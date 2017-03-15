@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="false"
+    android:id="@+id/coordinatorlayout"
+    tools:context="org.oscim.app.TileMap">
+
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/fab_margin"
+        app:fabSize="normal"
+        app:backgroundTint="@color/disabledBackgroundLight"
+        app:srcCompat="@drawable/ic_location_disabled_white_24dp"
+         />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/compass"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginBottom="85dp"
+        android:layout_marginRight="@dimen/fab_margin"
+        android:layout_marginLeft="@dimen/fab_margin"
+        android:layout_marginTop="@dimen/fab_margin"
+        app:fabSize="normal"
+        android:scaleType="center"
+        app:layout_anchor="@id/location"
+        app:layout_anchorGravity="top"
+        app:backgroundTint="#60FFFFFF"
+        app:srcCompat="@drawable/ic_explore_colored_35dp"
+        app:elevation="1dp"/>
+
+    <include layout="@layout/activity_tilemap" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/status_bar_height"> </TextView>
+
+        <LinearLayout
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_margin="10dp"
+            android:background="@drawable/layout_bg"
+            android:elevation="2dp"
+            android:orientation="horizontal"
+            android:theme="@style/AppTheme.AppBarOverlay">
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:scaleType="fitXY"
+                android:padding="15dp"
+                android:adjustViewBounds="true"
+                android:background="@android:color/transparent"
+                android:drawableStart="@drawable/ic_menu_black_24dp"
+                android:layout_gravity="center"
+                android:onClick="toggleNavigationView"/>
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="10dp"
+                android:background="@null"
+                android:hint="Search"
+                android:inputType="text"
+                android:maxLines="1"
+                android:scrollHorizontally="true"
+                android:textColor="@color/text_light"
+                android:textColorHint="@color/text_lgray" />
+
+            <!--<android.support.v7.widget.Toolbar-->
+            <!--android:id="@+id/toolbar"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="?attr/actionBarSize"-->
+            <!--app:popupTheme="@style/AppTheme.PopupOverlay" />-->
+
+        </LinearLayout>
+    </LinearLayout>
+
+</android.support.design.widget.CoordinatorLayout>

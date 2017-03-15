@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="Actual Route">
+        <menu>
+            <group>
+                <item
+                    android:id="@+id/waypoints"
+                    android:icon="@drawable/ic_linear_scale_black_24dp"
+                    android:title="Waypoints" />
+                <item
+                    android:id="@+id/route_instructions"
+                    android:icon="@drawable/ic_directions_black_24dp"
+                    android:title="Route Instructions" />
+                <item
+                    android:id="@+id/route_settings"
+                    android:icon="@drawable/ic_edit_black_24dp"
+                    android:title="Route Settings" />
+            </group>
+        </menu>
+    </item>
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/my_places"
+            android:icon="@drawable/ic_place_black_24dp"
+            android:title="My Places" />
+        <item
+            android:id="@+id/tools"
+            android:icon="@drawable/ic_build_black_24dp"
+            android:title="Tools" />
+        <item
+            android:id="@+id/maps_download"
+            android:icon="@drawable/ic_file_download_black_24dp"
+            android:title="Maps Download" />
+        <item
+            android:id="@+id/settings"
+            android:icon="@drawable/ic_settings_black_24dp"
+            android:title="Settings"/>
+    </group>
+    <item android:title="Help">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/legend"
+                    android:icon="@drawable/ic_map_black_24dp"
+                    android:title="Legend" />
+                <item
+                    android:id="@+id/about"
+                    android:icon="@drawable/ic_info_outline_black_24dp"
+                    android:title="About" />
+            </group>
+        </menu>
+    </item>
+
+</menu>

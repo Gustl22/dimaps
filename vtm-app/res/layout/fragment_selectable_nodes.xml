@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/status"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/colorPrimaryDark">
+
+
+    <com.github.johnkil.print.PrintButton
+        android:id="@+id/btn_selectAll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:iconColor="@color/selection"
+        app:iconFont="fonts/material-icon-font.ttf"
+        app:iconSize="28dp"
+        app:iconText="@string/ic_check_box_outline" />
+
+
+    <com.github.johnkil.print.PrintButton
+        android:id="@+id/btn_checkSelection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:iconColor="@color/colorAccent"
+        app:iconFont="fonts/material-icon-font.ttf"
+        app:iconSize="28dp"
+        app:iconText="@string/ic_info_outline" />
+
+</LinearLayout>

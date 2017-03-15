@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:minHeight="48dp"
+    android:paddingLeft="10dp"
+    android:background="@drawable/textline"
+    android:layout_height="match_parent">
+    <!--android:background="?android:attr/selectableItemBackground"-->
+
+    <CheckBox
+        android:visibility="gone"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentLeft="true"
+        android:id="@+id/node_selector"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:buttonTint="@color/selection"/>
+
+    <LinearLayout
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="28dp"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_toRightOf="@id/node_selector"
+        android:orientation="vertical"
+        android:id="@+id/picture_wrapper"
+        android:layout_width="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_height="wrap_content">
+
+        <!--<View-->
+            <!--android:id="@+id/top_line"-->
+            <!--android:background="#12558C"-->
+            <!--android:layout_gravity="center_horizontal"-->
+            <!--android:layout_width="1dp"-->
+            <!--android:layout_height="16dp" />-->
+
+        <!--<com.github.johnkil.print.PrintView-->
+            <!--android:id="@+id/icon"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--app:iconText="@string/ic_check_circle_blank"-->
+            <!--app:iconColor="#12558C"-->
+            <!--app:iconFont="fonts/material-icon-font.ttf"-->
+            <!--app:iconSize="16dp" />-->
+
+        <com.github.johnkil.print.PrintView
+            android:id="@+id/icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:iconText="@string/ic_email"
+            app:iconColor="@color/colorAccent"
+            app:iconFont="fonts/material-icon-font.ttf"
+            app:iconSize="24dp" />
+
+        <!--<View-->
+            <!--android:id="@+id/bot_line"-->
+            <!--android:background="#12558C"-->
+            <!--android:layout_gravity="center_horizontal"-->
+            <!--android:layout_width="1dp"-->
+            <!--android:layout_height="16dp" />-->
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/picture_wrapper">
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_marginLeft="10dp"
+        android:orientation="vertical">
+
+    <TextView
+        android:textSize="16sp"
+        android:id="@+id/node_value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:textSize="12sp"
+                android:id="@+id/node_country"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textColor="@color/disabledForegroundLight"/>
+            <TextView
+                android:textSize="12sp"
+                android:id="@+id/node_continent"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:textColor="@color/disabledForegroundLight"
+                android:textAlignment="textEnd"
+                android:gravity="end"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+    <TextView
+        android:textSize="12sp"
+        android:layout_marginLeft="10dp"
+        android:id="@+id/node_filesize"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:textAlignment="textEnd"
+        android:gravity="end"
+        android:paddingEnd="10dp"
+        android:paddingRight="10dp"/>
+
+    </LinearLayout>
+</RelativeLayout>
