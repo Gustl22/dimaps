@@ -33,16 +33,13 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 
 import org.oscim.android.canvas.AndroidGraphics;
-import org.oscim.app.graphhopper.CrossMapCalculator;
-import org.oscim.app.graphhopper.GHAsyncLoader;
-import org.oscim.app.graphhopper.GHAsyncTask;
+import org.oscim.app.graphhopper.GHPointArea;
+import org.oscim.app.graphhopper.GHPointListener;
 import org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter;
 import org.oscim.backend.canvas.Bitmap;
 import org.oscim.backend.canvas.Paint;
@@ -60,15 +57,14 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
+import static org.oscim.app.graphhopper.CrossMapCalculator.getCrossPoint;
 import static org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter.convertGHPointToGeoPoint;
 import static org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter.convertPointListToGeoPoints;
 import static org.oscim.app.graphhopper.OsmdroidGraphhopperAdapter.convertGeoPointToGHPoint;
 
-public class RouteSearch {
+public class RouteSearch implements GHPointListener {
     private static int START_INDEX = -2, DEST_INDEX = -1;
 
     private final PathLayer mRouteOverlay;
@@ -118,8 +114,8 @@ public class RouteSearch {
         mRouteBar = new RouteBar(App.activity);
 
         String storage = App.view.getContext().getExternalFilesDir(null).getAbsolutePath();
-        ghFiles = FileUtils.walkExtension(new File(storage,"maps/"), "-gh");
-        ghFiles.add(new File(storage,"maps/"));
+        ghFiles = FileUtils.walkExtension(new File(storage, "maps/"), "-gh");
+        ghFiles.add(new File(storage, "maps/")); //Add default folder for loading unzipped GH-Files
     }
 
     /**
@@ -128,16 +124,15 @@ public class RouteSearch {
     public void showRoute(GeoPoint p1, GeoPoint p2) {
         clearOverlays();
 
-        mStartPoint = new GHPointArea(convertGeoPointToGHPoint(p1), ghFiles, mStartPoint);
+        mStartPoint = new GHPointArea(convertGeoPointToGHPoint(p1), ghFiles, mStartPoint, this);
         markerStart = putMarkerItem(markerStart, mStartPoint.getGhPoint(), START_INDEX,
                 R.string.departure, R.drawable.ic_place_green_24dp, -1);
 
-        mDestinationPoint = new GHPointArea(convertGeoPointToGHPoint(p2), ghFiles, mDestinationPoint);
+        mDestinationPoint = new GHPointArea(convertGeoPointToGHPoint(p2), ghFiles, mDestinationPoint, this);
         markerDestination = putMarkerItem(markerDestination, mDestinationPoint.getGhPoint(), DEST_INDEX,
                 R.string.destination,
                 R.drawable.ic_place_red_24dp, -1);
 
-        getRouteAsync();
     }
 
     /**
@@ -170,6 +165,12 @@ public class RouteSearch {
             return theAddress;
         }
         return "";
+    }
+
+    @Override
+    public void onRoutePointUpdate() {
+        getRouteAsync();
+        updateIternaryMarkers();
     }
 
     // Async task to reverse-geocode the marker position in a separate thread:
@@ -233,12 +234,11 @@ public class RouteSearch {
         } else if (index == DEST_INDEX) {
             GHPointArea.getGHPointAreas().remove(mDestinationPoint);
             mDestinationPoint = null;
-        } else
+        } else {
             GHPointArea.getGHPointAreas().remove(mViaPoints.get(index));
             mViaPoints.remove(index);
-
-        getRouteAsync();
-        updateIternaryMarkers();
+        }
+        onRoutePointUpdate();
     }
 
     public void updateIternaryMarkers() {
@@ -260,6 +260,7 @@ public class RouteSearch {
                     R.string.destination,
                     R.drawable.ic_place_red_24dp, -1);
         }
+        App.map.updateMap(true);
     }
 
     //------------ Route and Directions
@@ -270,14 +271,10 @@ public class RouteSearch {
 
         if (route == null || route.hasErrors()) {
             App.activity.showToastOnUiThread(App.activity.getString(R.string.route_lookup_error));
-            if(route != null)
-            Log.e(App.activity.getString(R.string.route_lookup_error), route.getErrors().toString());
+            if (route != null)
+                Log.e(App.activity.getString(R.string.route_lookup_error), route.getErrors().toString());
             return;
         }
-
-//        pathLayer = createPathLayer(resp);
-//        mapView.map().layers().add(pathLayer);
-//        mapView.map().updateMap(true);
 
         shortestPathRunning = false;
 
@@ -318,44 +315,83 @@ public class RouteSearch {
     /**
      * Async task to get the route in a separate thread.
      */
-    class UpdateRouteTask extends AsyncTask<List<GHPointArea>, Void, PathWrapper> {
+    class UpdateRouteTask extends AsyncTask<List<GHPointArea>, Void, PathWrapper> implements GHPointListener {
         float time;
 
         @Override
         protected PathWrapper doInBackground(List<GHPointArea>... wp) {
             List<GHPointArea> waypoints = wp[0];
-            List<GHPoint> ghList = new ArrayList<>();
+            ArrayList<List<GHPointArea>> ghList = new ArrayList<>();
 
-            //Handle Routing over multiple areas
-            for (int i=0; i<waypoints.size(); i++) {
-                if(i>0){
-                    if(waypoints.get(i).getGraphHopper().equals(waypoints.get(0).getGraphHopper())){
-                        ghList.add(waypoints.get(i).getGhPoint());
+            StopWatch sw = new StopWatch().start();
+            //Split route in multiple GHPointLists
+            for (int i = 0; i < waypoints.size(); i++) {
+                if (i > 0) {
+                    GraphHopper g1 = waypoints.get(i).getGraphHopper();
+                    GraphHopper g2 = waypoints.get(i - 1).getGraphHopper();
+                    if (g1 != null && g2 != null && !g1.equals(g2)) {
+                        //Add element to last list of route points
+                        ghList.add(new ArrayList<GHPointArea>());
                     }
+                    ghList.get(ghList.size() - 1).add(waypoints.get(i));
                 } else {
-                    ghList.add(waypoints.get(i).getGhPoint());
+                    if (ghList.isEmpty()) {
+                        ghList.add(new ArrayList<GHPointArea>());
+                    }
+                    ghList.get(0).add(waypoints.get(i));
                 }
             }
-            if(ghList.size()<2){return null;}
-            GraphHopper graphHopper = waypoints.get(0).getGraphHopper();
-            if(graphHopper == null) return null;
-            StopWatch sw = new StopWatch().start();
-            GHRequest req = new GHRequest(ghList).
-                    setAlgorithm(Parameters.Algorithms.DIJKSTRA_BI);
-            req.getHints().
-                    put(Parameters.Routing.INSTRUCTIONS, "false");
-            GHResponse resp = graphHopper.route(req);
-            if(!resp.getErrors().isEmpty()){
-                CrossMapCalculator cross = new CrossMapCalculator(graphHopper, req);
-                cross.recalculateRoute(resp, ghFiles);
+            //Add Route points if necessary
+            if (ghList.isEmpty() || ghList.get(0).size() < 2) {
+                return null;
             }
+            for (int i = 0; i < ghList.size(); i++) {
+                if (i > 0) {
+                    List<GHPointArea> subRoutes = ghList.get(i);
+                    if (!subRoutes.isEmpty()) {
+                        List<GHPointArea> ghListBefore = ghList.get(i - 1);
+                        GHPointArea ghpaBefore = ghListBefore.get(ghListBefore.size());
+                        GHPointArea ghpa = subRoutes.get(0);
+                        GHPoint crossPoint = getCrossPoint(ghpaBefore, ghpa);
+                        ghListBefore.add(new GHPointArea(crossPoint,
+                                ghpaBefore.getGraphHopper(), null, this));
+                        subRoutes.add(0, new GHPointArea(crossPoint,
+                                ghpa.getGraphHopper(), null, this));
+                    }
+                }
+            }
+
+            //Calculate Routes
+            List<GHResponse> responses = new ArrayList<>();
+            for (List<GHPointArea> pointList : ghList) {
+                GraphHopper hopper = pointList.get(0).getGraphHopper();
+                if (hopper == null) return null;
+                GHRequest req = new GHRequest(getRouteListOfAreaList(pointList)).
+                        setAlgorithm(Parameters.Algorithms.DIJKSTRA_BI);
+                req.getHints().
+                        put(Parameters.Routing.INSTRUCTIONS, "false");
+                GHResponse resp = hopper.route(req);
+                if (!resp.getErrors().isEmpty()) {
+                    return null;
+                }
+                responses.add(resp);
+            }
+
             time = sw.stop().getSeconds();
-            return resp.getBest();
+            return responses.get(0).getBest();
+        }
+
+        public List<GHPoint> getRouteListOfAreaList(List<GHPointArea> areaPointList) {
+            List<GHPoint> ghPoints = new ArrayList<>();
+            for (GHPointArea element : areaPointList) {
+                ghPoints.add(element.getGhPoint());
+            }
+            return ghPoints;
         }
 
         @Override
         protected void onPostExecute(PathWrapper resp) {
-            if(resp == null){
+            if (resp == null) {
                 App.activity.showToastOnUiThread("Route calculation failed. No routing data available");
                 return;
             }
@@ -364,6 +400,11 @@ public class RouteSearch {
             mRouteBar.set(GraphhopperOsmdroidAdapter.convertPathWrapperToRoute(resp));
 
             mRouteTask = null;
+        }
+
+        @Override
+        public void onRoutePointUpdate() {
+            //update
         }
     }
 
@@ -392,31 +433,29 @@ public class RouteSearch {
         App.activity.showToastOnUiThread("calculating path ...");
     }
 
+    /**
+     * handle action of items, popped up with long press on map
+     */
     boolean onContextItemSelected(MenuItem item, GeoPoint geoPoint) {
         switch (item.getItemId()) {
             case R.id.menu_route_departure:
-                mStartPoint = new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles, mStartPoint);
+                mStartPoint = new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles, mStartPoint, this);
 
                 markerStart = putMarkerItem(markerStart, mStartPoint.getGhPoint(), START_INDEX,
                         R.string.departure, R.drawable.ic_place_green_24dp, -1);
-                getRouteAsync();
                 return true;
 
             case R.id.menu_route_destination:
-                mDestinationPoint = new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles, mDestinationPoint);
+                mDestinationPoint = new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles, mDestinationPoint, this);
 
                 markerDestination = putMarkerItem(markerDestination, mDestinationPoint.getGhPoint(), DEST_INDEX,
                         R.string.destination,
                         R.drawable.ic_place_red_24dp, -1);
-
-                getRouteAsync();
                 return true;
 
             case R.id.menu_route_viapoint:
-                GHPointArea viaPoint = new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles, null);
+                GHPointArea viaPoint = new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles, null, this);
                 addViaPoint(viaPoint);
-
-                getRouteAsync();
                 return true;
 
             case R.id.menu_route_clear:
@@ -524,96 +563,4 @@ public class RouteSearch {
     }
 }
 
-class GHPointArea{
-    private static Collection<GHPointArea> GHPointAreas;
-    private GraphHopper graphHopper;
-    private GHPoint ghPoint;
 
-    public GHPointArea(GHPoint ghPoint, ArrayList<File> ghFiles, GHPointArea overridden){
-        if(GHPointAreas == null)
-            GHPointAreas = new HashSet<GHPointArea>();
-        this.ghPoint = ghPoint;
-        if(overridden != null){
-            GHPointArea.getGHPointAreas().remove(overridden);
-        }
-        GHPointAreas.add(this);
-        new GHAsyncTask<Object, Void, GraphHopper>(){
-            @Override
-            protected GraphHopper saveDoInBackground(Object... params) throws Exception {
-                return autoSelectGraphhopper((GHPoint) params[0], GHPointAreas, (ArrayList<File>) params[1]);
-            }
-
-            protected void onPostExecute(GraphHopper hopper){
-                graphHopper = hopper;
-            }
-        }.execute(ghPoint, ghFiles);
-    }
-
-    public static Collection<GHPointArea> getGHPointAreas(){
-        return GHPointAreas;
-    }
-
-    public static void setGHPointAreas(Collection<GHPointArea> ghPointAreas){
-        GHPointAreas = ghPointAreas;
-    }
-
-    public GraphHopper getGraphHopper(){
-        return graphHopper;
-    }
-
-    public GraphHopper autoSelectGraphhopper(GHPoint pt, Collection<GHPointArea> ghPointAreas,
-                                             ArrayList<File> ghFiles){
-                //Search Point in already loaded areas
-                for(GHPointArea ghpa : ghPointAreas){
-                    GraphHopper gh = ghpa.getGraphHopper();
-                    if(gh != null) {
-                        try{
-                            QueryResult qr = gh.getLocationIndex().findClosest(pt.getLat(), pt.getLon(),
-                                    EdgeFilter.ALL_EDGES);
-                            if (qr.getClosestNode() > 0) {
-                                return gh;
-                            }
-                        } catch (IllegalStateException ex) {
-                            Log.e(ex.getMessage(),ex.getCause().getMessage());
-                        }
-                    }
-                }
-
-                //Calculation will be in different area
-                fileloop:
-                for(File f : ghFiles) {
-                    //Exclude already loaded areas
-                    for(GHPointArea ghpa : ghPointAreas){
-                        GraphHopper gh = ghpa.getGraphHopper();
-                        if(gh != null){
-                            String fPath = new File(f.getAbsolutePath()).getAbsolutePath();
-                            String hPath = new File(gh.getGraphHopperStorage().getDirectory().getLocation()).getAbsolutePath();
-                            if(fPath.equals(hPath))
-                                continue fileloop;
-                        }
-                    }
-                    try {
-                        GraphHopper graphHopper = GHAsyncLoader.loadGraphhopperStorage(f.getAbsolutePath());
-                        QueryResult qr = graphHopper.getLocationIndex().findClosest(pt.getLat(), pt.getLon(),
-                                EdgeFilter.ALL_EDGES);
-                        if (qr.getClosestNode() > 0) {
-                            return graphHopper;
-                        }
-                    } catch (Exception ex) {
-                        if(ex instanceof IllegalStateException){
-                            Log.e(ex.getMessage(),ex.getCause().getMessage());
-                        }
-                        continue;
-                    }
-                }
-                return null;
-            }
-
-    public GHPoint getGhPoint() {
-        return ghPoint;
-    }
-
-    public void setGhPoint(GHPoint ghPoint) {
-        this.ghPoint = ghPoint;
-    }
-}

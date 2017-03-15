@@ -140,6 +140,13 @@ public class MapDownloader extends DownloadReceiverActivity implements AdapterVi
         downloadSpinner.setSelection(adapter.getPosition(initalMapSource));
     }
 
+    /**
+     *
+     * @param rootPath the path were the first element is located
+     * @param filepath the subpaths which were not stored in rootPath.
+     *                 At the beginning it's an empty String
+     * @return All Files/Folders in the rootspecified folder
+     */
     private Collection<String> RecursiveAreaFinder(String rootPath, String filepath) {
         Collection<String> res = new HashSet<String>();
         try {
@@ -177,6 +184,11 @@ public class MapDownloader extends DownloadReceiverActivity implements AdapterVi
         return res;
     }
 
+    /**
+     * Gets the filesize based on HTML "<td" string
+     * @param subs Substring of HTML Line
+     * @return Filesize included in String
+     */
     private String getFileSizeFromHtml(String subs){
         if(subs.contains("<td")){
             String[] arr = subs.split("\\<td");

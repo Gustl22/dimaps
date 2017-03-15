@@ -27,6 +27,7 @@ import java.util.List;
 
 /**
  * Created by gustl on 11.03.17.
+ * Activity can be used to receive Download events, which were triggered before
  */
 
 public abstract class DownloadReceiverActivity extends AppCompatActivity {
