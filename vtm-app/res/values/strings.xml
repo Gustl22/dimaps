@@ -506,9 +506,10 @@
     <string-array name="downloadSources">
         <item>Esslingen Maps(.map)|http://ftp-stud.hs-esslingen.de/pub/Mirrors/download.mapsforge.org/maps/</item>
         <item>Graphhopper Develope(.ghz)|http://download2.graphhopper.com/public/maps/0.9/</item>
-        <item>Pocket Maps 01(.ghz)|http://folk.ntnu.no/junjung/pocketmaps/maps/</item>
-        <item>Pocket Maps 02(.ghz)|http://folk.ntnu.no/chunf/pocketmaps/maps/</item>
-        <item>Pocket Maps 03(.ghz)|http://folk.ntnu.no/weiwe/junjunguo/pocketmaps/maps/</item>
+        <!--Following are not compatible with Version Graphhopper 0.8-->
+        <!--<item>Pocket Maps 01(.ghz)|http://folk.ntnu.no/junjung/pocketmaps/maps/</item>-->
+        <!--<item>Pocket Maps 02(.ghz)|http://folk.ntnu.no/chunf/pocketmaps/maps/</item>-->
+        <!--<item>Pocket Maps 03(.ghz)|http://folk.ntnu.no/weiwe/junjunguo/pocketmaps/maps/</item>-->
         <!--http://folk.ntnu.no/junjung/pocketmaps/map_url_list-->
     </string-array>
 
