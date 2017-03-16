@@ -18,6 +18,7 @@ package org.oscim.app;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -49,6 +50,7 @@ import android.widget.Toast;
 import org.oscim.android.MapView;
 import org.oscim.app.download.MapDownloader;
 import org.oscim.app.filepicker.Utils;
+import org.oscim.app.graphhopper.CrossMapCalculatorListener;
 import org.oscim.app.location.Compass;
 import org.oscim.app.location.LocationDialog;
 import org.oscim.app.location.LocationHandler;
@@ -62,7 +64,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public class TileMap extends MapActivity implements MapEventsReceiver, NavigationView.OnNavigationItemSelectedListener {
+public class TileMap extends MapActivity implements MapEventsReceiver,
+        NavigationView.OnNavigationItemSelectedListener, CrossMapCalculatorListener {
     final static Logger log = LoggerFactory.getLogger(TileMap.class);
 
     private static final int DIALOG_ENTER_COORDINATES = 0;
@@ -743,5 +746,30 @@ public class TileMap extends MapActivity implements MapEventsReceiver, Navigatio
             float tilt = mCompass.getTilt() - 15;
             mCompass.setTilt(tilt);
         }
+    }
+
+    ProgressDialog progressDialog;
+    @Override
+    public void onCrossMapCalculatorUpdate(final String status, final int progress, final int style) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (progress == 0) {
+                    if(progressDialog == null){
+                        progressDialog = new ProgressDialog(App.activity);
+                        progressDialog.setProgressStyle(style);
+                        progressDialog.setMessage(status);
+                        progressDialog.setCancelable(false);
+                        progressDialog.show();
+                    }
+                    progressDialog.setMessage(status);
+                } else if (progress == 100) {
+                    progressDialog.dismiss();
+                    progressDialog = null;
+                }
+                if(progressDialog != null)
+                    progressDialog.setProgress(progress);
+            }
+        });
     }
 }

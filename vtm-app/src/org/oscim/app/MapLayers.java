@@ -50,6 +50,7 @@ public class MapLayers {
     static String getDbMapName() {
         return "MAPSFORGE_OFFLINE";
     }
+    static File mapFolder = new File(App.activity.getExternalFilesDir(null), "maps/");
 
     final static Logger log = LoggerFactory.getLogger(MapLayers.class);
     static Config[] configs = new Config[]{new Config("OPENSCIENCEMAP4") {
@@ -59,7 +60,7 @@ public class MapLayers {
     }, new Config("MAPSFORGE") {
         TileSource init() {
             return new MapFileTileSource().setOption("file",
-                    App.activity.getBaseContext().getExternalFilesDir(null) + "/maps/openscience.map");
+                    mapFolder + "/openscience.map");
         }
     }, new Config("MAPNIK_VECTOR") {
         TileSource init() {
@@ -76,9 +77,7 @@ public class MapLayers {
     }, new Config("MAPSFORGE_OFFLINE") {
         TileSource init() {
             MultiMapFileTileSource MultiTS = new MultiMapFileTileSource();
-            String path = App.activity.getExternalFilesDir(null) + "/maps/";
-            File directory = new File(path);
-            ArrayList<File> files = FileUtils.walkExtension(directory, ".map");
+            ArrayList<File> files = FileUtils.walkExtension(mapFolder, ".map");
             for (File f : files) {
                 Log.d("Files", "FileName:" + f.getName());
                     MapFileTileSource ts = new MapFileTileSource();
@@ -112,6 +111,12 @@ public class MapLayers {
 
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+
+        //Unzip downloaded Files:
+        ArrayList<File> files = FileUtils.walkExtension(mapFolder, ".ghz");
+        for (File f : files) {
+            App.activity.unzipAsync(f, App.activity);
+        }
 
         //Temporary files
         String dbname = preferences.getString("mapDatabase", getDbMapName());

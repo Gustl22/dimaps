@@ -33,11 +33,16 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 
 import org.oscim.android.canvas.AndroidGraphics;
+import org.oscim.app.graphhopper.CrossMapCalculator;
+import org.oscim.app.graphhopper.CrossMapCalculatorListener;
 import org.oscim.app.graphhopper.GHPointArea;
 import org.oscim.app.graphhopper.GHPointListener;
 import org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter;
@@ -59,7 +64,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.oscim.app.graphhopper.CrossMapCalculator.getCrossPoint;
 import static org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter.convertGHPointToGeoPoint;
 import static org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter.convertPointListToGeoPoints;
 import static org.oscim.app.graphhopper.OsmdroidGraphhopperAdapter.convertGeoPointToGHPoint;
@@ -315,11 +319,11 @@ public class RouteSearch implements GHPointListener {
     /**
      * Async task to get the route in a separate thread.
      */
-    class UpdateRouteTask extends AsyncTask<List<GHPointArea>, Void, PathWrapper> implements GHPointListener {
+    class UpdateRouteTask extends AsyncTask<List<GHPointArea>, Void, List<GHResponse>> implements GHPointListener {
         float time;
 
         @Override
-        protected PathWrapper doInBackground(List<GHPointArea>... wp) {
+        protected List<GHResponse> doInBackground(List<GHPointArea>... wp) {
             List<GHPointArea> waypoints = wp[0];
             ArrayList<List<GHPointArea>> ghList = new ArrayList<>();
 
@@ -342,7 +346,7 @@ public class RouteSearch implements GHPointListener {
                 }
             }
             //Add Route points if necessary
-            if (ghList.isEmpty() || ghList.get(0).size() < 2) {
+            if (ghList.isEmpty() || ghList.get(0).isEmpty()) {
                 return null;
             }
             for (int i = 0; i < ghList.size(); i++) {
@@ -350,9 +354,12 @@ public class RouteSearch implements GHPointListener {
                     List<GHPointArea> subRoutes = ghList.get(i);
                     if (!subRoutes.isEmpty()) {
                         List<GHPointArea> ghListBefore = ghList.get(i - 1);
-                        GHPointArea ghpaBefore = ghListBefore.get(ghListBefore.size());
+                        GHPointArea ghpaBefore = ghListBefore.get(ghListBefore.size()-1);
                         GHPointArea ghpa = subRoutes.get(0);
-                        GHPoint crossPoint = getCrossPoint(ghpaBefore, ghpa);
+                        CrossMapCalculator calculator = new CrossMapCalculator(
+                                (CrossMapCalculatorListener) App.activity);
+                        GHPoint crossPoint = calculator.getCrossPoint(ghpaBefore, ghpa);
+                        if(crossPoint == null) return null;
                         ghListBefore.add(new GHPointArea(crossPoint,
                                 ghpaBefore.getGraphHopper(), null, this));
                         subRoutes.add(0, new GHPointArea(crossPoint,
@@ -378,26 +385,65 @@ public class RouteSearch implements GHPointListener {
             }
 
             time = sw.stop().getSeconds();
-            return responses.get(0).getBest();
-        }
-
-        public List<GHPoint> getRouteListOfAreaList(List<GHPointArea> areaPointList) {
-            List<GHPoint> ghPoints = new ArrayList<>();
-            for (GHPointArea element : areaPointList) {
-                ghPoints.add(element.getGhPoint());
-            }
-            return ghPoints;
+            return responses;
         }
 
         @Override
-        protected void onPostExecute(PathWrapper resp) {
-            if (resp == null) {
-                App.activity.showToastOnUiThread("Route calculation failed. No routing data available");
+        protected void onPostExecute(List<GHResponse> resp) {
+            if(resp == null|| resp.isEmpty()){
+                App.activity.showToastOnUiThread("Route calculation failed");
                 return;
             }
+            PathWrapper pathWrapper = new PathWrapper();
+            long time = 0;
+            List<String> description = new ArrayList<>();
+            PointList pointList = new PointList();
+            PointList wayPoints = new PointList();
+            double distance = 0;
+            double ascend = 0;
+            double descend = 0;
+            InstructionList instructionList = InstructionList.EMPTY;
+            double routeWeight = 0;
+
+            for(int i = 0; i<resp.size(); i++ ) {
+                GHResponse re = resp.get(i);
+                if (re == null || !re.getErrors().isEmpty()) {
+                    App.activity.showToastOnUiThread("Route calculation failed. No routing data available");
+                    return;
+                }
+
+                PathWrapper pw = re.getBest();
+
+                time += pw.getTime();
+                distance += pw.getDistance();
+                descend += pw.getDescend();
+                ascend += pw.getAscend();
+                routeWeight += pw.getRouteWeight();
+                wayPoints.add(pw.getWaypoints());
+                pointList.add(pw.getPoints());
+                try {
+                    for (Instruction in : pw.getInstructions()) {
+                        instructionList.add(in);
+                    }
+                } catch (IllegalArgumentException ex){
+                    Log.w("Graphhopper Instructions", "Instructions disabled");
+                }
+                description.addAll(pw.getDescription());
+            }
+            pathWrapper.setAscend(ascend);
+            pathWrapper.setDescend(descend);
+            pathWrapper.setRouteWeight(routeWeight);
+            pathWrapper.setDescription(description);
+            pathWrapper.setPoints(pointList);
+            pathWrapper.setDistance(distance);
+            pathWrapper.setInstructions(instructionList);
+            pathWrapper.setTime(time);
+            pathWrapper.setWaypoints(wayPoints);
+
             App.activity.showToastOnUiThread("Route found in: " + time + " Seconds.");
-            updateOverlays(resp);
-            mRouteBar.set(GraphhopperOsmdroidAdapter.convertPathWrapperToRoute(resp));
+            updateOverlays(pathWrapper);
+
+            mRouteBar.set(GraphhopperOsmdroidAdapter.convertPathWrapperToRoute(pathWrapper));
 
             mRouteTask = null;
         }
@@ -406,6 +452,14 @@ public class RouteSearch implements GHPointListener {
         public void onRoutePointUpdate() {
             //update
         }
+    }
+
+    public List<GHPoint> getRouteListOfAreaList(List<GHPointArea> areaPointList) {
+        List<GHPoint> ghPoints = new ArrayList<>();
+        for (GHPointArea element : areaPointList) {
+            ghPoints.add(element.getGhPoint());
+        }
+        return ghPoints;
     }
 
     @SuppressWarnings("unchecked")

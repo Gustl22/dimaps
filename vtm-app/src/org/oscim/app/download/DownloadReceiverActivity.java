@@ -81,39 +81,9 @@ public abstract class DownloadReceiverActivity extends AppCompatActivity {
                 }
 
                 int uriIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
-                final File mFile = new File(Uri.parse(cursor.getString(uriIndex)).getPath());
+                File mFile = new File(Uri.parse(cursor.getString(uriIndex)).getPath());
                 if (mFile.getName().endsWith(".ghz")) {
-                    new GHAsyncTask<Void, Void, Boolean>() {
-                        ProgressDialog progDailog;
-
-                        @Override
-                        protected void onPreExecute() {
-                            super.onPreExecute();
-                            progDailog = new ProgressDialog(ctxt);
-                            progDailog.setMessage("Unzipping...");
-                            progDailog.setIndeterminate(false);
-                            progDailog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-                            progDailog.setCancelable(false);
-                            progDailog.show();
-                        }
-
-                        protected Boolean saveDoInBackground(Void... params)
-                                throws Exception {
-                            Unzipper unzipper = new Unzipper();
-                            return unzipper.unzip(mFile.getAbsolutePath(), mFile.getAbsolutePath()
-                                    .substring(0, mFile.getAbsolutePath().length() - 4)+"-gh", true);
-                        }
-
-                        @Override
-                        protected void onPostExecute(Boolean success) {
-                            progDailog.dismiss();
-                            if(!success){
-                                Log.e("Unzipping failed", "File does not exists");
-                                return;
-                            }
-                            showDownloadCompleted();
-                        }
-                    }.execute();
+                    unzipAsync(mFile, ctxt);
                 } else {
                     showDownloadCompleted();
                 }
@@ -121,6 +91,42 @@ public abstract class DownloadReceiverActivity extends AppCompatActivity {
             }
         };
         registerReceiver(receiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+    }
+
+    public void unzipAsync(File mFile, final Context ctxt) {
+        new GHAsyncTask<File, Void, Boolean>() {
+            ProgressDialog progDailog;
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                progDailog = new ProgressDialog(ctxt);
+                progDailog.setMessage("Unzipping...");
+                progDailog.setIndeterminate(false);
+                progDailog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                progDailog.setCancelable(false);
+                progDailog.show();
+            }
+
+            protected Boolean saveDoInBackground(File... files)
+                    throws Exception {
+                Unzipper unzipper = new Unzipper();
+                if(files[0] == null || files[0].getAbsolutePath().isEmpty())
+                    return false;
+                return unzipper.unzip(files[0].getAbsolutePath(), files[0].getAbsolutePath()
+                        .substring(0, files[0].getAbsolutePath().length() - 4)+"-gh", true);
+            }
+
+            @Override
+            protected void onPostExecute(Boolean success) {
+                progDailog.dismiss();
+                if(!success){
+                    Log.e("Unzipping failed", "File does not exists");
+                    return;
+                }
+                showDownloadCompleted();
+            }
+        }.execute(mFile);
     }
 
     private Snackbar snackbar;
