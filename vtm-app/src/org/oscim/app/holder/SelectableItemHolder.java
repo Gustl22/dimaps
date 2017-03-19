@@ -15,7 +15,7 @@ import org.oscim.app.R;
 /**
  * Created by Bogdan Melnychuk on 2/15/15.
  */
-public class SelectableItemHolder extends TreeNode.BaseNodeViewHolder<TreeNodeContent> {
+public class SelectableItemHolder extends TreeNode.BaseNodeViewHolder<AreaFileInfo> {
     private TextView tvValue;
     private TextView tvSize;
     private TextView tvCountry;
@@ -27,7 +27,7 @@ public class SelectableItemHolder extends TreeNode.BaseNodeViewHolder<TreeNodeCo
     }
 
     @Override
-    public View createNodeView(final TreeNode node, TreeNodeContent value) {
+    public View createNodeView(final TreeNode node, AreaFileInfo value) {
         final LayoutInflater inflater = LayoutInflater.from(context);
         final View view = inflater.inflate(R.layout.layout_selectable_item, null, false);
 

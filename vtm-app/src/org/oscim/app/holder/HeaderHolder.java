@@ -13,7 +13,7 @@ import org.oscim.app.R;
 /**
  * Created by Bogdan Melnychuk on 2/13/15.
  */
-public class HeaderHolder extends TreeNode.BaseNodeViewHolder<TreeNodeContent> {
+public class HeaderHolder extends TreeNode.BaseNodeViewHolder<AreaFileInfo> {
 
     private PrintView arrowView;
 
@@ -22,7 +22,7 @@ public class HeaderHolder extends TreeNode.BaseNodeViewHolder<TreeNodeContent> {
     }
 
     @Override
-    public View createNodeView(TreeNode node, TreeNodeContent value) {
+    public View createNodeView(TreeNode node, AreaFileInfo value) {
         final LayoutInflater inflater = LayoutInflater.from(context);
         final View view = inflater.inflate(R.layout.layout_header_node, null, false);
         TextView tvValue = (TextView) view.findViewById(R.id.node_value);

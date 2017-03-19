@@ -503,8 +503,10 @@
     <string name="ic_wifi_tethering">&#xe1af;</string>
     <string name="ic_work">&#xe1b0;</string>
 
+    <!--Preferences-->
     <string-array name="downloadSources">
         <item>Esslingen Maps(.map)|http://ftp-stud.hs-esslingen.de/pub/Mirrors/download.mapsforge.org/maps/</item>
+        <item>Mapsforge POI(.poi)|http://download.mapsforge.org/pois/</item>
         <item>Graphhopper Develope(.ghz)|http://download2.graphhopper.com/public/maps/0.9/</item>
         <!--Following are not compatible with Version Graphhopper 0.8-->
         <!--<item>Pocket Maps 01(.ghz)|http://folk.ntnu.no/junjung/pocketmaps/maps/</item>-->
@@ -512,5 +514,7 @@
         <!--<item>Pocket Maps 03(.ghz)|http://folk.ntnu.no/weiwe/junjunguo/pocketmaps/maps/</item>-->
         <!--http://folk.ntnu.no/junjung/pocketmaps/map_url_list-->
     </string-array>
+    <string name="pref_poiArea_folderPath">pref_poiArea_folderPath</string>
+
 
 </resources>

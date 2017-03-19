@@ -2,7 +2,7 @@ package org.oscim.app.holder;
 
 import org.oscim.app.R;
 
-public class TreeNodeContent {
+public class AreaFileInfo {
     public int icon;
     private String text;
     private String extension = "";
@@ -12,11 +12,11 @@ public class TreeNodeContent {
     private String country;
     private String region;
 
-    public TreeNodeContent(String path) {
+    public AreaFileInfo(String path) {
         this(!path.contains(".") ? R.string.ic_folder :  R.string.ic_drive_file, path);
     }
 
-    public TreeNodeContent(int icon, String path) {
+    public AreaFileInfo(int icon, String path) {
         this.icon = icon;
         this.path = path.trim();
         int i = path.lastIndexOf("/");
@@ -88,8 +88,8 @@ public class TreeNodeContent {
     @Override
     public boolean equals(Object o){
         if (o == null) return false;
-        if (!(o instanceof TreeNodeContent))return false;
-        TreeNodeContent i = (TreeNodeContent)o;
+        if (!(o instanceof AreaFileInfo))return false;
+        AreaFileInfo i = (AreaFileInfo)o;
         return i.getPath().equals(this.path);
     }
 
@@ -105,19 +105,20 @@ public class TreeNodeContent {
         }
         String[] arr =name.split("_");
         if(arr.length>1) {
-            continent = Capitalize(arr[0]);
-            country = Capitalize(arr[1]);
+            continent = capitalize(arr[0]);
+            country = capitalize(arr[1]);
             region = country;
         }
         if(arr.length>2){
             region = "";
             for(int i = 2; i< arr.length; i++){
-                region += Capitalize(arr[i]+" ");
+                region += capitalize(arr[i]+" ");
             }
+            region = region.trim();
         }
     }
 
-    public String Capitalize(String text){
+    public String capitalize(String text){
         if(text.length()> 1)
             return String.valueOf(text.charAt(0)).toUpperCase()+text.substring(1);
         return text.toUpperCase();

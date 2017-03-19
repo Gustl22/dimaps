@@ -13,7 +13,7 @@ import org.oscim.app.R;
 /**
  * Created by Bogdan Melnychuk on 2/12/15.
  */
-public class IconTreeItemHolder extends TreeNode.BaseNodeViewHolder<TreeNodeContent> {
+public class IconTreeItemHolder extends TreeNode.BaseNodeViewHolder<AreaFileInfo> {
     private TextView tvValue;
     private PrintView arrowView;
 
@@ -22,7 +22,7 @@ public class IconTreeItemHolder extends TreeNode.BaseNodeViewHolder<TreeNodeCont
     }
 
     @Override
-    public View createNodeView(final TreeNode node, TreeNodeContent value) {
+    public View createNodeView(final TreeNode node, AreaFileInfo value) {
         final LayoutInflater inflater = LayoutInflater.from(context);
         final View view = inflater.inflate(R.layout.layout_icon_node, null, false);
         tvValue = (TextView) view.findViewById(R.id.node_value);
@@ -36,7 +36,7 @@ public class IconTreeItemHolder extends TreeNode.BaseNodeViewHolder<TreeNodeCont
         view.findViewById(R.id.btn_addFolder).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                TreeNode newFolder = new TreeNode(new TreeNodeContent("New Folder"));
+                TreeNode newFolder = new TreeNode(new AreaFileInfo("New Folder"));
                 getTreeView().addNode(node, newFolder);
             }
         });

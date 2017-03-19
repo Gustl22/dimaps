@@ -44,6 +44,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -54,6 +55,7 @@ import org.oscim.app.graphhopper.CrossMapCalculatorListener;
 import org.oscim.app.location.Compass;
 import org.oscim.app.location.LocationDialog;
 import org.oscim.app.location.LocationHandler;
+import org.oscim.app.search.SearchActivity;
 import org.oscim.core.GeoPoint;
 import org.oscim.core.Tile;
 import org.oscim.overlay.DistanceTouchOverlay;
@@ -87,6 +89,8 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
     private LinearLayout mToolbar;
     private FloatingActionButton mLocationFab;
     private FloatingActionButton mCompassFab;
+    //SearchBar
+    private EditText mSearchBar;
 
     private MapLayers mMapLayers;
 
@@ -99,6 +103,8 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
         Tile.SIZE = Tile.calculateTileSize(getResources().getDisplayMetrics().scaledDensity);
         setContentView(R.layout.activity_tilemap_nav);
@@ -132,6 +138,13 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         registerForContextMenu(App.view);
         //Navigationview
         mToolbar = (LinearLayout) findViewById(R.id.toolbar);
+        mSearchBar = (EditText) findViewById(R.id.search_bar);
+        mSearchBar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(App.activity, SearchActivity.class));
+            }
+        });
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
@@ -147,8 +160,6 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         mLocationFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
                 toggleLoction();
             }
         });
@@ -159,26 +170,18 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-
             // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
-
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
 
             } else {
-
                 // No explanation needed, we can request the permission.
-
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         ACCESS_FINE_LOCATION);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
             }
         }
     }

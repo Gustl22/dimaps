@@ -117,9 +117,8 @@ public class RouteSearch implements GHPointListener {
 
         mRouteBar = new RouteBar(App.activity);
 
-        String storage = App.view.getContext().getExternalFilesDir(null).getAbsolutePath();
-        ghFiles = FileUtils.walkExtension(new File(storage, "maps/"), "-gh");
-        ghFiles.add(new File(storage, "maps/")); //Add default folder for loading unzipped GH-Files
+        ghFiles = FileUtils.walkExtension(MapLayers.MAP_FOLDER, "-gh");
+        ghFiles.add(MapLayers.MAP_FOLDER); //Add default folder for loading unzipped GH-Files
     }
 
     /**

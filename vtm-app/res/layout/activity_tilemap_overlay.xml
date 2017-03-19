@@ -72,6 +72,7 @@
                 android:onClick="toggleNavigationView"/>
 
             <EditText
+                android:id="@+id/search_bar"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_margin="10dp"
@@ -81,7 +82,8 @@
                 android:maxLines="1"
                 android:scrollHorizontally="true"
                 android:textColor="@color/text_light"
-                android:textColorHint="@color/text_lgray" />
+                android:textColorHint="@color/text_lgray"
+                android:focusableInTouchMode="false"/>
 
             <!--<android.support.v7.widget.Toolbar-->
             <!--android:id="@+id/toolbar"-->

@@ -33,7 +33,7 @@ import org.oscim.app.graphhopper.AndroidDownloader;
 import org.oscim.app.graphhopper.GHAsyncTask;
 import org.oscim.app.holder.SelectableHeaderHolder;
 import org.oscim.app.holder.SelectableItemHolder;
-import org.oscim.app.holder.TreeNodeContent;
+import org.oscim.app.holder.AreaFileInfo;
 
 import java.io.File;
 import java.util.Collection;
@@ -160,6 +160,9 @@ public class MapDownloader extends DownloadReceiverActivity implements AdapterVi
                     if ((file = getCheckFileType(subs, ".map")) != null) {
                         res.add(rootPath+filepath + file);
                         fileSizeHMap.put((filepath+file).toLowerCase(), getFileSizeFromHtml(subs));
+                    } else if ((file = getCheckFileType(subs, ".poi")) != null) {
+                        res.add(rootPath+filepath + file);
+                        fileSizeHMap.put((filepath+file).toLowerCase(), getFileSizeFromHtml(subs));
                     } else if ((file = getCheckFileType(subs, ".ghz")) != null) {
                         res.add(rootPath+filepath + file);
                         fileSizeHMap.put((filepath+file).toLowerCase(), getFileSizeFromHtml(subs));
@@ -250,7 +253,7 @@ public class MapDownloader extends DownloadReceiverActivity implements AdapterVi
 
                 DownloadListener downloadListener = new DownloadListener() {
                     @Override
-                    public void onSelect(TreeNodeContent tnc, String selectedFile) {
+                    public void onSelect(AreaFileInfo tnc, String selectedFile) {
                         if (selectedFile == null
                                 || new File(mMapsFolder, tnc.getPath()).exists()
 /*                                || new File(mMapsFolder, selectedArea + "/").exists()*/) {
@@ -294,7 +297,7 @@ public class MapDownloader extends DownloadReceiverActivity implements AdapterVi
                 TreeNode parent = root;
                 for (int j = 0; j < i; j++) {
                     for (TreeNode t : parent.getChildren()) {
-                        if (arr[j].equals(((TreeNodeContent) t.getValue()).getFullName())) {
+                        if (arr[j].equals(((AreaFileInfo) t.getValue()).getFullName())) {
                             parent = t;
                             break;
                         }
@@ -302,17 +305,19 @@ public class MapDownloader extends DownloadReceiverActivity implements AdapterVi
                 }
                 if (!TreeNodeListContainsTitle(parent.getChildren(), arr[i])) {
                     //Set icon if is map
-                    TreeNodeContent tnc;
+                    AreaFileInfo tnc;
                     String tmp = arr[i];
                     for (int j = i - 1; j >= 0; j--) {
                         tmp = arr[j] + '/' + tmp;
                     }
                     if (tmp.endsWith(".map")) {
-                        tnc = new TreeNodeContent(R.string.ic_map, tmp);
+                        tnc = new AreaFileInfo(R.string.ic_map, tmp);
                     } else if (tmp.endsWith(".ghz")) {
-                        tnc = new TreeNodeContent(R.string.ic_archive, tmp);
-                    }else {
-                        tnc = new TreeNodeContent(tmp);
+                        tnc = new AreaFileInfo(R.string.ic_archive, tmp);
+                    } else if (tmp.endsWith(".poi")) {
+                        tnc = new AreaFileInfo(R.string.ic_star, tmp);
+                    } else {
+                        tnc = new AreaFileInfo(tmp);
                     }
                     tnc.setSize((String) fileSizeHMap.get(tnc.getPath().toLowerCase()));
                     parent.addChild(new TreeNode(tnc));
@@ -338,7 +343,7 @@ public class MapDownloader extends DownloadReceiverActivity implements AdapterVi
             public void onClick(View v) {
                 //Loop each selected item and revert it from nameToPath map to download-path. Then trigger myListener to Download files
                 for (TreeNode t : tView.getSelected()) {
-                    TreeNodeContent o = ((TreeNodeContent) t.getValue());
+                    AreaFileInfo o = ((AreaFileInfo) t.getValue());
                     String area = o.getPath();
                     if (area != null && area.length() > 0 && !nameToPath.isEmpty()) {
                         myListener.onSelect(o, nameToPath.get(area.toLowerCase()));
@@ -407,7 +412,7 @@ public class MapDownloader extends DownloadReceiverActivity implements AdapterVi
     public boolean TreeNodeListContainsTitle(final List<TreeNode> list, final String title) {
         boolean isPresent = false;
         for (TreeNode t : list) {
-            if (title.equals(((TreeNodeContent) t.getValue()).getFullName())) {
+            if (title.equals(((AreaFileInfo) t.getValue()).getFullName())) {
                 isPresent = true;
                 break;
             }
@@ -429,11 +434,11 @@ public class MapDownloader extends DownloadReceiverActivity implements AdapterVi
         }
     }
 
-    void downloadingFiles(TreeNodeContent tnc) {
+    void downloadingFiles(AreaFileInfo tnc) {
         String downloadPath;
         if (isGraphhopperFolderStyle) {
             String r = tnc.getExtension();
-            if (tnc.getExtension().equals(".map")) {
+            if (tnc.getExtension().equals(".map") || tnc.getExtension().equals(".poi")) {
                 String ghpath = tnc.getPath().substring(0, tnc.getPath().length() - tnc.getExtension().length()).replace("/", "_");
                 ghpath = ghpath + "-gh/" + ghpath + tnc.getExtension();
                 downloadPath = ghpath;
@@ -475,7 +480,7 @@ public class MapDownloader extends DownloadReceiverActivity implements AdapterVi
     }
 
     public interface DownloadListener {
-        void onSelect(TreeNodeContent tnc, String selectedFile);
+        void onSelect(AreaFileInfo tnc, String selectedFile);
     }
 
     @Override

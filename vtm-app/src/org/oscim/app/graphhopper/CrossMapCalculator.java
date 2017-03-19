@@ -241,7 +241,7 @@ public class CrossMapCalculator {
                 filePath = file1.getAbsolutePath();
             } else {
                 isSecFile = true;
-                filePath = file1.getAbsolutePath();
+                filePath = file2.getAbsolutePath();
             }
             try {
                 FileInputStream fileInputStream = new FileInputStream(filePath);

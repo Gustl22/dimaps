@@ -1,19 +1,20 @@
 apply plugin: 'com.android.application'
 
 dependencies {
-//    compile project(':vtm-android')
-//    compile project(':vtm-themes')
-//    compile project(':vtm-extras')
+    //    compile project(':vtm-android')
+    //    compile project(':vtm-themes')
+    //    compile project(':vtm-extras')
     //Mapsforge vtm online
     compile 'org.mapsforge:vtm-android:0.+'
     compile 'org.mapsforge:vtm-themes:0.+'
     compile 'org.mapsforge:vtm-extras:0.+'
-
+    compile 'org.mapsforge:mapsforge-poi:0.8.0-rc1'
+    compile 'org.mapsforge:mapsforge-poi-android:0.8.0-rc1'
     //causes problems with staticlogger
-//    compile ('com.noveogroup.android:android-logger:1.+'){
-//        exclude module: 'support-v4'
-//    }
-    compile ('com.squareup.okhttp3:okhttp:3.+'){
+    //    compile ('com.noveogroup.android:android-logger:1.+'){
+    //        exclude module: 'support-v4'
+    //    }
+    compile('com.squareup.okhttp3:okhttp:3.+') {
         exclude module: 'support-v4'
     }
     compile 'com.android.support:support-v4:25.+'
@@ -54,6 +55,10 @@ android {
             res.srcDirs = ['res']
             assets.srcDirs = ['assets']
             file("${rootDir}/vtm-android/natives").eachDir() { dir ->
+                jniLibs.srcDirs += "${dir.path}/lib"
+            }
+            //Spatialite database for POI search
+            file("${rootDir}/spatialite-android/natives").eachDir() { dir ->
                 jniLibs.srcDirs += "${dir.path}/lib"
             }
         }

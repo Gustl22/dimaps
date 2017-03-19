@@ -15,7 +15,7 @@ import org.oscim.app.R;
 /**
  * Created by Bogdan Melnychuk on 2/15/15.
  */
-public class SelectableHeaderHolder extends TreeNode.BaseNodeViewHolder<TreeNodeContent> {
+public class SelectableHeaderHolder extends TreeNode.BaseNodeViewHolder<AreaFileInfo> {
     private TextView tvValue;
     private PrintView arrowView;
     private CheckBox nodeSelector;
@@ -25,7 +25,7 @@ public class SelectableHeaderHolder extends TreeNode.BaseNodeViewHolder<TreeNode
     }
 
     @Override
-    public View createNodeView(final TreeNode node, TreeNodeContent value) {
+    public View createNodeView(final TreeNode node, AreaFileInfo value) {
         final LayoutInflater inflater = LayoutInflater.from(context);
         final View view = inflater.inflate(R.layout.layout_selectable_header, null, false);
 

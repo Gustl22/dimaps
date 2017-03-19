@@ -64,6 +64,8 @@ public class FileUtils {
     }
 
     public static ArrayList<File> walkExtension(File root, String extension) {
+        assert root != null;
+        assert extension != null;
         ArrayList<File> res = new ArrayList<File>();
         if(!root.exists()) return res;
         File[] list = root.listFiles();
