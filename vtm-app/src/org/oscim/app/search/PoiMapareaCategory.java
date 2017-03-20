@@ -8,7 +8,7 @@ import java.util.Collection;
  * Created by gustl on 18.03.17.
  */
 
-public class PoiAreaCategory implements PoiCategory {
+public class PoiMapareaCategory implements PoiCategory {
 
     @Override
     public Collection<PoiCategory> deepChildren() {
@@ -32,7 +32,7 @@ public class PoiAreaCategory implements PoiCategory {
 
     @Override
     public String getTitle() {
-        return "MapArea";
+        return PoiSearch.CustomPoiCategory.Maparea.name();
     }
 
     @Override

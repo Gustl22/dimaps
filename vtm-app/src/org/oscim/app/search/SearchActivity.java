@@ -1,20 +1,28 @@
 package org.oscim.app.search;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
+
+import com.github.johnkil.print.PrintView;
 
 import org.mapsforge.core.model.Tag;
 import org.mapsforge.poi.storage.PointOfInterest;
 import org.oscim.app.App;
+import org.oscim.app.CustomAnimationUtils;
 import org.oscim.app.R;
 
 import java.io.File;
@@ -34,6 +42,10 @@ public class SearchActivity extends AppCompatActivity {
     PoiSearch mPoiSearch;
     PointOfInterest mSelectedPOI;
     TextView mResult;
+    TextView mAreaSelection;
+    ListView mSearchSuggestions;
+    PrintView mExpandButton;
+    LinearLayout mExpandLine;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,21 +58,25 @@ public class SearchActivity extends AppCompatActivity {
         mStringSuggestions = new ArrayList<>();
         mStringSuggestions.add("No suggestions");
         mResult = (TextView) findViewById(R.id.result);
+        mSearchSuggestions = (ListView) findViewById(R.id.search_suggestions);
+        mExpandLine = (LinearLayout)  findViewById(R.id.expand_line);
+        mExpandButton = (PrintView) findViewById(R.id.result_expand_btn);
+        mExpandLine.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mSearchSuggestions.getVisibility() == View.GONE){
+                    expandSuggestions();
+                } else {
+                    collapseSuggestions();
+                }
+            }
+        });
+        mAreaSelection = (TextView) findViewById(R.id.poi_area_selection);
         mSearchBar = (AutoCompleteTextView) findViewById(R.id.search_bar);
         mSearchBar.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                mPoiSuggestions = getSuggestions(v.getText().toString());
-                mStringSuggestions = getStringListFromPoiList(mPoiSuggestions);
-
-                mAutoCompleteSearchBarAdapter.clear();
-                for (String s : mStringSuggestions) {
-                    mAutoCompleteSearchBarAdapter.add(s);
-                }
-                //Force the adapter to filter itself, necessary to show new data.
-                //Filter based on the current text because api call is asynchronous.
-                mAutoCompleteSearchBarAdapter.getFilter().filter(mSearchBar.getText(), null);
-//                mAutoCompleteSearchBarAdapter.notifyDataSetChanged();
+                getSuggestions(v.getText().toString());
                 return true;
             }
         });
@@ -74,14 +90,15 @@ public class SearchActivity extends AppCompatActivity {
         //Set autocompletion-List
         mAutoCompleteSearchBarAdapter = new ArrayAdapter<String>
                 (this, android.R.layout.simple_dropdown_item_1line, mStringSuggestions);
-        mSearchBar.setAdapter(mAutoCompleteSearchBarAdapter);
+        mSearchSuggestions.setAdapter(mAutoCompleteSearchBarAdapter);
         //Onclick suggested item
-        mSearchBar.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mSearchSuggestions.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
                 mSelectedPOI = mPoiSuggestions.get((int) arg3);
                 setResultText(mSelectedPOI);
                 mCurrentPoiFile = mPoiSearch.getPoiFile();
+                collapseSuggestions();
             }
         });
 
@@ -94,11 +111,15 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void setResultText(PointOfInterest mSelectedPOI) {
-        String resText = mSelectedPOI.getName() + " "+ mSelectedPOI.getCategory().getTitle();
+        String resText = "<b>"+ mSelectedPOI.getCategory().getTitle() +": </b>" + mSelectedPOI.getName();
         for(Tag t:mSelectedPOI.getTags()){
             resText += "<br/>"+t.key+": "+ t.value;
         }
-        mResult.setText(resText);
+        if(mSelectedPOI.getCategory().getTitle().equals(PoiSearch.CustomPoiCategory.Maparea.name())){
+            mAreaSelection.setText(Html.fromHtml(resText));
+        } else {
+            mResult.setText(Html.fromHtml(resText));
+        }
     }
 
     /**
@@ -106,15 +127,70 @@ public class SearchActivity extends AppCompatActivity {
      * @param text input-filter for poi-text
      * @return List of suggestions
      */
-    private List<PointOfInterest> getSuggestions(String text){
-        ArrayList<PointOfInterest> list = new ArrayList<>(mPoiSearch.getPoiByAll(text));
-            return list;
+    ProgressDialog progDailog;
+    private void getSuggestions(String text){
+        final Context context = this;
+        new AsyncTask<String, Void, ArrayList<PointOfInterest>>(){
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                progDailog = new ProgressDialog(context);
+                progDailog.setMessage("Loading...");
+                progDailog.setIndeterminate(false);
+                progDailog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                progDailog.setCancelable(false);
+                progDailog.show();
+            }
+
+            @Override
+            protected ArrayList<PointOfInterest> doInBackground(String... params) {
+                return new ArrayList<>(mPoiSearch.getPoiByAll(params[0]));
+            }
+
+            @Override
+            protected void onPostExecute(ArrayList<PointOfInterest> pointOfInterests) {
+                progDailog.dismiss();
+                super.onPostExecute(pointOfInterests);
+                mPoiSuggestions = pointOfInterests;
+                mStringSuggestions = getStringListFromPoiList(mPoiSuggestions);
+
+                mAutoCompleteSearchBarAdapter.clear();
+                mAutoCompleteSearchBarAdapter.addAll(mStringSuggestions);
+                mAutoCompleteSearchBarAdapter.notifyDataSetChanged();
+                expandSuggestions();
+//                mAutoCompleteSearchBarAdapter.notifyDataSetChanged();
+            }
+        }.execute(text);
+    }
+
+    public void collapseSuggestions(){
+        CustomAnimationUtils.collapse(mSearchSuggestions);
+        mExpandButton.setIconText(getString(R.string.ic_keyboard_arrow_right));
+    }
+
+    public void expandSuggestions(){
+        CustomAnimationUtils.expand(mSearchSuggestions);
+        mExpandButton.setIconText(getString(R.string.ic_keyboard_arrow_down));
     }
 
     private List<String> getStringListFromPoiList(List<PointOfInterest> poiList){
         List<String> arr = new ArrayList<>();
         for(PointOfInterest poi: poiList){
-            arr.add(poi.getName());
+            String builder = poi.getName();
+            List<Tag> tags = poi.getTags();
+            for(Tag t : tags){
+                switch(t.key){
+                    case "addr:city":
+                        builder += ", " + t.value;
+                        break;
+                    case "addr:street":
+                        builder += ", " + t.value;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            arr.add(builder);
         }
         return arr;
     }
@@ -137,6 +213,7 @@ public class SearchActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy(){
+        progDailog.dismiss();
         savePreferences();
         super.onDestroy();
     }

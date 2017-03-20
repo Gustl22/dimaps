@@ -47,8 +47,6 @@ import static org.oscim.app.FileUtils.walkExtension;
 public class PoiSearch {
     private File mPOI_File;
     private PointOfInterest poiArea;
-    private static final CustomPoiCategory CUSTOM_POI_CATEGORY = CustomPoiCategory.Restaurants;
-
 
     public PoiSearch(File poiFile){
         setPoiFile(poiFile);
@@ -94,7 +92,7 @@ public class PoiSearch {
         Collection<PointOfInterest> collection = new HashSet<PointOfInterest>();
         List<File> files;
         text = text.toLowerCase();
-        String[] requests = text.split(",");
+        String[] requests = text.split("-|\\.|\\s+|,");
 //        for(int i=0; i<requests.length; i++){
 //            requests[i] = requests[i].trim();
 //        }
@@ -108,6 +106,27 @@ public class PoiSearch {
             return collection;
         } else {
 
+            outer:
+            for(CustomPoiCategory c : CustomPoiCategory.values()){
+                String cat = c.name().substring(0,c.name().length()-1).toLowerCase();
+                for(int i=0; i<requests.length; i++){
+                    if(requests[i].contains(cat)){
+                        String builder = "";
+                        for(int j=0; j<requests.length; j++){
+                            if(i==j) continue;
+                            builder += requests[j] + " ";
+                        }
+                        Collection<PointOfInterest> res = getPoiByNameAndCategory(builder.trim(), c);
+                        if(res != null && !res.isEmpty()){
+                            collection.addAll(res);
+                            return collection;
+                        }
+                    }
+                }
+            }
+            if(collection.isEmpty()){
+                collection.addAll(getPoiByNameAndCategory(text, CustomPoiCategory.Root));
+            }
         }
         return collection;
     }
@@ -145,7 +164,7 @@ public class PoiSearch {
         LatLong center = bb.getCenterPoint();
         poi = new PointOfInterest(-(poiId+1), center.getLatitude(), center.getLongitude(),
                 areaInfo.getContinent()+ ", " + areaInfo.getCountry() + ", "
-                        + areaInfo.getRegion(), new PoiAreaCategory());
+                        + areaInfo.getRegion(), (new PoiMapareaCategory()));
         persManager.close();
         return poi;
     }
@@ -178,9 +197,10 @@ public class PoiSearch {
             PoiCategoryFilter categoryFilter = new ExactMatchPoiCategoryFilter();
             categoryFilter.addCategory(categoryManager.getPoiCategoryByTitle(category.name()));
             persManager.getPoiFileInfo();
-            return persManager.findInRect(bb, categoryFilter, name, Integer.MAX_VALUE);
+            return persManager.findInRect(bb, categoryFilter, "%name="+name+"%", Integer.MAX_VALUE);
         } catch (Throwable t) {
-            Log.e(t.getMessage(), t.getCause().getMessage());
+            if(t != null && t.getCause() != null)
+                Log.e(t.getMessage(), t.getCause().getMessage());
         } finally {
             if (persManager != null) {
                 persManager.close();
@@ -197,10 +217,16 @@ public class PoiSearch {
         return poiArea;
     }
 
+    //Make shure has a natural name;
     public enum CustomPoiCategory{
         Restaurants,
-        Streets,
-        All
+        Shops,
+        Fastfood,
+        Bars,
+        Electronics,
+        Clothes,
+        Maparea,
+        Root
     }
 
     /**

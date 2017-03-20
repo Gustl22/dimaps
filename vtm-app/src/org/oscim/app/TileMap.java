@@ -49,7 +49,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import org.oscim.android.MapView;
-import org.oscim.app.download.MapDownloader;
+import org.oscim.app.download.MapDownloadActivity;
 import org.oscim.app.filepicker.Utils;
 import org.oscim.app.graphhopper.CrossMapCalculatorListener;
 import org.oscim.app.location.Compass;
@@ -273,7 +273,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
 //                position = 4;
                 break;
             case R.id.maps_download:
-                startActivity(new Intent(this, MapDownloader.class));
+                startActivity(new Intent(this, MapDownloadActivity.class));
                 break;
             case R.id.settings:
 //                mTitle = getString(R.string.title_settings);

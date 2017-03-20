@@ -50,7 +50,7 @@ import static org.oscim.app.ConnectionHandler.isOnline;
  * Created by Gustl on 06.03.2017.
  */
 
-public class MapDownloader extends DownloadReceiverActivity implements AdapterView.OnItemSelectedListener {
+public class MapDownloadActivity extends DownloadReceiverActivity implements AdapterView.OnItemSelectedListener {
 
     //Inidcates the downloaded folder structure in your application files
     private final boolean isGraphhopperFolderStyle = true;
@@ -335,7 +335,6 @@ public class MapDownloader extends DownloadReceiverActivity implements AdapterVi
 
         initSelectableTreeView(listViewWrapper, tView, this, root);
         map_list.removeAllViews();
-        ;
         map_list.addView(tView.getView());
 
         downloadButton.setOnClickListener(new View.OnClickListener() {
