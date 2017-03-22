@@ -10,6 +10,7 @@ import android.text.Html;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -77,6 +78,11 @@ public class SearchActivity extends AppCompatActivity {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 getSuggestions(v.getText().toString());
+                View view = getCurrentFocus();
+                if (view != null) {
+                    InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                }
                 return true;
             }
         });
@@ -95,10 +101,12 @@ public class SearchActivity extends AppCompatActivity {
         mSearchSuggestions.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-                mSelectedPOI = mPoiSuggestions.get((int) arg3);
-                setResultText(mSelectedPOI);
-                mCurrentPoiFile = mPoiSearch.getPoiFile();
-                collapseSuggestions();
+                if(mPoiSuggestions != null && !mPoiSuggestions.isEmpty()){
+                    mSelectedPOI = mPoiSuggestions.get((int) arg3);
+                    setResultText(mSelectedPOI);
+                    mCurrentPoiFile = mPoiSearch.getPoiFile();
+                    collapseSuggestions();
+                }
             }
         });
 

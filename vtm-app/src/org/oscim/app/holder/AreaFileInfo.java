@@ -13,7 +13,7 @@ public class AreaFileInfo {
     private String region;
 
     public AreaFileInfo(String path) {
-        this(!path.contains(".") ? R.string.ic_folder :  R.string.ic_drive_file, path);
+        this(!path.contains(".") ? R.string.ic_folder :  R.string.ic_insert_drive_file, path);
     }
 
     public AreaFileInfo(int icon, String path) {

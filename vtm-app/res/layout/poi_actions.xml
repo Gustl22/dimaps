@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.github.johnkil.print.PrintView
+            android:layout_column="0"
+            android:layout_columnWeight="1"
+            android:id="@+id/icon"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:iconText="@string/ic_access_alarms"
+            app:iconColor="@color/colorAccent"
+            app:iconFont="fonts/material-icon-font.ttf"
+            app:iconSize="40dp" />
+        <com.github.johnkil.print.PrintView
+            android:layout_column="1"
+            android:layout_columnWeight="1"
+            android:id="@+id/icon2"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:iconText="@string/ic_email"
+            app:iconColor="@color/colorAccent"
+            app:iconFont="fonts/material-icon-font.ttf"
+            app:iconSize="40dp" />
+        <com.github.johnkil.print.PrintView
+            android:id="@+id/icon3"
+            android:layout_column="2"
+            android:layout_columnWeight="1"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:iconText="@string/ic_email"
+            app:iconColor="@color/colorAccent"
+            app:iconFont="fonts/material-icon-font.ttf"
+            app:iconSize="40dp" />
+        <com.github.johnkil.print.PrintView
+            android:id="@+id/icon4"
+            android:layout_column="3"
+            android:layout_columnWeight="1"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:iconText="@string/ic_email"
+            app:iconColor="@color/colorAccent"
+            app:iconFont="fonts/material-icon-font.ttf"
+            app:iconSize="40dp" />
+    </GridLayout>
+</LinearLayout>

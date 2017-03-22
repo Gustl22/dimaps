@@ -315,7 +315,7 @@ public class MapDownloadActivity extends DownloadReceiverActivity implements Ada
                     } else if (tmp.endsWith(".ghz")) {
                         tnc = new AreaFileInfo(R.string.ic_archive, tmp);
                     } else if (tmp.endsWith(".poi")) {
-                        tnc = new AreaFileInfo(R.string.ic_star, tmp);
+                        tnc = new AreaFileInfo(R.string.ic_local_activity, tmp);
                     } else {
                         tnc = new AreaFileInfo(tmp);
                     }

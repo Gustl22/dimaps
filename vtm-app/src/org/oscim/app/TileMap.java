@@ -30,6 +30,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
@@ -185,6 +186,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
                         ACCESS_FINE_LOCATION);
             }
         }
+        delayBlankMode();
     }
 
     private void buildAlertMessageNoGps() {
@@ -548,11 +550,14 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
      *
      * @param text the text message to display
      */
+    static Toast toast;
     public void showToastOnUiThread(final String text) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast toast = Toast.makeText(TileMap.this, text, Toast.LENGTH_SHORT);
+                if(toast != null)
+                    toast.cancel();
+                toast = Toast.makeText(TileMap.this, text, Toast.LENGTH_SHORT);
                 toast.show();
             }
         });
@@ -673,20 +678,41 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
     @Override
     public boolean singleTapUpHelper(GeoPoint p) {
         if(!isBlankMode){
+            checkBlankMode();
+        } else {
+            uncheckBlankMode();
+        }
+        return true;
+    }
+
+    private void checkBlankMode(){
+        if(!isBlankMode) {
             CustomAnimationUtils.SlideUp(mToolbar, this);
             CustomAnimationUtils.SlideRight(mLocationFab, this);
             CustomAnimationUtils.SlideRight(mCompassFab, this);
             isBlankMode = true;
-        } else {
-//            mToolbar.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void uncheckBlankMode(){
+        if(isBlankMode) {
             CustomAnimationUtils.SlideUpBack(mToolbar, this);
             CustomAnimationUtils.SlideRightBack(mLocationFab, this);
             CustomAnimationUtils.SlideRightBack(mCompassFab, this);
             isBlankMode = false;
-            //mToolbar.clearAnimation();
+            delayBlankMode();
         }
+    }
 
-        return true;
+    final Handler handler = new Handler();
+    private void delayBlankMode(){
+        handler.removeCallbacksAndMessages(null);
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                checkBlankMode();
+            }
+        }, 10000);
     }
 
     @Override

@@ -84,7 +84,7 @@ public class RouteSearch implements GHPointListener {
 
     private UpdateRouteTask mRouteTask;
 
-    ArrayList<File> ghFiles;
+    private static ArrayList<File> ghFiles;
 
     //private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
@@ -119,6 +119,14 @@ public class RouteSearch implements GHPointListener {
 
         ghFiles = FileUtils.walkExtension(MapLayers.MAP_FOLDER, "-gh");
         ghFiles.add(MapLayers.MAP_FOLDER); //Add default folder for loading unzipped GH-Files
+    }
+
+    public static ArrayList<File> getGraphHopperFiles(){
+        return ghFiles;
+    }
+
+    public void setGraphHopperFiles(ArrayList<File> ghFiles){
+        this.ghFiles = ghFiles;
     }
 
     /**

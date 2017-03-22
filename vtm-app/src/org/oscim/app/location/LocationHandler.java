@@ -19,19 +19,31 @@ package org.oscim.app.location;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.os.AsyncTaskCompat;
+import android.support.v4.view.animation.LinearOutSlowInInterpolator;
+import android.view.animation.LinearInterpolator;
 
+import com.graphhopper.GraphHopper;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.shapes.GHPoint;
 import com.vividsolutions.jts.math.Vector2D;
 
 import org.oscim.app.App;
 import org.oscim.app.R;
+import org.oscim.app.RouteSearch;
 import org.oscim.app.TileMap;
+import org.oscim.app.graphhopper.GHPointArea;
+import org.oscim.app.graphhopper.GHPointAreaRoute;
 import org.oscim.core.MapPosition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +63,8 @@ public class LocationHandler implements LocationListener {
 
     private final static int DIALOG_LOCATION_PROVIDER_DISABLED = 2;
     private final static int SHOW_LOCATION_ZOOM = 14;
+    private final static int GPS_MINIMUM_DISTANCE = 10; //Standard 10
+    private final static int GPS_MINIMUM_TIME_ELAPSE = 5000; //Standard 10000
 
     private final LocationManager mLocationManager;
     private final LocationLayerImpl mLocationLayer;
@@ -119,12 +133,14 @@ public class LocationHandler implements LocationListener {
             return false;
         }
 
-        mLocationManager.requestLocationUpdates(bestProvider, 5000, 5, this);
+        mLocationManager.requestLocationUpdates(bestProvider, GPS_MINIMUM_TIME_ELAPSE,
+                GPS_MINIMUM_DISTANCE, this);
 
         Location location = gotoLastKnownPosition();
         if (location == null)
             return false;
-
+        initGraphHopperLocation(location.getLatitude(), location.getLongitude());
+        //Handle Showing position
         mLocationLayer.setEnabled(true);
         mLocationLayer.setPosition(location.getLatitude(),
                 location.getLongitude(),
@@ -181,17 +197,22 @@ public class LocationHandler implements LocationListener {
         if (mMapPosition.zoomLevel < SHOW_LOCATION_ZOOM)
             mMapPosition.setZoomLevel(SHOW_LOCATION_ZOOM);
 
-        //Set Location to bottom for navigation
-        double radian = Math.toRadians(location.getBearing());
-        double y = Math.sin(radian);
-        double x = Math.cos(radian);
-        Vector2D vector = new Vector2D(x, y);
-        vector = vector.divide(vector.length()); //Unit vector
-        double distance = App.map.getMapPosition().getTilt()/100;
-        vector = vector.multiply(0.001*distance); //Distance Value (dependent on the map tilt)
+        double lat = location.getLatitude();
+        double lon = location.getLongitude();
+
+//        //Set Location to bottom for navigation
+//        double radian = Math.toRadians(location.getBearing());
+//        double y = Math.sin(radian);
+//        double x = Math.cos(radian);
+//        Vector2D vector = new Vector2D(x, y);
+//        vector = vector.divide(vector.length()); //Unit vector
+//        double distance = App.map.getMapPosition().getTilt() / 100;
+//        vector = vector.multiply(0.001 * distance); //Distance Value (dependent on the map tilt)
+//        lat += vector.getX();
+//        lon = vector.getY();
 
         //Set Map position
-        mMapPosition.setPosition(location.getLatitude()+vector.getX(), location.getLongitude()+vector.getY());
+        mMapPosition.setPosition(lat, lon);
         App.map.setMapPosition(mMapPosition);
 
         return location;
@@ -200,10 +221,8 @@ public class LocationHandler implements LocationListener {
     /***
      * LocationListener
      ***/
-    ValueAnimator anim;
-    Location preLocation;
 
-    public void onVirtualLocationChanged(Location location){
+    public void onVirtualLocationChanged(Location location) {
         //Inform Compass about big location changes
         for (LocationListener hl : listeners)
             hl.onLocationChanged(location);
@@ -227,33 +246,86 @@ public class LocationHandler implements LocationListener {
         mLocationLayer.setPosition(lat, lon, location.getAccuracy());
     }
 
-    public Location calculateNextLocation(Location preLocation, Location currentLocation){
+    private void initGraphHopperLocation(double lat, double lon){
+        //Load Graphhopper asynchroniously, if is null
+        AsyncTask task = new AsyncTask<Object, Void, Void>() {
+            @Override
+            protected Void doInBackground(Object[] params) {
+                try {
+                    GHPointArea area = new GHPointArea(
+                            new GHPoint((double) params[0], (double) params[1])
+                            , RouteSearch.getGraphHopperFiles());
+                    if (area.getGraphHopper() == null) {
+                        synchronized (area.virtualObject) {
+                            try {
+                                area.virtualObject.wait();
+                                App.activity.showToastOnUiThread("Way snap initialized");
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    GHPointAreaRoute.getInstance().setPrimaryGraphHopper(area.getGraphHopper());
+                } catch (Exception e) {
+                    App.activity.showToastOnUiThread(e.getMessage());
+                }
+                return null;
+            }
+        };
+        AsyncTaskCompat.executeParallel(task, lat, lon);
+        App.activity.showToastOnUiThread("Way animation in progress");
+    }
+
+    public Location calculateNextLocation(Location preLocation, Location currentLocation) {
+        //TODO Add File list for better results
+        double curLat = currentLocation.getLatitude();
+        double curLon = currentLocation.getLongitude();
+        GraphHopper gh = GHPointAreaRoute.getInstance().getPrimaryGraphHopper();
+        if (gh == null) {
+            return null;
+        }
+
         Location location = new Location(currentLocation);
-        double diffLat = currentLocation.getLatitude()-preLocation.getLatitude();
-        double diffLon = currentLocation.getLongitude()-preLocation.getLongitude();
-        location.setLatitude(location.getLatitude()+diffLat);
-        location.setLongitude(location.getLongitude()+diffLon);
+        double diffLat = curLat - preLocation.getLatitude();
+        double diffLon = curLon - preLocation.getLongitude();
+        double abs = new Vector2D(diffLat, diffLon).length();
+        //App.activity.showToastOnUiThread("GraphHopper found");
+        int node = gh.getLocationIndex().findClosest(curLat + diffLat, curLon + diffLon,
+                EdgeFilter.ALL_EDGES).getClosestNode();
+        if (node < 1) {
+            return null;
+        }
+        NodeAccess na = gh.getGraphHopperStorage().getNodeAccess();
+        diffLat = na.getLatitude(node) - curLat;
+        diffLon = na.getLongitude(node) - curLon;
+        Vector2D vec = new Vector2D(diffLat, diffLon);
+        vec = vec.divide(vec.length()).multiply(abs);
+
+        location.setLatitude(curLat + vec.getX());
+        location.setLongitude(curLon + vec.getY());
         return location;
     }
 
-    public Location calculateProgressLocation(Location startLocation, Location endLocation, float progress){
+    public Location calculateProgressLocation(Location startLocation, Location endLocation, float progress) {
         Location location = new Location(startLocation);
-        double diffLat = endLocation.getLatitude()-startLocation.getLatitude();
-        double diffLon = endLocation.getLongitude()-startLocation.getLongitude();
-        float diffBearing = endLocation.getBearing()-startLocation.getBearing();
-        long diffTime = endLocation.getTime()-startLocation.getTime();
-        float diffSpeed = endLocation.getSpeed()-startLocation.getSpeed();
-        if(diffLat != 0) location.setLatitude(location.getLatitude() + diffLat*progress);
-        if(diffLon != 0)location.setLongitude(location.getLongitude() + diffLon*progress);
-        if(diffBearing != 0f)location.setBearing(location.getBearing() + diffBearing*progress);
-        if(diffTime != 0) location.setTime(location.getTime() + (long)(diffTime*progress));
-        if(diffSpeed != 0f)location.setSpeed(location.getSpeed() + diffSpeed*progress);
+        double diffLat = endLocation.getLatitude() - startLocation.getLatitude();
+        double diffLon = endLocation.getLongitude() - startLocation.getLongitude();
+        float diffBearing = endLocation.getBearing() - startLocation.getBearing();
+        long diffTime = endLocation.getTime() - startLocation.getTime();
+        float diffSpeed = endLocation.getSpeed() - startLocation.getSpeed();
+        if (diffLat != 0) location.setLatitude(location.getLatitude() + diffLat * progress);
+        if (diffLon != 0) location.setLongitude(location.getLongitude() + diffLon * progress);
+        if (diffBearing != 0f) location.setBearing(location.getBearing() + diffBearing * progress);
+        if (diffTime != 0) location.setTime(location.getTime() + (long) (diffTime * progress));
+        if (diffSpeed != 0f) location.setSpeed(location.getSpeed() + diffSpeed * progress);
         return location;
     }
 
+    ValueAnimator anim;
+    Location preLocation;
     @Override
     public void onLocationChanged(final Location location) {
-        if(preLocation == null){
+        if (preLocation == null) {
             onVirtualLocationChanged(location);
             preLocation = location;
             return;
@@ -261,25 +333,27 @@ public class LocationHandler implements LocationListener {
         //Animate big rotation steps
         final Location startLocation = location;
         final Location endLocation = calculateNextLocation(preLocation, location);
-        anim = ValueAnimator.ofFloat(0f, 1f);
-        anim.setDuration(5000);
-        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float progress = (float) animation.getAnimatedValue();
-                Location l = calculateProgressLocation(startLocation, endLocation, progress);
-                onVirtualLocationChanged(l);
-            }
-        });
-        anim.addListener(new AnimatorListenerAdapter()
-        {
-            @Override
-            public void onAnimationEnd(Animator animation)
-            {
+        if (endLocation != null) {
+            if(anim != null) anim.end();
+            anim = ValueAnimator.ofFloat(0f, 1f);
+            anim.setDuration(GPS_MINIMUM_TIME_ELAPSE);
+            anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    float progress = (float) animation.getAnimatedValue();
+                    Location l = calculateProgressLocation(startLocation, endLocation, progress);
+                    onVirtualLocationChanged(l);
+                }
+            });
+            anim.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
 
-            }
-        });
-        anim.start();
+                }
+            });
+            anim.setInterpolator(new LinearInterpolator());
+            anim.start();
+        }
 
         preLocation = location;
     }
@@ -320,7 +394,8 @@ public class LocationHandler implements LocationListener {
             Criteria criteria = new Criteria();
             criteria.setAccuracy(Criteria.ACCURACY_FINE);
             String bestProvider = mLocationManager.getBestProvider(criteria, true);
-            mLocationManager.requestLocationUpdates(bestProvider, 5000, 5, this);
+            mLocationManager.requestLocationUpdates(bestProvider, GPS_MINIMUM_TIME_ELAPSE,
+                    GPS_MINIMUM_DISTANCE, this);
         }
     }
 

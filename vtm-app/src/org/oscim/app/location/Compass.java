@@ -30,7 +30,6 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import org.oscim.app.App;
 import org.oscim.app.R;
@@ -331,13 +330,19 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
             if (mMode == Mode.C3D){
                 // float tilt = (float) Math.toDegrees(mRotationV[1]);
                 // float tilt = (float) Math.toDegrees(mPitchAxisRadians);
-                float tilt = mRotationV[1];
+                float tilt;
+                if(App.activity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+                    tilt = mRotationV[2]>0?-mRotationV[2]:mRotationV[2];
+                } else {
+                    tilt = mRotationV[1];
+                }
                 mCurTilt = mCurTilt + 0.2f * (tilt - mCurTilt);
 
 //                Log.d("MinTilt", ""+ mMap.viewport().getMinTilt());
 //                Log.d("MaxTilt", ""+ mMap.viewport().getMaxTilt());
                 redraw |= mMap.viewport().setTilt(-mCurTilt * 1.5f);
             }
+
             mCurRotation = rotation;
             if (redraw)
                 mMap.updateMap(true);
@@ -478,10 +483,10 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
             mIsRotationByLocation = true;
             mRotationV[0] = location.getBearing();
             onRotationChanged();
-            Toast.makeText(App.activity, "Bearing:"+location.getBearing(), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(App.activity, "Bearing:"+location.getBearing(), Toast.LENGTH_SHORT).show();
         } else {
             mIsRotationByLocation = false;
-            Toast.makeText(App.activity, "No speed", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(App.activity, "No speed", Toast.LENGTH_SHORT).show();
         }
         mMap.updateMap(true);
     }
