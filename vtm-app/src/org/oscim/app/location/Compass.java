@@ -16,17 +16,21 @@
  */
 package org.oscim.app.location;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.support.design.widget.FloatingActionButton;
+import android.location.Location;
+import android.location.LocationListener;
+import android.os.Bundle;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import org.oscim.app.App;
 import org.oscim.app.R;
@@ -36,9 +40,11 @@ import org.oscim.layers.Layer;
 import org.oscim.map.Map;
 import org.oscim.renderer.LocationRenderer;
 
+import java.util.Calendar;
+
 @SuppressWarnings("deprecation")
 public class Compass extends Layer implements SensorEventListener, Map.UpdateListener,
-        LocationRenderer.Callback {
+        LocationRenderer.Callback, LocationListener {
 
     // final static Logger log = LoggerFactory.getLogger(Compass.class);
 
@@ -60,7 +66,8 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
     private float mCurRotation;
     private float mCurTilt;
 
-    private boolean mControlOrientation;
+    private boolean mControlOrientation = false;
+    private boolean mIsRotationByLocation = false;
 
     private Mode mMode = Mode.OFF;
     private int mListeners;
@@ -217,6 +224,10 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        //Handle unwanted rotation by user
+        if(mIsRotationByLocation){
+            return;
+        }
 
         if (event.sensor.getType() != Sensor.TYPE_ORIENTATION)
             return;
@@ -241,54 +252,96 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
         // SensorManager.getRotationMatrix(mRotationM, null, mAccelV, mMagnetV);
         // SensorManager.getOrientation(mRotationM, mRotationV);
 
-        // float rotation = (float) Math.toDegrees(mRotationV[0]);
-        float rotation = mRotationV[0];
 
-        // handle(event);
-        // if (!mOrientationOK)
-        // return;
-        // float rotation = (float) Math.toDegrees(mAzimuthRadians);
+        onRotationChanged();
+    }
 
-        float change = rotation - mCurRotation;
-        if (change > 180)
-            change -= 360;
-        else if (change < -180)
-            change += 360;
-
-        // low-pass
-        change *= 0.05;
-
-        rotation = mCurRotation + change;
-
-        if (rotation > 180)
-            rotation -= 360;
-        else if (rotation < -180)
-            rotation += 360;
-
-        // float tilt = (float) Math.toDegrees(mRotationV[1]);
-        // float tilt = (float) Math.toDegrees(mPitchAxisRadians);
-        float tilt = mRotationV[1];
-
-        mCurTilt = mCurTilt + 0.2f * (tilt - mCurTilt);
-
+    ValueAnimator anim;
+    long time;
+    private void onRotationChanged() {
         if (mMode != Mode.OFF) {
-            boolean redraw = false;
+            // float rotation = (float) Math.toDegrees(mRotationV[0]);
+            float rotation = mRotationV[0];
 
-            if (Math.abs(change) > 0.01) {
+            // handle(event);
+            // if (!mOrientationOK)
+            // return;
+            // float rotation = (float) Math.toDegrees(mAzimuthRadians);
+
+            float change = rotation - mCurRotation;
+            if (change > 180)
+                change -= 360;
+            else if (change < -180)
+                change += 360;
+
+            // low-pass (slow down)
+            long currentTime = Calendar.getInstance().getTimeInMillis();
+            //40 Milliseconds is an elapse of 1sec/25frames
+            if((currentTime - time) < 40){
+                change *= 0.3;
+            }
+            time = currentTime;
+
+            rotation = mCurRotation + change;
+
+            if (rotation > 180)
+                rotation -= 360;
+            else if (rotation < -180)
+                rotation += 360;
+
+            boolean redraw = false;
+            if(anim != null){
+                anim.end();
+            }
+            float absChange = Math.abs(change);
+            if (absChange > 0.2) {
                 adjustArrow(mCurRotation, rotation);
                 mMap.viewport().setRotation(-rotation);
                 redraw = true;
+//                if(absChange > 0.4){
+//                    //Animate big rotation steps
+//                    float startRotation = mCurRotation;
+//                    anim = ValueAnimator.ofFloat(startRotation, rotation);
+//                    anim.setDuration(500);
+//                    setTilt(60); //Test purposes
+//                    anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//                        @Override
+//                        public void onAnimationUpdate(ValueAnimator animation) {
+//                            mCurRotation = (float) animation.getAnimatedValue();
+//                            mMap.updateMap(true);
+//                        }
+//                    });
+//                    anim.addListener(new AnimatorListenerAdapter()
+//                    {
+//                        @Override
+//                        public void onAnimationEnd(Animator animation)
+//                        {
+//                            setTilt(50); //Test purposes
+//                        }
+//                    });
+//                    anim.start();
+//                } else {
+//                    mCurRotation = rotation;
+//                }
             }
+//            else {
+//                mCurRotation = rotation;
+//            }
 
-            if (mMode == Mode.C3D)
+            if (mMode == Mode.C3D){
+                // float tilt = (float) Math.toDegrees(mRotationV[1]);
+                // float tilt = (float) Math.toDegrees(mPitchAxisRadians);
+                float tilt = mRotationV[1];
+                mCurTilt = mCurTilt + 0.2f * (tilt - mCurTilt);
+
 //                Log.d("MinTilt", ""+ mMap.viewport().getMinTilt());
 //                Log.d("MaxTilt", ""+ mMap.viewport().getMaxTilt());
                 redraw |= mMap.viewport().setTilt(-mCurTilt * 1.5f);
-
+            }
+            mCurRotation = rotation;
             if (redraw)
                 mMap.updateMap(true);
         }
-        mCurRotation = rotation;
     }
 
     // from http://stackoverflow.com/questions/16317599/android-compass-that-
@@ -416,6 +469,36 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
         // mMagneticFieldAccuracy = accuracy;
         // break;
         // }
+    }
+
+    //Handle set compass if it will be set by locationhandler
+    @Override
+    public void onLocationChanged(Location location) {
+        if(location.hasSpeed() && location.getSpeed() > 1.5){
+            mIsRotationByLocation = true;
+            mRotationV[0] = location.getBearing();
+            onRotationChanged();
+            Toast.makeText(App.activity, "Bearing:"+location.getBearing(), Toast.LENGTH_SHORT).show();
+        } else {
+            mIsRotationByLocation = false;
+            Toast.makeText(App.activity, "No speed", Toast.LENGTH_SHORT).show();
+        }
+        mMap.updateMap(true);
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+        mIsRotationByLocation = false;
     }
 
 }

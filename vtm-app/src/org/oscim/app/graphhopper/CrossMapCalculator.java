@@ -22,9 +22,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 
 import static android.app.ProgressDialog.STYLE_HORIZONTAL;
@@ -34,7 +34,7 @@ public class CrossMapCalculator {
     public CrossMapCalculator(CrossMapCalculatorListener listener){
         addListener(listener);
     }
-    private List<CrossMapCalculatorListener> listeners = new ArrayList<CrossMapCalculatorListener>();
+    private Collection<CrossMapCalculatorListener> listeners = new HashSet<CrossMapCalculatorListener>();
 
     public void addListener(CrossMapCalculatorListener toAdd) {
         listeners.add(toAdd);

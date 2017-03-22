@@ -131,6 +131,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         mMap.layers().add(mCompass);
 
         mLocation = new LocationHandler(this, mCompass);
+        mLocation.addListener(mCompass);
 
         App.poiSearch = new POISearch();
         App.routeSearch = new RouteSearch();

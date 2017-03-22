@@ -42,8 +42,8 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import org.oscim.android.canvas.AndroidGraphics;
 import org.oscim.app.graphhopper.CrossMapCalculator;
-import org.oscim.app.graphhopper.CrossMapCalculatorListener;
 import org.oscim.app.graphhopper.GHPointArea;
+import org.oscim.app.graphhopper.GHPointAreaRoute;
 import org.oscim.app.graphhopper.GHPointListener;
 import org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter;
 import org.oscim.backend.canvas.Bitmap;
@@ -127,15 +127,21 @@ public class RouteSearch implements GHPointListener {
     public void showRoute(GeoPoint p1, GeoPoint p2) {
         clearOverlays();
 
-        mStartPoint = new GHPointArea(convertGeoPointToGHPoint(p1), ghFiles, mStartPoint, this);
         markerStart = putMarkerItem(markerStart, mStartPoint.getGhPoint(), START_INDEX,
                 R.string.departure, R.drawable.ic_place_green_24dp, -1);
+        mStartPoint = updateGHPointArea(mStartPoint, new GHPointArea(convertGeoPointToGHPoint(p1), ghFiles));
+        mDestinationPoint = updateGHPointArea(mDestinationPoint, new GHPointArea(convertGeoPointToGHPoint(p2), ghFiles));
 
-        mDestinationPoint = new GHPointArea(convertGeoPointToGHPoint(p2), ghFiles, mDestinationPoint, this);
         markerDestination = putMarkerItem(markerDestination, mDestinationPoint.getGhPoint(), DEST_INDEX,
                 R.string.destination,
                 R.drawable.ic_place_red_24dp, -1);
 
+    }
+
+    private GHPointArea updateGHPointArea(GHPointArea oldGHPointArea, GHPointArea newGHPointArea){
+        GHPointAreaRoute.getInstance().remove(oldGHPointArea);
+        GHPointAreaRoute.getInstance().add(newGHPointArea, this);
+        return newGHPointArea;
     }
 
     /**
@@ -232,13 +238,13 @@ public class RouteSearch implements GHPointListener {
 
     public void removePoint(int index) {
         if (index == START_INDEX) {
-            GHPointArea.getGHPointAreas().remove(mStartPoint);
+            GHPointAreaRoute.getInstance().remove(mStartPoint);
             mStartPoint = null;
         } else if (index == DEST_INDEX) {
-            GHPointArea.getGHPointAreas().remove(mDestinationPoint);
+            GHPointAreaRoute.getInstance().remove(mDestinationPoint);
             mDestinationPoint = null;
         } else {
-            GHPointArea.getGHPointAreas().remove(mViaPoints.get(index));
+            GHPointAreaRoute.getInstance().getGHPointAreas().remove(mViaPoints.get(index));
             mViaPoints.remove(index);
         }
         onRoutePointUpdate();
@@ -324,7 +330,7 @@ public class RouteSearch implements GHPointListener {
         @Override
         protected List<GHResponse> doInBackground(List<GHPointArea>... wp) {
             List<GHPointArea> waypoints = wp[0];
-            ArrayList<List<GHPointArea>> ghList = new ArrayList<>();
+            ArrayList<List<GHPointArea>> ghSubRouteList = new ArrayList<>();
 
             StopWatch sw = new StopWatch().start();
             //Split route in multiple GHPointLists
@@ -334,42 +340,49 @@ public class RouteSearch implements GHPointListener {
                     GraphHopper g2 = waypoints.get(i - 1).getGraphHopper();
                     if (g1 != null && g2 != null && !g1.equals(g2)) {
                         //Add element to last list of route points
-                        ghList.add(new ArrayList<GHPointArea>());
+                        ghSubRouteList.add(new ArrayList<GHPointArea>());
                     }
-                    ghList.get(ghList.size() - 1).add(waypoints.get(i));
+                    ghSubRouteList.get(ghSubRouteList.size() - 1).add(waypoints.get(i));
                 } else {
-                    if (ghList.isEmpty()) {
-                        ghList.add(new ArrayList<GHPointArea>());
+                    if (ghSubRouteList.isEmpty()) {
+                        ghSubRouteList.add(new ArrayList<GHPointArea>());
                     }
-                    ghList.get(0).add(waypoints.get(i));
+                    ghSubRouteList.get(0).add(waypoints.get(i));
                 }
             }
             //Add Route points if necessary
-            if (ghList.isEmpty() || ghList.get(0).isEmpty()) {
+            if (ghSubRouteList.isEmpty() || ghSubRouteList.get(0).isEmpty()) {
                 return null;
             }
-            for (int i = 0; i < ghList.size(); i++) {
+            for (int i = 0; i < ghSubRouteList.size(); i++) {
                 if (i > 0) {
-                    List<GHPointArea> subRoutes = ghList.get(i);
+                    List<GHPointArea> subRoutes = ghSubRouteList.get(i);
                     if (!subRoutes.isEmpty()) {
-                        List<GHPointArea> ghListBefore = ghList.get(i - 1);
+                        List<GHPointArea> ghListBefore = ghSubRouteList.get(i - 1);
+                        //Get last element of previousList
                         GHPointArea ghpaBefore = ghListBefore.get(ghListBefore.size()-1);
-                        GHPointArea ghpa = subRoutes.get(0);
-                        CrossMapCalculator calculator = new CrossMapCalculator(
-                                (CrossMapCalculatorListener) App.activity);
-                        GHPoint crossPoint = calculator.getCrossPoint(ghpaBefore, ghpa);
+                        //Get first element of currentList
+                        GHPointArea ghpaCurrent = subRoutes.get(0);
+                        CrossMapCalculator calculator = new CrossMapCalculator(App.activity);
+                        GHPoint crossPoint = calculator.getCrossPoint(ghpaBefore, ghpaCurrent);
                         if(crossPoint == null) return null;
-                        ghListBefore.add(new GHPointArea(crossPoint,
-                                ghpaBefore.getGraphHopper(), null, this));
-                        subRoutes.add(0, new GHPointArea(crossPoint,
-                                ghpa.getGraphHopper(), null, this));
+
+                        GHPointArea ghPointAreaBefore = new GHPointArea(crossPoint,
+                                ghpaBefore.getGraphHopper());
+                        //Don't add to route list to avoid recursive updates
+                        ghListBefore.add(ghPointAreaBefore);
+
+                        GHPointArea ghPointAreaSub = new GHPointArea(crossPoint,
+                                ghpaCurrent.getGraphHopper());
+                        subRoutes.add(0, ghPointAreaSub);
+                        //Don't add to route list to avoid recursive updates
                     }
                 }
             }
 
             //Calculate Routes
             List<GHResponse> responses = new ArrayList<>();
-            for (List<GHPointArea> pointList : ghList) {
+            for (List<GHPointArea> pointList : ghSubRouteList) {
                 GraphHopper hopper = pointList.get(0).getGraphHopper();
                 if (hopper == null) return null;
                 GHRequest req = new GHRequest(getRouteListOfAreaList(pointList)).
@@ -492,14 +505,16 @@ public class RouteSearch implements GHPointListener {
     boolean onContextItemSelected(MenuItem item, GeoPoint geoPoint) {
         switch (item.getItemId()) {
             case R.id.menu_route_departure:
-                mStartPoint = new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles, mStartPoint, this);
+                mStartPoint = updateGHPointArea(mStartPoint,
+                        new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles));
 
                 markerStart = putMarkerItem(markerStart, mStartPoint.getGhPoint(), START_INDEX,
                         R.string.departure, R.drawable.ic_place_green_24dp, -1);
                 return true;
 
             case R.id.menu_route_destination:
-                mDestinationPoint = new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles, mDestinationPoint, this);
+                mDestinationPoint = updateGHPointArea(mDestinationPoint,
+                        new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles));
 
                 markerDestination = putMarkerItem(markerDestination, mDestinationPoint.getGhPoint(), DEST_INDEX,
                         R.string.destination,
@@ -507,12 +522,13 @@ public class RouteSearch implements GHPointListener {
                 return true;
 
             case R.id.menu_route_viapoint:
-                GHPointArea viaPoint = new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles, null, this);
+                GHPointArea viaPoint = new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles);
+                GHPointAreaRoute.getInstance().add(viaPoint, this);
                 addViaPoint(viaPoint);
                 return true;
 
             case R.id.menu_route_clear:
-                GHPointArea.setGHPointAreas(null);
+                GHPointAreaRoute.getInstance().setGHPointAreas(null);
                 clearOverlays();
                 return true;
 

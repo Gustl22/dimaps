@@ -17,12 +17,17 @@
  */
 package org.oscim.app.location;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+
+import com.vividsolutions.jts.math.Vector2D;
 
 import org.oscim.app.App;
 import org.oscim.app.R;
@@ -31,8 +36,12 @@ import org.oscim.core.MapPosition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.HashSet;
+
+import static org.oscim.app.App.map;
+
 public class LocationHandler implements LocationListener {
-    private final static Logger log = LoggerFactory.getLogger(LocationHandler.class);
 
     public enum Mode {
         OFF,
@@ -55,7 +64,7 @@ public class LocationHandler implements LocationListener {
         mLocationManager = (LocationManager) tileMap
                 .getSystemService(Context.LOCATION_SERVICE);
 
-        mLocationLayer = new LocationLayerImpl(App.map, compass);
+        mLocationLayer = new LocationLayerImpl(map, compass);
 
         mMapPosition = new MapPosition();
     }
@@ -68,7 +77,7 @@ public class LocationHandler implements LocationListener {
             disableShowMyLocation();
 
             if (mMode == Mode.SNAP)
-                App.map.getEventLayer().enableMove(true);
+                map.getEventLayer().enableMove(true);
         }
 
         if (mMode == Mode.OFF) {
@@ -77,10 +86,10 @@ public class LocationHandler implements LocationListener {
         }
 
         if (mode == Mode.SNAP) {
-            App.map.getEventLayer().enableMove(false);
+            map.getEventLayer().enableMove(false);
             gotoLastKnownPosition();
         } else {
-            App.map.getEventLayer().enableMove(true);
+            map.getEventLayer().enableMove(true);
         }
 
         // FIXME?
@@ -110,7 +119,7 @@ public class LocationHandler implements LocationListener {
             return false;
         }
 
-        mLocationManager.requestLocationUpdates(bestProvider, 10000, 10, this);
+        mLocationManager.requestLocationUpdates(bestProvider, 5000, 5, this);
 
         Location location = gotoLastKnownPosition();
         if (location == null)
@@ -122,9 +131,9 @@ public class LocationHandler implements LocationListener {
                 location.getAccuracy());
 
         // FIXME -> implement LayerGroup
-        App.map.layers().add(4, mLocationLayer);
+        map.layers().add(4, mLocationLayer);
 
-        App.map.updateMap(true);
+        map.updateMap(true);
         return true;
     }
 
@@ -136,8 +145,8 @@ public class LocationHandler implements LocationListener {
         mLocationManager.removeUpdates(this);
         mLocationLayer.setEnabled(false);
 
-        App.map.layers().remove(mLocationLayer);
-        App.map.updateMap(true);
+        map.layers().remove(mLocationLayer);
+        map.updateMap(true);
 
         return true;
     }
@@ -167,12 +176,22 @@ public class LocationHandler implements LocationListener {
             return null;
         }
 
-        App.map.getMapPosition(mMapPosition);
+        map.getMapPosition(mMapPosition);
 
         if (mMapPosition.zoomLevel < SHOW_LOCATION_ZOOM)
             mMapPosition.setZoomLevel(SHOW_LOCATION_ZOOM);
 
-        mMapPosition.setPosition(location.getLatitude(), location.getLongitude());
+        //Set Location to bottom for navigation
+        double radian = Math.toRadians(location.getBearing());
+        double y = Math.sin(radian);
+        double x = Math.cos(radian);
+        Vector2D vector = new Vector2D(x, y);
+        vector = vector.divide(vector.length()); //Unit vector
+        double distance = App.map.getMapPosition().getTilt()/100;
+        vector = vector.multiply(0.001*distance); //Distance Value (dependent on the map tilt)
+
+        //Set Map position
+        mMapPosition.setPosition(location.getLatitude()+vector.getX(), location.getLongitude()+vector.getY());
         App.map.setMapPosition(mMapPosition);
 
         return location;
@@ -181,8 +200,13 @@ public class LocationHandler implements LocationListener {
     /***
      * LocationListener
      ***/
-    @Override
-    public void onLocationChanged(Location location) {
+    ValueAnimator anim;
+    Location preLocation;
+
+    public void onVirtualLocationChanged(Location location){
+        //Inform Compass about big location changes
+        for (LocationListener hl : listeners)
+            hl.onLocationChanged(location);
 
         if (mMode == Mode.OFF)
             return;
@@ -195,24 +219,90 @@ public class LocationHandler implements LocationListener {
         if (mSetCenter || mMode == Mode.SNAP) {
             mSetCenter = false;
 
-            App.map.getMapPosition(mMapPosition);
+            map.getMapPosition(mMapPosition);
             mMapPosition.setPosition(lat, lon);
-            App.map.setMapPosition(mMapPosition);
+            map.setMapPosition(mMapPosition);
         }
 
         mLocationLayer.setPosition(lat, lon, location.getAccuracy());
     }
 
+    public Location calculateNextLocation(Location preLocation, Location currentLocation){
+        Location location = new Location(currentLocation);
+        double diffLat = currentLocation.getLatitude()-preLocation.getLatitude();
+        double diffLon = currentLocation.getLongitude()-preLocation.getLongitude();
+        location.setLatitude(location.getLatitude()+diffLat);
+        location.setLongitude(location.getLongitude()+diffLon);
+        return location;
+    }
+
+    public Location calculateProgressLocation(Location startLocation, Location endLocation, float progress){
+        Location location = new Location(startLocation);
+        double diffLat = endLocation.getLatitude()-startLocation.getLatitude();
+        double diffLon = endLocation.getLongitude()-startLocation.getLongitude();
+        float diffBearing = endLocation.getBearing()-startLocation.getBearing();
+        long diffTime = endLocation.getTime()-startLocation.getTime();
+        float diffSpeed = endLocation.getSpeed()-startLocation.getSpeed();
+        if(diffLat != 0) location.setLatitude(location.getLatitude() + diffLat*progress);
+        if(diffLon != 0)location.setLongitude(location.getLongitude() + diffLon*progress);
+        if(diffBearing != 0f)location.setBearing(location.getBearing() + diffBearing*progress);
+        if(diffTime != 0) location.setTime(location.getTime() + (long)(diffTime*progress));
+        if(diffSpeed != 0f)location.setSpeed(location.getSpeed() + diffSpeed*progress);
+        return location;
+    }
+
+    @Override
+    public void onLocationChanged(final Location location) {
+        if(preLocation == null){
+            onVirtualLocationChanged(location);
+            preLocation = location;
+            return;
+        }
+        //Animate big rotation steps
+        final Location startLocation = location;
+        final Location endLocation = calculateNextLocation(preLocation, location);
+        anim = ValueAnimator.ofFloat(0f, 1f);
+        anim.setDuration(5000);
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float progress = (float) animation.getAnimatedValue();
+                Location l = calculateProgressLocation(startLocation, endLocation, progress);
+                onVirtualLocationChanged(l);
+            }
+        });
+        anim.addListener(new AnimatorListenerAdapter()
+        {
+            @Override
+            public void onAnimationEnd(Animator animation)
+            {
+
+            }
+        });
+        anim.start();
+
+        preLocation = location;
+    }
+
     @Override
     public void onProviderDisabled(String provider) {
+        // Notify everybody that may be interested.
+        for (LocationListener hl : listeners)
+            hl.onProviderDisabled(provider);
     }
 
     @Override
     public void onProviderEnabled(String provider) {
+        // Notify everybody that may be interested.
+        for (LocationListener hl : listeners)
+            hl.onProviderEnabled(provider);
     }
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
+        // Notify everybody that may be interested.
+        for (LocationListener hl : listeners)
+            hl.onStatusChanged(provider, status, extras);
     }
 
     public void setCenterOnFirstFix() {
@@ -230,8 +320,15 @@ public class LocationHandler implements LocationListener {
             Criteria criteria = new Criteria();
             criteria.setAccuracy(Criteria.ACCURACY_FINE);
             String bestProvider = mLocationManager.getBestProvider(criteria, true);
-            mLocationManager.requestLocationUpdates(bestProvider, 10000, 10, this);
+            mLocationManager.requestLocationUpdates(bestProvider, 5000, 5, this);
         }
     }
 
+    //Location Listeners, which listen this Location-Handler
+    private final static Logger log = LoggerFactory.getLogger(LocationHandler.class);
+    private Collection<LocationListener> listeners = new HashSet<LocationListener>();
+
+    public void addListener(LocationListener toAdd) {
+        listeners.add(toAdd);
+    }
 }

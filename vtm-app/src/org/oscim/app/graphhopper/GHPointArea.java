@@ -1,5 +1,6 @@
 package org.oscim.app.graphhopper;
 
+import android.support.v4.os.AsyncTaskCompat;
 import android.util.Log;
 
 import com.graphhopper.GraphHopper;
@@ -10,80 +11,52 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 
 public class GHPointArea{
-    private List<GHPointListener> listeners = new ArrayList<GHPointListener>();
 
-    public void addListener(GHPointListener toAdd) {
-        listeners.add(toAdd);
-    }
-    public void updatePoints() {
-        // Notify everybody that may be interested.
-        for (GHPointListener hl : listeners)
-            hl.onRoutePointUpdate();
-    }
-
-
-    private static Collection<GHPointArea> GHPointAreas;
-    private GraphHopper graphHopper;
+    private volatile GraphHopper graphHopper;
     private GHPoint ghPoint;
+    public final Object virtualObject = new Object();
 
     /**
      * An location GHPoint, that stores it's area routing map
      * @param ghPoint The point you want to store
      * @param ghFiles All graphhopper directories, that store data
-     * @param overridden If the GHPointArea you override was not null, else type null
-     *                   (Background: the point you override must deleted from the internal list,
-     *                   so it does not disturb)
      */
-    public GHPointArea(GHPoint ghPoint, ArrayList<File> ghFiles, GHPointArea overridden, GHPointListener rpl){
-        if(GHPointAreas == null)
-            GHPointAreas = new HashSet<GHPointArea>();
+    public GHPointArea(GHPoint ghPoint, ArrayList<File> ghFiles){
         this.ghPoint = ghPoint;
-        if(overridden != null){
-            GHPointArea.getGHPointAreas().remove(overridden);
-        }
-        GHPointAreas.add(this);
-        addListener(rpl);
-        new GHAsyncTask<Object, Void, GraphHopper>(){
+        Collection<GHPointArea> GHPointAreas = GHPointAreaRoute.getInstance().getGHPointAreas();
+        GHAsyncTask<Object, Void, GraphHopper> task = new GHAsyncTask<Object, Void, GraphHopper>(){
             @Override
             protected GraphHopper saveDoInBackground(Object... params) throws Exception {
-                return autoSelectGraphhopper((GHPoint) params[0], GHPointAreas, (ArrayList<File>) params[1]);
+                GraphHopper hopper = autoSelectGraphhopper((GHPoint) params[0],
+                        (Collection<GHPointArea>) params[1], (ArrayList<File>) params[2]);
+                return hopper;
             }
 
             protected void onPostExecute(GraphHopper hopper){
                 graphHopper = hopper;
-                updatePoints();
+                synchronized(virtualObject){
+                    virtualObject.notifyAll();
+                }
             }
-        }.execute(ghPoint, ghFiles);
+        };
+        AsyncTaskCompat.executeParallel(task, ghPoint, GHPointAreas, ghFiles);
     }
 
     /**
      * Manually add Point to Graphhopper e.g. on edges
      * @param hopper Predefined graphhopper
      */
-    public GHPointArea(GHPoint ghPoint, GraphHopper hopper, GHPointArea overridden, GHPointListener rpl){
-        if(GHPointAreas == null)
-            GHPointAreas = new HashSet<GHPointArea>();
+    public GHPointArea(GHPoint ghPoint, GraphHopper hopper){
         this.ghPoint = ghPoint;
-        addListener(rpl);
-        if(overridden != null){
-            GHPointArea.getGHPointAreas().remove(overridden);
-        }
-        GHPointAreas.add(this);
         this.graphHopper = hopper;
-        updatePoints();
+        synchronized(virtualObject){
+            virtualObject.notifyAll();
+        }
     }
 
-    public static Collection<GHPointArea> getGHPointAreas(){
-        return GHPointAreas;
-    }
 
-    public static void setGHPointAreas(Collection<GHPointArea> ghPointAreas){
-        GHPointAreas = ghPointAreas;
-    }
 
     public GraphHopper getGraphHopper(){
         return graphHopper;
