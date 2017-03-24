@@ -545,13 +545,18 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
      * @param text the text message to display
      */
     static Toast toast;
+
     public void showToastOnUiThread(final String text) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if(toast != null)
                     toast.cancel();
-                toast = Toast.makeText(TileMap.this, text, Toast.LENGTH_SHORT);
+                if (text.length() < 20) {
+                    toast = Toast.makeText(TileMap.this, text, Toast.LENGTH_SHORT);
+                } else {
+                    toast = Toast.makeText(TileMap.this, text, Toast.LENGTH_LONG);
+                }
                 toast.show();
             }
         });

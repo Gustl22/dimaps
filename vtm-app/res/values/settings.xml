@@ -74,9 +74,11 @@
     <string name="preferences_text_scale_desc">Select the text size of map labels</string>
     <string name="preferences_wake_lock">Stay awake</string>
     <string name="preferences_wake_lock_desc">Stop the screen from dimming</string>
-    <string name="preferences_storage">Storage</string>
-    <string name="preferences_storage_summary">Change the map storage location</string>
-    <string name="preferences_storage_default">SD-Card: 0</string>
+    <string name="storage">Storage</string>
+    <string name="storage_location">Storage location</string>
+    <string name="storage_location_summary">Change the map storage location</string>
+    <string name="preferences_storage_location">storage_location</string>
+    <string name="preferences_storage_location_default">0</string>
 
     <!--
      <string-array name="view_sections">

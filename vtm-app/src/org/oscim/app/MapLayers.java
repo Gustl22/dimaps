@@ -23,6 +23,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import org.oscim.android.cache.TileCache;
+import org.oscim.app.preferences.StoragePreference;
 import org.oscim.layers.GenericLayer;
 import org.oscim.layers.Layer;
 import org.oscim.layers.TileGridLayer;
@@ -63,7 +64,7 @@ public class MapLayers {
     }, new Config("MAPSFORGE") {
         TileSource init() {
             return new MapFileTileSource().setOption("file",
-                    MAP_FOLDERS[0] + "/openscience.map");
+                    StoragePreference.getPreferredStorageLocation().getAbsolutePath() + "/maps/openscience.map");
         }
     }, new Config("MAPNIK_VECTOR") {
         TileSource init() {
@@ -83,6 +84,18 @@ public class MapLayers {
             ArrayList<File> files = new ArrayList<File>();
             for (File f : MAP_FOLDERS) {
                 files.addAll(FileUtils.walkExtension(f, ".map"));
+            }
+            if (files.isEmpty()) {
+                App.activity.showToastOnUiThread("No maps downloaded.");
+            } else {
+                File worldmap = null;
+                for (File f : files) {
+                    if (f.getName().toLowerCase().contains("world.map"))
+                        worldmap = f;
+                }
+                if (worldmap == null) {
+                    App.activity.showToastOnUiThread("Make shure you downloaded a world map, too!");
+                }
             }
             for (File f : files) {
                 Log.d("Files", "FileName:" + f.getName());

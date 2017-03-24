@@ -33,6 +33,7 @@ import org.oscim.app.graphhopper.GHAsyncTask;
 import org.oscim.app.holder.SelectableHeaderHolder;
 import org.oscim.app.holder.SelectableItemHolder;
 import org.oscim.app.holder.AreaFileInfo;
+import org.oscim.app.preferences.StoragePreference;
 
 import java.io.File;
 import java.util.Collection;
@@ -110,7 +111,7 @@ public class MapDownloadActivity extends DownloadReceiverActivity implements Ada
             Log.d("", R.string.application_name + " is not usable without an external storage!");
             return;
         }
-        mMapsFolder = new File(App.activity.getExternalFilesDir(null).getAbsolutePath(),
+        mMapsFolder = new File(StoragePreference.getPreferredStorageLocation().getAbsolutePath(),
                 "/maps/");
         if (!mMapsFolder.exists())
             mMapsFolder.mkdirs();
