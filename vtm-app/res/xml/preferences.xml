@@ -57,12 +57,12 @@
             android:key="distanceTouch" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Storage">
+    <PreferenceCategory android:title="@string/storage">
         <org.oscim.app.preferences.StoragePreference
-            android:defaultValue="@string/preferences_storage_default"
+            android:defaultValue="@string/preferences_storage_location_default"
             android:key="storage"
-            android:summary="@string/preferences_storage_summary"
-            android:title="@string/preferences_storage" />
+            android:summary="@string/storage_location_summary"
+            android:title="@string/storage" />
         <org.oscim.app.preferences.CacheSizePreference
             android:key="cacheSize"
             android:summary="Set tile cache size"
