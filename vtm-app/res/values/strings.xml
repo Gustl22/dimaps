@@ -64,6 +64,7 @@
     <string name="departure">Departure</string>
     <string name="destination">Destination</string>
     <string name="viapoint">Via-Point</string>
+    <string name="poi">Point of Interest</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
@@ -79,6 +80,10 @@
         <!--http://folk.ntnu.no/junjung/pocketmaps/map_url_list-->
     </string-array>
     <string name="pref_poiArea_folderPath">pref_poiArea_folderPath</string>
-
-
+    <string name="set_destination">Set destination</string>
+    <string name="set_start">Set start</string>
+    <string name="show_on_map">Show on map</string>
+    <string name="mar_as_favorite">Mark as favorite</string>
+    <string name="share_location">Share location</string>
+    <string name="add_waypoint">Add waypoint</string>
 </resources>

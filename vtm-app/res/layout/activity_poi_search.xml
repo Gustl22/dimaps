@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_margin="10dp"
-        android:background="@drawable/layout_bg"
+        android:background="@drawable/layout_background_round_corners"
         android:elevation="2dp"
         android:orientation="horizontal"
         android:theme="@style/AppTheme.AppBarOverlay">
@@ -25,6 +25,7 @@
             android:adjustViewBounds="true"
             android:background="@android:color/transparent"
             android:drawableStart="@drawable/ic_arrow_back_black_24dp"
+            android:drawableLeft="@drawable/ic_arrow_back_black_24dp"
             android:layout_gravity="center"
             android:onClick="finish"/>
 
@@ -52,10 +53,11 @@
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginLeft="@dimen/activity_vertical_margin"
         android:layout_marginRight="@dimen/activity_vertical_margin"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_weight="1">
         <TextView
             android:id="@+id/poi_area_selection"
             android:layout_width="match_parent"
@@ -93,12 +95,17 @@
                 android:layout_height="wrap_content"
                 android:divider="@color/disabledBackgroundLight">
             </ListView>
+
+            <TextView
+                android:id="@+id/result"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/activity_horizontal_margin"></TextView>
         </LinearLayout>
-        <TextView
-            android:id="@+id/result"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/activity_horizontal_margin">
-        </TextView>
     </LinearLayout>
+
+    <include
+        layout="@layout/poi_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </LinearLayout>

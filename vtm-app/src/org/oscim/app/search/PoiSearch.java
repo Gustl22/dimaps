@@ -32,12 +32,11 @@ import org.oscim.app.MapLayers;
 import org.oscim.app.holder.AreaFileInfo;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-
-import static org.oscim.app.FileUtils.walkExtension;
 
 /**
  * POI search.<br/>
@@ -46,40 +45,42 @@ import static org.oscim.app.FileUtils.walkExtension;
  */
 public class PoiSearch {
     private File mPOI_File;
-    private PointOfInterest poiArea;
+    private PointOfInterest poiArea; //The Area of poiFile expressed as POI
 
-    public PoiSearch(File poiFile){
-        setPoiFile(poiFile);
+    public PoiSearch() {
     }
 
     public File getPoiFile(){
         return mPOI_File;
     }
 
-    public void setPoiFile(File poiFile){
-        if(poiFile != null){
-            if(poiFile.exists()){
+    public void setPoiFile(File poiFile) throws FileNotFoundException {
+        if (poiFile != null && poiFile.exists()) {
                 mPOI_File = poiFile;
                 Collection<File> poiAreas = fetchAreaFiles(poiFile.getName());
                 if(poiAreas != null && !poiAreas.isEmpty())
                     setPoiArea(getPoiFromFile(new ArrayList<>(poiAreas).get(0), 0));
-            } else {
-                setPoiFileByAreaFolder(mPOI_File.getParentFile());
-            }
+        } else if (mPOI_File != null && mPOI_File.getParentFile().exists()) {
+            setPoiFileByAreaFolder(mPOI_File.getParentFile());
         } else {
             setPoiFileByAreaFolder(null);
         }
     }
 
-    public void setPoiFileByAreaFolder(File areaFolder){
+    public void setPoiFileByAreaFolder(File areaFolder) throws FileNotFoundException {
         ArrayList<File> files;
         if(areaFolder == null || !areaFolder.exists()){
-            files = FileUtils.walkExtension(MapLayers.MAP_FOLDER, ".poi");
+            files = new ArrayList<File>();
+            for (File f : MapLayers.MAP_FOLDERS) {
+                files.addAll(FileUtils.walkExtension(f, ".poi"));
+            }
         } else {
             files = FileUtils.walkExtension(areaFolder, ".poi");
         }
         if(!files.isEmpty()){
             setPoiFile(files.get(0));
+        } else {
+            throw new FileNotFoundException("No point of interest files found");
         }
     }
 
@@ -136,7 +137,10 @@ public class PoiSearch {
         Collection<File> continentCollection = new HashSet<File>();
         Collection<File> regionCollection = new HashSet<File>();
         text = text.toLowerCase();
-        ArrayList<File> files = walkExtension(MapLayers.MAP_FOLDER, ".poi");
+        ArrayList<File> files = new ArrayList<File>();
+        for (File f : MapLayers.MAP_FOLDERS) {
+            files.addAll(FileUtils.walkExtension(f, ".poi"));
+        }
         if(!files.isEmpty()){
             for(int i= 0; i<files.size(); i++){
                 File file = files.get(i);
@@ -189,6 +193,7 @@ public class PoiSearch {
 
     public Collection<PointOfInterest> getPoiByNameAndCategory(String name, CustomPoiCategory category){
         PoiPersistenceManager persManager = null;
+        assert mPOI_File != null;
         try {
             persManager = openPoiConnection(mPOI_File);
             assert persManager != null;

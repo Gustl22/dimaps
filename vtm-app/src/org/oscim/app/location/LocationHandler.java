@@ -39,6 +39,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import com.vividsolutions.jts.math.Vector2D;
 
 import org.oscim.app.App;
+import org.oscim.app.MapLayers;
 import org.oscim.app.R;
 import org.oscim.app.RouteSearch;
 import org.oscim.app.TileMap;
@@ -265,7 +266,6 @@ public class LocationHandler implements LocationListener {
                             }
                         }
                     }
-                    GHPointAreaRoute.getInstance().setPrimaryGraphHopper(area.getGraphHopper());
                 } catch (Exception e) {
                     App.activity.showToastOnUiThread(e.getMessage());
                 }
@@ -276,11 +276,12 @@ public class LocationHandler implements LocationListener {
         App.activity.showToastOnUiThread("Way animation in progress");
     }
 
-    public Location calculateNextLocation(Location preLocation, Location currentLocation) {
+    public synchronized Location calculateNextLocation(Location preLocation, Location currentLocation) {
         //TODO Add File list for better results
         double curLat = currentLocation.getLatitude();
         double curLon = currentLocation.getLongitude();
-        GraphHopper gh = GHPointAreaRoute.getInstance().getPrimaryGraphHopper();
+        GraphHopper gh = new GHPointArea(new GHPoint(curLat, curLon),
+                RouteSearch.getGraphHopperFiles()).getGraphHopper();
         if (gh == null) {
             return null;
         }

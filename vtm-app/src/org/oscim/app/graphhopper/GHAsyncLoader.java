@@ -33,16 +33,10 @@ public class GHAsyncLoader extends GHAsyncTask<String, Void, GraphHopper>{
 
     public static GraphHopper loadGraphhopperStorage(String path) throws IllegalAccessException{
         GraphHopper tmpHopp = new GraphHopperOSM().forMobile();
-//                String db = getDbMapName();
-//                tmpHopp.setDataReaderFile(storage + "/" + db);
-//                tmpHopp.setGraphHopperLocation(storage);
-//                tmpHopp.setEncodingManager(new EncodingManager("car")); //car, bike or ...
-//                tmpHopp.importOrLoad();
 
         if(!tmpHopp.load(path)){
             throw new IllegalAccessException("Graphhopper filepath does not exist");
         }
-        Log.d("Found", "found graph " + tmpHopp.getGraphHopperStorage().toString() + ", nodes:" + tmpHopp.getGraphHopperStorage().getNodes());
         return tmpHopp;
     }
 }

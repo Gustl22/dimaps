@@ -29,7 +29,6 @@ import com.unnamed.b.atv.view.AndroidTreeView;
 
 import org.oscim.app.App;
 import org.oscim.app.R;
-import org.oscim.app.graphhopper.AndroidDownloader;
 import org.oscim.app.graphhopper.GHAsyncTask;
 import org.oscim.app.holder.SelectableHeaderHolder;
 import org.oscim.app.holder.SelectableItemHolder;

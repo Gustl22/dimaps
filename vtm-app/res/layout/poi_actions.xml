@@ -1,58 +1,176 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <GridLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <com.github.johnkil.print.PrintView
+    android:layout_gravity="bottom"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:targetApi="ice_cream_sandwich"
+    android:padding="4dp"
+    android:background="@color/disabledBackgroundLight">
+
+    <LinearLayout
+        android:id="@+id/destination_position"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
             android:layout_column="0"
             android:layout_columnWeight="1"
-            android:id="@+id/icon"
+        android:layout_rowWeight="1"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:layout_margin="4dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:elevation="2dp"
+        android:clickable="true">
+
+        <com.github.johnkil.print.PrintView
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:iconText="@string/ic_access_alarms"
+            app:iconText="@string/ic_flag"
             app:iconColor="@color/colorAccent"
             app:iconFont="fonts/material-icon-font.ttf"
             app:iconSize="40dp" />
-        <com.github.johnkil.print.PrintView
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/add_waypoint"
+            android:textAlignment="center"
+            android:textSize="12dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/start_position"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_column="1"
             android:layout_columnWeight="1"
-            android:id="@+id/icon2"
+        android:layout_rowWeight="1"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:layout_margin="4dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:elevation="2dp"
+        android:clickable="true">
+
+        <com.github.johnkil.print.PrintView
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:iconText="@string/ic_email"
+            app:iconText="@string/ic_place"
             app:iconColor="@color/colorAccent"
             app:iconFont="fonts/material-icon-font.ttf"
             app:iconSize="40dp" />
-        <com.github.johnkil.print.PrintView
-            android:id="@+id/icon3"
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/set_start"
+            android:gravity="center"
+            android:textSize="12dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/show_position"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_column="2"
             android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:layout_margin="4dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:elevation="2dp"
+        android:clickable="true">
+
+        <com.github.johnkil.print.PrintView
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:iconText="@string/ic_email"
+            app:iconText="@string/ic_pin_drop"
             app:iconColor="@color/colorAccent"
             app:iconFont="fonts/material-icon-font.ttf"
             app:iconSize="40dp" />
-        <com.github.johnkil.print.PrintView
-            android:id="@+id/icon4"
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/show_on_map"
+            android:textAlignment="center"
+            android:textSize="12dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/favor_position"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_column="3"
             android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:layout_margin="4dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:elevation="2dp"
+        android:clickable="true">
+
+        <com.github.johnkil.print.PrintView
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:iconText="@string/ic_email"
+            app:iconText="@string/ic_star"
             app:iconColor="@color/colorAccent"
             app:iconFont="fonts/material-icon-font.ttf"
             app:iconSize="40dp" />
-    </GridLayout>
-</LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/mar_as_favorite"
+            android:textAlignment="center"
+            android:textSize="12dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/share_position"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+        android:layout_column="4"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:layout_margin="4dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:elevation="2dp"
+        android:clickable="true">
+
+        <com.github.johnkil.print.PrintView
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:iconText="@string/ic_share"
+            app:iconColor="@color/colorAccent"
+            app:iconFont="fonts/material-icon-font.ttf"
+            app:iconSize="40dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:foregroundGravity="center"
+            android:text="@string/share_location"
+            android:textAlignment="center"
+            android:textSize="12dp" />
+    </LinearLayout>
+</GridLayout>

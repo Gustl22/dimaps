@@ -120,7 +120,7 @@ public abstract class DownloadReceiverActivity extends AppCompatActivity {
             @Override
             protected void onPostExecute(Boolean success) {
                 progDailog.dismiss();
-                if(!success){
+                if (success == null || !success) {
                     Log.e("Unzipping failed", "File does not exists");
                     return;
                 }

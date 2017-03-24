@@ -56,7 +56,8 @@ import org.oscim.app.graphhopper.CrossMapCalculatorListener;
 import org.oscim.app.location.Compass;
 import org.oscim.app.location.LocationDialog;
 import org.oscim.app.location.LocationHandler;
-import org.oscim.app.search.SearchActivity;
+import org.oscim.app.preferences.EditPreferences;
+import org.oscim.app.search.PoiSearchActivity;
 import org.oscim.core.GeoPoint;
 import org.oscim.core.Tile;
 import org.oscim.overlay.DistanceTouchOverlay;
@@ -144,7 +145,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         mSearchBar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(App.activity, SearchActivity.class));
+                startActivity(new Intent(App.activity, PoiSearchActivity.class));
             }
         });
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -256,35 +257,28 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         int position = 0;
         switch (id) {
             case R.id.waypoints:
-//                mTitle = getString(R.string.title_home);
-//                position = 0;
+//                TODO handle waypoints for route
                 break;
             case R.id.route_instructions:
-//                mTitle = getString(R.string.title_bookmarks);
-//                position = 1;
+//                TODO fetch instructions
                 break;
             case R.id.route_settings:
-//                mTitle = getString(R.string.title_favorite);
-//                position = 2;
+//                TODO preferences for current route
                 break;
             case R.id.my_places:
-//                mTitle = getString(R.string.title_payment);
-//                position = 3;
+//                TODO create favorite-activity
                 break;
             case R.id.tools:
-//                mTitle = getString(R.string.title_settings);
-//                position = 4;
+//                TODO create tools
                 break;
             case R.id.maps_download:
                 startActivity(new Intent(this, MapDownloadActivity.class));
                 break;
             case R.id.settings:
-//                mTitle = getString(R.string.title_settings);
-//                position = 4;
+                startActivity(new Intent(this, EditPreferences.class));
                 break;
             case R.id.legend:
-//                mTitle = getString(R.string.title_settings);
-//                position = 4;
+//                TODO write legend for map
                 break;
             case R.id.about:
                 startActivity(new Intent(this, InfoView.class));
@@ -794,7 +788,8 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
                     }
                     progressDialog.setMessage(status);
                 } else if (progress == 100) {
-                    progressDialog.dismiss();
+                    if (progressDialog != null)
+                        progressDialog.dismiss();
                     progressDialog = null;
                 }
                 if(progressDialog != null)

@@ -3,8 +3,6 @@ package org.oscim.app.graphhopper;
 import android.os.AsyncTask;
 import android.support.v4.os.AsyncTaskCompat;
 
-import com.graphhopper.GraphHopper;
-
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -14,7 +12,6 @@ import java.util.HashSet;
 
 public class GHPointAreaRoute {
     private Collection<GHPointListener> listeners = new HashSet<GHPointListener>();
-    private static GraphHopper mPrimaryGraphHopper;
 
     public void addListener(GHPointListener toAdd) {
         listeners.add(toAdd);
@@ -30,12 +27,10 @@ public class GHPointAreaRoute {
     private static Collection<GHPointArea> GHPointAreas;
 
     private GHPointAreaRoute(){
-
+        GHPointAreas = new HashSet<GHPointArea>();
     }
 
     public Collection<GHPointArea> getGHPointAreas(){
-        if(GHPointAreas == null)
-            GHPointAreas = new HashSet<GHPointArea>();
         return GHPointAreas;
     }
 
@@ -73,7 +68,6 @@ public class GHPointAreaRoute {
                     }
                 }
                 GHPointAreas.add(tempPointArea);
-                if(mPrimaryGraphHopper == null) mPrimaryGraphHopper = tempPointArea.getGraphHopper();
                 addListener((GHPointListener) params[1]);
                 updateRoutePoints();
                 return null;
@@ -87,13 +81,5 @@ public class GHPointAreaRoute {
             getGHPointAreas().remove(ghPointArea);
         }
         //updatePoints(); //Is not enabled because this will cause overhead
-    }
-
-    public GraphHopper getPrimaryGraphHopper() {
-        return mPrimaryGraphHopper;
-    }
-
-    public void setPrimaryGraphHopper(GraphHopper PrimaryGraphHopper) {
-        this.mPrimaryGraphHopper = PrimaryGraphHopper;
     }
 }

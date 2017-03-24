@@ -85,7 +85,7 @@ public class CacheSizePreference extends Preference implements OnSeekBarChangeLi
 
     @Override
     protected View onCreateView(ViewGroup parent) {
-
+        super.onCreateView(parent);
         RelativeLayout layout = null;
 
         try {

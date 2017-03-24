@@ -19,6 +19,7 @@ package org.oscim.app;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import org.oscim.android.cache.TileCache;
@@ -45,12 +46,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MapLayers {
     static String getDbMapName() {
         return "MAPSFORGE_OFFLINE";
     }
-    public static File MAP_FOLDER = new File(App.activity.getExternalFilesDir(null), "maps/");
+
+    public static File[] MAP_FOLDERS;
 
     final static Logger log = LoggerFactory.getLogger(MapLayers.class);
     static Config[] configs = new Config[]{new Config("OPENSCIENCEMAP4") {
@@ -60,7 +63,7 @@ public class MapLayers {
     }, new Config("MAPSFORGE") {
         TileSource init() {
             return new MapFileTileSource().setOption("file",
-                    MAP_FOLDER + "/openscience.map");
+                    MAP_FOLDERS[0] + "/openscience.map");
         }
     }, new Config("MAPNIK_VECTOR") {
         TileSource init() {
@@ -77,7 +80,10 @@ public class MapLayers {
     }, new Config("MAPSFORGE_OFFLINE") {
         TileSource init() {
             MultiMapFileTileSource MultiTS = new MultiMapFileTileSource();
-            ArrayList<File> files = FileUtils.walkExtension(MAP_FOLDER, ".map");
+            ArrayList<File> files = new ArrayList<File>();
+            for (File f : MAP_FOLDERS) {
+                files.addAll(FileUtils.walkExtension(f, ".map"));
+            }
             for (File f : files) {
                 Log.d("Files", "FileName:" + f.getName());
                     MapFileTileSource ts = new MapFileTileSource();
@@ -105,18 +111,42 @@ public class MapLayers {
         mBackroundPlaceholder = new Layer(null) {
         };
         setBackgroundMap(-1);
+
+        MAP_FOLDERS = ContextCompat.getExternalFilesDirs(App.activity, null);
+        for (int i = 0; i < MAP_FOLDERS.length; i++) {
+            File tmpFile = new File(MAP_FOLDERS[i], "maps/");
+            if (tmpFile.exists() || tmpFile.mkdirs()) {
+                MAP_FOLDERS[i] = tmpFile;
+            } else {
+                MAP_FOLDERS[i] = null;
+            }
+        }
+        MAP_FOLDERS = removeNullFile(MAP_FOLDERS);
+
+        //Unzip downloaded Files:
+        ArrayList<File> files = new ArrayList<File>();
+        for (File f : MAP_FOLDERS) {
+            files.addAll(FileUtils.walkExtension(f, ".ghz"));
+        }
+        for (File f : files) {
+            App.activity.unzipAsync(f, App.activity);
+        }
+    }
+
+    public static File[] removeNullFile(File[] array) {
+        List<File> list = new ArrayList<>();
+
+        for (File s : array) {
+            if (s != null) {
+                list.add(s);
+            }
+        }
+        return list.toArray(new File[list.size()]);
     }
 
     void setBaseMap(Context context) {
 
-
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-
-        //Unzip downloaded Files:
-        ArrayList<File> files = FileUtils.walkExtension(MAP_FOLDER, ".ghz");
-        for (File f : files) {
-            App.activity.unzipAsync(f, App.activity);
-        }
 
         //Temporary files
         String dbname = preferences.getString("mapDatabase", getDbMapName());

@@ -261,6 +261,7 @@ public class CrossMapCalculator {
             updateCrossMapCalculatorListener("No Match points found", 100, 0);
             return null;
         } else {
+            updateCrossMapCalculatorListener("", 100, 0);
             HashMap<Integer, Integer> hm = getAllBoundNodes(gh1, gh2);
             try {
                 FileOutputStream fileOutputStream = new FileOutputStream(file1);

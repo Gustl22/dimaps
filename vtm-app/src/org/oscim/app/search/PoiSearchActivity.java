@@ -27,6 +27,7 @@ import org.oscim.app.CustomAnimationUtils;
 import org.oscim.app.R;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,26 +35,27 @@ import java.util.List;
  * Created by gustl on 17.03.17.
  */
 
-public class SearchActivity extends AppCompatActivity {
-    AutoCompleteTextView mSearchBar;
-    File mCurrentPoiFile;
-    List<PointOfInterest> mPoiSuggestions;
-    List<String> mStringSuggestions;
-    ArrayAdapter<String> mAutoCompleteSearchBarAdapter;
-    PoiSearch mPoiSearch;
-    PointOfInterest mSelectedPOI;
-    TextView mResult;
-    TextView mAreaSelection;
-    ListView mSearchSuggestions;
-    PrintView mExpandButton;
-    LinearLayout mExpandLine;
+public class PoiSearchActivity extends AppCompatActivity {
+    private AutoCompleteTextView mSearchBar;
+    private File mCurrentPoiFile;
+    private List<PointOfInterest> mPoiSuggestions;
+    private List<String> mStringSuggestions;
+    private ArrayAdapter<String> mAutoCompleteSearchBarAdapter;
+    private PoiSearch mPoiSearch;
+    private PointOfInterest mSelectedPOI;
+    private TextView mResult;
+    private TextView mAreaSelection;
+    private ListView mSearchSuggestions;
+    private PrintView mExpandButton;
+    private LinearLayout mExpandLine;
+    private PoiActionHandler poiHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         loadPreferences();
-        setContentView(R.layout.activity_search);
+        setContentView(R.layout.activity_poi_search);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         //Set search-Bar on-hit-Enter-Listener
         mStringSuggestions = new ArrayList<>();
@@ -111,11 +113,24 @@ public class SearchActivity extends AppCompatActivity {
         });
 
         //Setup search logic
-        mPoiSearch = new PoiSearch(mCurrentPoiFile);
+        mPoiSearch = new PoiSearch();
+        try {
+            mPoiSearch.setPoiFile(mCurrentPoiFile);
+        } catch (FileNotFoundException ex) {
+            App.activity.showToastOnUiThread("No POI data found. Download it first");
+            finish();
+        }
         if(mPoiSearch.getPoiArea() != null){
             mCurrentPoiFile = mPoiSearch.getPoiFile();
             setResultText(mPoiSearch.getPoiArea());
         }
+
+        poiHandler = new PoiActionHandler(this);
+        poiHandler.setDestinationButton(findViewById(R.id.destination_position));
+        poiHandler.setShareButton(findViewById(R.id.share_position));
+        poiHandler.setFavoriteButton(findViewById(R.id.favor_position));
+        poiHandler.setStartButton(findViewById(R.id.start_position));
+        poiHandler.setShowMapButton(findViewById(R.id.show_position));
     }
 
     private void setResultText(PointOfInterest mSelectedPOI) {
@@ -127,6 +142,7 @@ public class SearchActivity extends AppCompatActivity {
             mAreaSelection.setText(Html.fromHtml(resText));
         } else {
             mResult.setText(Html.fromHtml(resText));
+            poiHandler.setPoi(mSelectedPOI);
         }
     }
 
@@ -135,19 +151,19 @@ public class SearchActivity extends AppCompatActivity {
      * @param text input-filter for poi-text
      * @return List of suggestions
      */
-    ProgressDialog progDailog;
+    ProgressDialog progDialog;
     private void getSuggestions(String text){
         final Context context = this;
         new AsyncTask<String, Void, ArrayList<PointOfInterest>>(){
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
-                progDailog = new ProgressDialog(context);
-                progDailog.setMessage("Loading...");
-                progDailog.setIndeterminate(false);
-                progDailog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-                progDailog.setCancelable(false);
-                progDailog.show();
+                progDialog = new ProgressDialog(context);
+                progDialog.setMessage("Loading...");
+                progDialog.setIndeterminate(false);
+                progDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                progDialog.setCancelable(false);
+                progDialog.show();
             }
 
             @Override
@@ -157,7 +173,8 @@ public class SearchActivity extends AppCompatActivity {
 
             @Override
             protected void onPostExecute(ArrayList<PointOfInterest> pointOfInterests) {
-                progDailog.dismiss();
+                if (progDialog != null)
+                    progDialog.dismiss();
                 super.onPostExecute(pointOfInterests);
                 mPoiSuggestions = pointOfInterests;
                 mStringSuggestions = getStringListFromPoiList(mPoiSuggestions);
@@ -221,7 +238,8 @@ public class SearchActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy(){
-        progDailog.dismiss();
+        if (progDialog != null)
+            progDialog.dismiss();
         savePreferences();
         super.onDestroy();
     }

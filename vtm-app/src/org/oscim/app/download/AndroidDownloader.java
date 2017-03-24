@@ -1,4 +1,4 @@
-package org.oscim.app.graphhopper;
+package org.oscim.app.download;
 
 import com.graphhopper.util.Downloader;
 

@@ -5,6 +5,9 @@
         android:id="@+id/menu_poi_nearby"
         android:title="@string/menu_find" />
     <item
+        android:id="@+id/menu_share_location"
+        android:title="@string/share_location" />
+    <item
         android:id="@+id/menu_route_departure"
         android:title="Set Departure" />
     <item

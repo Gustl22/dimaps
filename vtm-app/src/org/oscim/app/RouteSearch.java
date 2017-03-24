@@ -16,9 +16,11 @@
 package org.oscim.app;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -64,12 +66,14 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.oscim.app.App.activity;
 import static org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter.convertGHPointToGeoPoint;
 import static org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter.convertPointListToGeoPoints;
 import static org.oscim.app.graphhopper.OsmdroidGraphhopperAdapter.convertGeoPointToGHPoint;
 
 public class RouteSearch implements GHPointListener {
     private static int START_INDEX = -2, DEST_INDEX = -1;
+    //other points which aren't contained in route are negative
 
     private final PathLayer mRouteOverlay;
     //private final ItemizedOverlayWithBubble<ExtendedOverlayItem> mRouteMarkers;
@@ -79,6 +83,7 @@ public class RouteSearch implements GHPointListener {
 
     private GHPointArea mStartPoint, mDestinationPoint;
     private final ArrayList<GHPointArea> mViaPoints;
+    private ArrayList<GHPointArea> mNonRoutePoints;
 
     private ExtendedMarkerItem markerStart, markerDestination;
 
@@ -91,12 +96,13 @@ public class RouteSearch implements GHPointListener {
 
     RouteSearch() {
         mViaPoints = new ArrayList<GHPointArea>();
+        mNonRoutePoints = new ArrayList<GHPointArea>();
 
         // Itinerary markers:
         ArrayList<ExtendedMarkerItem> waypointsItems = new ArrayList<ExtendedMarkerItem>();
 
         mItineraryMarkers = new ItemizedOverlayWithBubble<ExtendedMarkerItem>(App.map,
-                App.activity,
+                activity,
                 null,
                 waypointsItems,
                 new ViaPointInfoWindow(R.layout.itinerary_bubble));
@@ -107,7 +113,7 @@ public class RouteSearch implements GHPointListener {
         //ArrayList<ExtendedOverlayItem> routeItems = new ArrayList<ExtendedOverlayItem>();
         //mRouteMarkers = new ItemizedOverlayWithBubble<ExtendedOverlayItem>(App.map, App.activity,
         //        null, routeItems);
-        LineStyle routeLine = new LineStyle(Color.parseColor("#CC3377FF"), 14, Paint.Cap.ROUND);
+        LineStyle routeLine = new LineStyle(Color.parseColor("#CC3377FF"), 20, Paint.Cap.ROUND);
         mRouteOverlay = new PathLayer(App.map, routeLine);
 
         // TODO use LayerGroup
@@ -115,18 +121,80 @@ public class RouteSearch implements GHPointListener {
         //App.map.getOverlays().add(mRouteMarkers);
         App.map.layers().add(mItineraryMarkers);
 
-        mRouteBar = new RouteBar(App.activity);
+        mRouteBar = new RouteBar(activity);
 
-        ghFiles = FileUtils.walkExtension(MapLayers.MAP_FOLDER, "-gh");
-        ghFiles.add(MapLayers.MAP_FOLDER); //Add default folder for loading unzipped GH-Files
+        ghFiles = new ArrayList<File>();
+        for (File f : MapLayers.MAP_FOLDERS) {
+            ghFiles.addAll(FileUtils.walkExtension(f, "-gh"));
+            ghFiles.add(f); //Add default folder for loading unzipped GH-Files
+        }
     }
 
+    //Getters and Setters
     public static ArrayList<File> getGraphHopperFiles(){
         return ghFiles;
     }
 
     public void setGraphHopperFiles(ArrayList<File> ghFiles){
         this.ghFiles = ghFiles;
+    }
+
+    public GHPointArea getStartPoint() {
+        return mStartPoint;
+    }
+
+    public void setStartPoint(GHPointArea ghPointArea) {
+        mStartPoint = updateGHPointArea(mStartPoint, ghPointArea);
+
+        markerStart = putMarkerItem(markerStart, mStartPoint.getGhPoint(), START_INDEX,
+                R.string.departure, R.drawable.ic_place_green_24dp, -1);
+    }
+
+    public GHPointArea getDestinationPoint() {
+        return mDestinationPoint;
+    }
+
+    public void setDestinationPoint(GHPointArea ghPointArea) {
+        mDestinationPoint = updateGHPointArea(mDestinationPoint, ghPointArea);
+
+        markerDestination = putMarkerItem(markerDestination, mDestinationPoint.getGhPoint(), DEST_INDEX,
+                R.string.destination,
+                R.drawable.ic_place_red_24dp, -1);
+    }
+
+    public List<GHPointArea> getViaPoints() {
+        return mViaPoints;
+    }
+
+    public void addViaPoint(GHPointArea ghPointArea) {
+        GHPointAreaRoute.getInstance().add(ghPointArea, this);
+        mViaPoints.add(ghPointArea);
+        putMarkerItem(null, ghPointArea.getGhPoint(), mViaPoints.size() - 1,
+                R.string.viapoint, R.drawable.ic_place_yellow_24dp, -1);
+    }
+
+    public void addNonRoutePoint(GHPointArea ghPointArea) {
+        mNonRoutePoints.add(ghPointArea);
+        putMarkerItem(null, ghPointArea.getGhPoint(), (-(mNonRoutePoints.size() - 1)) - 3,
+                R.string.poi, R.drawable.ic_place_black_24dp, -1);
+    }
+
+    public void removePoint(int index) {
+        if (index == START_INDEX) {
+            GHPointAreaRoute.getInstance().remove(mStartPoint);
+            mStartPoint = null;
+        } else if (index == DEST_INDEX) {
+            GHPointAreaRoute.getInstance().remove(mDestinationPoint);
+            mDestinationPoint = null;
+        } else if (index < -2) {
+            //Non route point markers
+            int i = -(index + 3);
+            mNonRoutePoints.remove(i);
+        } else {
+            GHPointAreaRoute.getInstance().getGHPointAreas().remove(mViaPoints.get(index));
+            mViaPoints.remove(index);
+        }
+        onRoutePointUpdate();
     }
 
     /**
@@ -156,7 +224,7 @@ public class RouteSearch implements GHPointListener {
      * Reverse Geocoding
      */
     public String getAddress(GeoPoint p) {
-        GeocoderNominatim geocoder = new GeocoderNominatim(App.activity);
+        GeocoderNominatim geocoder = new GeocoderNominatim(activity);
         String theAddress;
         try {
             double dLatitude = p.getLatitude();
@@ -213,7 +281,7 @@ public class RouteSearch implements GHPointListener {
         if (item != null)
             mItineraryMarkers.removeItem(item);
 
-        Drawable drawable = ContextCompat.getDrawable(App.activity, markerResId);
+        Drawable drawable = ContextCompat.getDrawable(activity, markerResId);
         Bitmap bitmap = AndroidGraphics.drawableToBitmap(drawable);
         MarkerSymbol marker = new MarkerSymbol(bitmap, 0.5f, 1);
 
@@ -223,7 +291,7 @@ public class RouteSearch implements GHPointListener {
         overlayItem.setMarker(marker);
 
         if (iconResId != -1) {
-            overlayItem.setImage(ContextCompat.getDrawable(App.activity, iconResId));
+            overlayItem.setImage(ContextCompat.getDrawable(activity, iconResId));
         }
 
         overlayItem.setRelatedObject(index);
@@ -236,26 +304,6 @@ public class RouteSearch implements GHPointListener {
         new GeocodingTask().execute(overlayItem);
 
         return overlayItem;
-    }
-
-    public void addViaPoint(GHPointArea p) {
-        mViaPoints.add(p);
-        putMarkerItem(null, p.getGhPoint(), mViaPoints.size() - 1,
-                R.string.viapoint, R.drawable.ic_place_yellow_24dp, -1);
-    }
-
-    public void removePoint(int index) {
-        if (index == START_INDEX) {
-            GHPointAreaRoute.getInstance().remove(mStartPoint);
-            mStartPoint = null;
-        } else if (index == DEST_INDEX) {
-            GHPointAreaRoute.getInstance().remove(mDestinationPoint);
-            mDestinationPoint = null;
-        } else {
-            GHPointAreaRoute.getInstance().getGHPointAreas().remove(mViaPoints.get(index));
-            mViaPoints.remove(index);
-        }
-        onRoutePointUpdate();
     }
 
     public void updateIternaryMarkers() {
@@ -277,6 +325,10 @@ public class RouteSearch implements GHPointListener {
                     R.string.destination,
                     R.drawable.ic_place_red_24dp, -1);
         }
+        for (int index = 0; index < mNonRoutePoints.size(); index++) {
+            putMarkerItem(null, mNonRoutePoints.get(index).getGhPoint(), (-index) - 3,
+                    R.string.poi, R.drawable.ic_place_black_24dp, -1);
+        }
         App.map.updateMap(true);
     }
 
@@ -287,9 +339,9 @@ public class RouteSearch implements GHPointListener {
         mRouteOverlay.clearPath();
 
         if (route == null || route.hasErrors()) {
-            App.activity.showToastOnUiThread(App.activity.getString(R.string.route_lookup_error));
+            activity.showToastOnUiThread(activity.getString(R.string.route_lookup_error));
             if (route != null)
-                Log.e(App.activity.getString(R.string.route_lookup_error), route.getErrors().toString());
+                Log.e(activity.getString(R.string.route_lookup_error), route.getErrors().toString());
             return;
         }
 
@@ -371,7 +423,7 @@ public class RouteSearch implements GHPointListener {
                         GHPointArea ghpaBefore = ghListBefore.get(ghListBefore.size()-1);
                         //Get first element of currentList
                         GHPointArea ghpaCurrent = subRoutes.get(0);
-                        CrossMapCalculator calculator = new CrossMapCalculator(App.activity);
+                        CrossMapCalculator calculator = new CrossMapCalculator(activity);
                         GHPoint crossPoint = calculator.getCrossPoint(ghpaBefore, ghpaCurrent);
                         if(crossPoint == null) return null;
 
@@ -411,7 +463,7 @@ public class RouteSearch implements GHPointListener {
         @Override
         protected void onPostExecute(List<GHResponse> resp) {
             if(resp == null|| resp.isEmpty()){
-                App.activity.showToastOnUiThread("Route calculation failed");
+                activity.showToastOnUiThread("Route calculation failed");
                 return;
             }
             PathWrapper pathWrapper = new PathWrapper();
@@ -428,7 +480,7 @@ public class RouteSearch implements GHPointListener {
             for(int i = 0; i<resp.size(); i++ ) {
                 GHResponse re = resp.get(i);
                 if (re == null || !re.getErrors().isEmpty()) {
-                    App.activity.showToastOnUiThread("Route calculation failed. No routing data available");
+                    activity.showToastOnUiThread("Route calculation failed. No routing data available");
                     return;
                 }
 
@@ -460,7 +512,7 @@ public class RouteSearch implements GHPointListener {
             pathWrapper.setTime(time);
             pathWrapper.setWaypoints(wayPoints);
 
-            App.activity.showToastOnUiThread("Route found in: " + time + " Seconds.");
+            activity.showToastOnUiThread("Route found in: " + time + " Seconds.");
             updateOverlays(pathWrapper);
 
             mRouteBar.set(GraphhopperOsmdroidAdapter.convertPathWrapperToRoute(pathWrapper));
@@ -504,7 +556,16 @@ public class RouteSearch implements GHPointListener {
 
         mRouteTask = new UpdateRouteTask();
         mRouteTask.execute(waypoints);
-        App.activity.showToastOnUiThread("calculating path ...");
+        activity.showToastOnUiThread("calculating path ...");
+    }
+
+    public void shareLocation(GHPoint poiLocation) {
+        if (poiLocation == null) return;
+        String uri = "geo:" + poiLocation.getLat() + ","
+                + poiLocation.getLon() + "?q=" + poiLocation.getLat()
+                + "," + poiLocation.getLon();
+        activity.startActivity(new Intent(android.content.Intent.ACTION_VIEW,
+                Uri.parse(uri)));
     }
 
     /**
@@ -512,26 +573,20 @@ public class RouteSearch implements GHPointListener {
      */
     boolean onContextItemSelected(MenuItem item, GeoPoint geoPoint) {
         switch (item.getItemId()) {
-            case R.id.menu_route_departure:
-                mStartPoint = updateGHPointArea(mStartPoint,
-                        new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles));
+            case R.id.menu_share_location:
+                shareLocation(convertGeoPointToGHPoint(geoPoint));
+                return true;
 
-                markerStart = putMarkerItem(markerStart, mStartPoint.getGhPoint(), START_INDEX,
-                        R.string.departure, R.drawable.ic_place_green_24dp, -1);
+            case R.id.menu_route_departure:
+                setStartPoint(new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles));
                 return true;
 
             case R.id.menu_route_destination:
-                mDestinationPoint = updateGHPointArea(mDestinationPoint,
-                        new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles));
-
-                markerDestination = putMarkerItem(markerDestination, mDestinationPoint.getGhPoint(), DEST_INDEX,
-                        R.string.destination,
-                        R.drawable.ic_place_red_24dp, -1);
+                setDestinationPoint(new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles));
                 return true;
 
             case R.id.menu_route_viapoint:
                 GHPointArea viaPoint = new GHPointArea(convertGeoPointToGHPoint(geoPoint), ghFiles);
-                GHPointAreaRoute.getInstance().add(viaPoint, this);
                 addViaPoint(viaPoint);
                 return true;
 

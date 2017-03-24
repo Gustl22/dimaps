@@ -22,20 +22,6 @@
         android:label="@string/application_name">
 
         android:theme="@style/AppTheme.NoActionBar"
-        <!--Graphhopper activity-->
-        <!--<activity-->
-        <!--android:name=".MainActivity"-->
-        <!--android:configChanges="keyboardHidden|orientation|screenSize">-->
-        <!--<intent-filter>-->
-        <!--<action android:name="android.intent.action.MAIN" />-->
-        <!--<category android:name="android.intent.category.LAUNCHER" />-->
-        <!--</intent-filter>-->
-        <!--<intent-filter>-->
-        <!--<action android:name="android.intent.action.VIEW" />-->
-        <!--<category android:name="android.intent.category.DEFAULT" />-->
-        <!--<data android:scheme="geo" />-->
-        <!--</intent-filter>-->
-        <!--</activity>-->
         <activity
             android:name=".TileMap"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -53,7 +39,11 @@
         </activity>
         <activity
             android:name=".preferences.EditPreferences"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
+            android:configChanges="keyboardHidden|orientation|screenSize">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".TileMap" />
+        </activity>
         <activity
             android:name=".filepicker.FilePicker"
             android:configChanges="keyboardHidden|orientation|screenSize" />
@@ -76,7 +66,7 @@
                 android:value=".TileMap" />
         </activity>
         <activity
-            android:name=".search.SearchActivity"
+            android:name=".search.PoiSearchActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:launchMode="singleTop"
             android:windowSoftInputMode="stateVisible"
