@@ -15,7 +15,6 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -30,9 +29,9 @@ import com.unnamed.b.atv.view.AndroidTreeView;
 import org.oscim.app.App;
 import org.oscim.app.R;
 import org.oscim.app.graphhopper.GHAsyncTask;
+import org.oscim.app.holder.AreaFileInfo;
 import org.oscim.app.holder.SelectableHeaderHolder;
 import org.oscim.app.holder.SelectableItemHolder;
-import org.oscim.app.holder.AreaFileInfo;
 import org.oscim.app.preferences.StoragePreference;
 
 import java.io.File;
@@ -68,7 +67,6 @@ public class MapDownloadActivity extends DownloadReceiverActivity implements Ada
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_download_maps);
 

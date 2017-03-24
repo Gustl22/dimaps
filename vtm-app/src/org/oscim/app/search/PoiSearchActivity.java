@@ -40,7 +40,7 @@ public class PoiSearchActivity extends AppCompatActivity {
     private File mCurrentPoiFile;
     private List<PointOfInterest> mPoiSuggestions;
     private List<String> mStringSuggestions;
-    private ArrayAdapter<String> mAutoCompleteSearchBarAdapter;
+    private ArrayAdapter<String> mSuggestionsAdapter;
     private PoiSearch mPoiSearch;
     private PointOfInterest mSelectedPOI;
     private TextView mResult;
@@ -96,9 +96,9 @@ public class PoiSearchActivity extends AppCompatActivity {
             }
         });
         //Set autocompletion-List
-        mAutoCompleteSearchBarAdapter = new ArrayAdapter<String>
+        mSuggestionsAdapter = new ArrayAdapter<String>
                 (this, android.R.layout.simple_dropdown_item_1line, mStringSuggestions);
-        mSearchSuggestions.setAdapter(mAutoCompleteSearchBarAdapter);
+        mSearchSuggestions.setAdapter(mSuggestionsAdapter);
         //Onclick suggested item
         mSearchSuggestions.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -142,7 +142,7 @@ public class PoiSearchActivity extends AppCompatActivity {
             mAreaSelection.setText(Html.fromHtml(resText));
         } else {
             mResult.setText(Html.fromHtml(resText));
-            poiHandler.setPoi(mSelectedPOI);
+            poiHandler.setPoi(mSelectedPOI, mCurrentPoiFile);
         }
     }
 
@@ -179,9 +179,9 @@ public class PoiSearchActivity extends AppCompatActivity {
                 mPoiSuggestions = pointOfInterests;
                 mStringSuggestions = getStringListFromPoiList(mPoiSuggestions);
 
-                mAutoCompleteSearchBarAdapter.clear();
-                mAutoCompleteSearchBarAdapter.addAll(mStringSuggestions);
-                mAutoCompleteSearchBarAdapter.notifyDataSetChanged();
+                mSuggestionsAdapter.clear();
+                mSuggestionsAdapter.addAll(mStringSuggestions);
+                mSuggestionsAdapter.notifyDataSetChanged();
                 expandSuggestions();
 //                mAutoCompleteSearchBarAdapter.notifyDataSetChanged();
             }

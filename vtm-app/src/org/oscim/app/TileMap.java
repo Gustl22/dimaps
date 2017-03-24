@@ -57,6 +57,7 @@ import org.oscim.app.location.Compass;
 import org.oscim.app.location.LocationDialog;
 import org.oscim.app.location.LocationHandler;
 import org.oscim.app.preferences.EditPreferences;
+import org.oscim.app.search.PoiFavoritesActivity;
 import org.oscim.app.search.PoiSearchActivity;
 import org.oscim.core.GeoPoint;
 import org.oscim.core.Tile;
@@ -67,6 +68,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+
+import static org.oscim.app.App.activity;
+
 
 public class TileMap extends MapActivity implements MapEventsReceiver,
         NavigationView.OnNavigationItemSelectedListener, CrossMapCalculatorListener {
@@ -114,7 +118,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         registerMapView(App.view);
 
         App.map = mMap;
-        App.activity = this;
+        activity = this;
 
         mMapLayers = new MapLayers();
         mMapLayers.setBaseMap(this);
@@ -145,21 +149,21 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         mSearchBar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(App.activity, PoiSearchActivity.class));
+                startActivity(new Intent(activity, PoiSearchActivity.class));
             }
         });
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
 
-        mCompassFab = (FloatingActionButton) App.activity.findViewById(R.id.compass);
+        mCompassFab = (FloatingActionButton) activity.findViewById(R.id.compass);
         mCompassFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 toggleCompass();
             }
         });
-        mLocationFab = (FloatingActionButton) App.activity.findViewById(R.id.location);
+        mLocationFab = (FloatingActionButton) activity.findViewById(R.id.location);
         mLocationFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -266,7 +270,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
 //                TODO preferences for current route
                 break;
             case R.id.my_places:
-//                TODO create favorite-activity
+                startActivity(new Intent(this, PoiFavoritesActivity.class));
                 break;
             case R.id.tools:
 //                TODO create tools
@@ -785,7 +789,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
             public void run() {
                 if (progress == 0) {
                     if(progressDialog == null){
-                        progressDialog = new ProgressDialog(App.activity);
+                        progressDialog = new ProgressDialog(activity);
                         progressDialog.setProgressStyle(style);
                         progressDialog.setMessage(status);
                         progressDialog.setCancelable(false);

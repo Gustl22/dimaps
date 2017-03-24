@@ -75,6 +75,16 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".TileMap" />
         </activity>
+        <activity
+            android:name=".search.PoiFavoritesActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="stateHidden"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".TileMap" />
+        </activity>
 
         <!-- <receiver
              android:name=".ConnectionHandler"

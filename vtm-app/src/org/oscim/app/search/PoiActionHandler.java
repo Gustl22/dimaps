@@ -1,6 +1,7 @@
 package org.oscim.app.search;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.view.View;
 
 import com.graphhopper.util.shapes.GHPoint;
@@ -20,6 +21,7 @@ import java.util.List;
 public class PoiActionHandler {
     private Activity activity;
     private PointOfInterest poi;
+    private File poiFile;
     private GHPoint poiLocation;
     private RouteSearch routeSearch = App.routeSearch;
     private List<File> ghFiles = RouteSearch.getGraphHopperFiles();
@@ -58,8 +60,10 @@ public class PoiActionHandler {
     }
 
     public void markAsFavorite() {
-        if (poi == null || ghFiles == null) return;
-        //TODO implement Favorite section
+        if (poi == null || poiFile == null || !poiFile.exists()) return;
+        PoiFavoritesHandler favorHandler = PoiFavoritesHandler.getInstance();
+        favorHandler.addFavorite(poi, poiFile.getParentFile());
+        activity.startActivity(new Intent(App.activity, PoiFavoritesActivity.class));
         activity.finish();
     }
 
@@ -143,9 +147,10 @@ public class PoiActionHandler {
         return poi;
     }
 
-    public void setPoi(PointOfInterest poi) {
-        if (poi == null) return;
+    public void setPoi(PointOfInterest poi, File poiFile) {
+        if (poi == null || poiFile == null || !poiFile.exists()) return;
         poiLocation = new GHPoint(poi.getLatitude(), poi.getLongitude());
         this.poi = poi;
+        this.poiFile = poiFile;
     }
 }
