@@ -43,14 +43,15 @@ import java.util.List;
  * Long press on map to search inside visible bounding box.<br/>
  * Tap on POIs to show their name (in device's locale).
  */
-public class PoiSearch {
+public class PoiSearch implements PoiSelector {
     private File mPOI_File;
     private PointOfInterest poiArea; //The Area of poiFile expressed as POI
 
     public PoiSearch() {
     }
 
-    public File getPoiFile(){
+    @Override
+    public File getPoiFile(int index) {
         return mPOI_File;
     }
 

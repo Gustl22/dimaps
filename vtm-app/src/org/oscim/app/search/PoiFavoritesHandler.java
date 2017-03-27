@@ -65,7 +65,6 @@ public class PoiFavoritesHandler {
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
             actualPois.addAll((List<PointOfInterest>) pair.getValue());
-            it.remove(); // avoids a ConcurrentModificationException
         }
         return actualPois;
     }
@@ -100,7 +99,7 @@ public class PoiFavoritesHandler {
                 actualPoiIds.add(poi.getId());
             }
             storeFavorites(new File((String) pair.getKey()), actualPoiIds);
-            it.remove(); // avoids a ConcurrentModificationException
+            //it.remove(); // avoids a ConcurrentModificationException
         }
     }
 

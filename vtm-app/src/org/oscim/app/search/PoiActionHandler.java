@@ -19,62 +19,62 @@ import java.util.List;
  */
 
 public class PoiActionHandler {
-    private Activity activity;
-    private PointOfInterest poi;
-    private File poiFile;
-    private GHPoint poiLocation;
-    private RouteSearch routeSearch = App.routeSearch;
-    private List<File> ghFiles = RouteSearch.getGraphHopperFiles();
-    private View startButton;
-    private View destinationButton;
-    private View showMapButton;
-    private View favoriteButton;
-    private View shareButton;
+    private Activity mActivity;
+    private PointOfInterest mPoi;
+    private File mPoiFile;
+    private GHPoint mPoiLocation;
+    private RouteSearch mRouteSearch = App.routeSearch;
+    private List<File> mGhFiles = RouteSearch.getGraphHopperFiles();
+    private View mvStartButton;
+    private View mvDestinationButton;
+    private View mvShowMapButton;
+    private View mvFavoriteButton;
+    private View mvShareButton;
 
     public PoiActionHandler(Activity activity) {
-        this.activity = activity;
+        this.mActivity = activity;
     }
 
 
     public void addDestination() {
-        if (poi == null || ghFiles == null) return;
-        GHPointArea area = new GHPointArea(poiLocation, ghFiles);
-        if (routeSearch.getDestinationPoint() == null) {
-            routeSearch.setDestinationPoint(area);
+        if (mPoi == null || mGhFiles == null) return;
+        GHPointArea area = new GHPointArea(mPoiLocation, mGhFiles);
+        if (mRouteSearch.getDestinationPoint() == null) {
+            mRouteSearch.setDestinationPoint(area);
         } else {
-            routeSearch.addViaPoint(area);
+            mRouteSearch.addViaPoint(area);
         }
         App.activity.showToastOnUiThread("Waypoint added");
     }
 
     public void setStart() {
-        if (poi == null || ghFiles == null) return;
-        routeSearch.setStartPoint(new GHPointArea(poiLocation, ghFiles));
+        if (mPoi == null || mGhFiles == null) return;
+        mRouteSearch.setStartPoint(new GHPointArea(mPoiLocation, mGhFiles));
         App.activity.showToastOnUiThread("Start set");
     }
 
     public void showOnMap() {
-        if (poi == null) return;
-        routeSearch.addNonRoutePoint(new GHPointArea(poiLocation, ghFiles));
-        activity.finish();
+        if (mPoi == null) return;
+        mRouteSearch.addNonRoutePoint(new GHPointArea(mPoiLocation, mGhFiles));
+        mActivity.finish();
     }
 
     public void markAsFavorite() {
-        if (poi == null || poiFile == null || !poiFile.exists()) return;
+        if (mPoi == null || mPoiFile == null || !mPoiFile.exists()) return;
         PoiFavoritesHandler favorHandler = PoiFavoritesHandler.getInstance();
-        favorHandler.addFavorite(poi, poiFile.getParentFile());
-        activity.startActivity(new Intent(App.activity, PoiFavoritesActivity.class));
-        activity.finish();
+        favorHandler.addFavorite(mPoi, mPoiFile.getParentFile());
+        mActivity.startActivity(new Intent(App.activity, PoiFavoritesActivity.class));
+        mActivity.finish();
     }
 
     //Getter and Setter
     public View getStartButton() {
-        return startButton;
+        return mvStartButton;
     }
 
-    public void setStartButton(View button) {
+    public void setMvStartButton(View button) {
         if (button == null) return;
-        this.startButton = button;
+        this.mvStartButton = button;
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -83,13 +83,13 @@ public class PoiActionHandler {
         });
     }
 
-    public View getDestinationButton() {
-        return destinationButton;
+    public View getMvDestinationButton() {
+        return mvDestinationButton;
     }
 
     public void setDestinationButton(View button) {
         if (button == null) return;
-        this.destinationButton = button;
+        this.mvDestinationButton = button;
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -99,12 +99,12 @@ public class PoiActionHandler {
     }
 
     public View getShowMapButton() {
-        return showMapButton;
+        return mvShowMapButton;
     }
 
-    public void setShowMapButton(View button) {
+    public void setMvShowMapButton(View button) {
         if (button == null) return;
-        this.showMapButton = button;
+        this.mvShowMapButton = button;
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -114,12 +114,12 @@ public class PoiActionHandler {
     }
 
     public View getFavoriteButton() {
-        return favoriteButton;
+        return mvFavoriteButton;
     }
 
-    public void setFavoriteButton(View button) {
+    public void setMvFavoriteButton(View button) {
         if (button == null) return;
-        this.favoriteButton = button;
+        this.mvFavoriteButton = button;
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -129,28 +129,28 @@ public class PoiActionHandler {
     }
 
     public View getShareButton() {
-        return shareButton;
+        return mvShareButton;
     }
 
-    public void setShareButton(View button) {
+    public void setMvShareButton(View button) {
         if (button == null) return;
-        this.shareButton = button;
+        this.mvShareButton = button;
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                routeSearch.shareLocation(poiLocation);
+                mRouteSearch.shareLocation(mPoiLocation);
             }
         });
     }
 
     public PointOfInterest getPoi() {
-        return poi;
+        return mPoi;
     }
 
     public void setPoi(PointOfInterest poi, File poiFile) {
         if (poi == null || poiFile == null || !poiFile.exists()) return;
-        poiLocation = new GHPoint(poi.getLatitude(), poi.getLongitude());
-        this.poi = poi;
-        this.poiFile = poiFile;
+        mPoiLocation = new GHPoint(poi.getLatitude(), poi.getLongitude());
+        this.mPoi = poi;
+        this.mPoiFile = poiFile;
     }
 }

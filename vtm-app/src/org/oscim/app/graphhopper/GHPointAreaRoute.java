@@ -11,14 +11,14 @@ import java.util.HashSet;
  */
 
 public class GHPointAreaRoute {
-    private Collection<GHPointListener> listeners = new HashSet<GHPointListener>();
+    private Collection<GHPointListener> mListeners = new HashSet<GHPointListener>();
 
     public void addListener(GHPointListener toAdd) {
-        listeners.add(toAdd);
+        mListeners.add(toAdd);
     }
     public void updateRoutePoints() {
         // Notify everybody that may be interested.
-        for (GHPointListener hl : listeners)
+        for (GHPointListener hl : mListeners)
             hl.onRoutePointUpdate();
     }
 

@@ -16,16 +16,16 @@ import java.util.List;
 public class GHPointArea {
 
     private volatile GraphHopper graphHopper;
-    private GHPoint ghPoint;
+    private GHPoint mGhPoint;
     public final Object virtualObject = new Object();
-    private static Collection<GraphHopper> graphHopperMemory;
+    private static Collection<GraphHopper> sGraphHopperMemory;
 
     public static Collection<GraphHopper> getGraphHopperMemory() {
-        return graphHopperMemory;
+        return sGraphHopperMemory;
     }
 
     public static void setGraphHopperMemory(Collection<GraphHopper> ghMemory) {
-        graphHopperMemory = ghMemory;
+        sGraphHopperMemory = ghMemory;
     }
 
     /**
@@ -35,8 +35,8 @@ public class GHPointArea {
      * @param ghFiles All graphhopper directories, that store data
      */
     public GHPointArea(GHPoint ghPoint, List<File> ghFiles) {
-        this.ghPoint = ghPoint;
-        if (graphHopperMemory == null) graphHopperMemory = new HashSet<>();
+        this.mGhPoint = ghPoint;
+        if (sGraphHopperMemory == null) sGraphHopperMemory = new HashSet<>();
         GHAsyncTask<Object, Void, GraphHopper> task = new GHAsyncTask<Object, Void, GraphHopper>() {
             @Override
             protected GraphHopper saveDoInBackground(Object... params) throws Exception {
@@ -52,7 +52,7 @@ public class GHPointArea {
                 }
             }
         };
-        AsyncTaskCompat.executeParallel(task, ghPoint, ghFiles, graphHopperMemory);
+        AsyncTaskCompat.executeParallel(task, ghPoint, ghFiles, sGraphHopperMemory);
     }
 
     /**
@@ -61,7 +61,7 @@ public class GHPointArea {
      * @param hopper Predefined graphhopper
      */
     public GHPointArea(GHPoint ghPoint, GraphHopper hopper) {
-        this.ghPoint = ghPoint;
+        this.mGhPoint = ghPoint;
         this.graphHopper = hopper;
         synchronized (virtualObject) {
             virtualObject.notifyAll();
@@ -94,7 +94,7 @@ public class GHPointArea {
         }
         //lockSelectGraphhoper.lock();
         //Search Point in already loaded areas
-        for (GraphHopper gh : graphHopperMemory) {
+        for (GraphHopper gh : sGraphHopperMemory) {
             if (isInGraphHopper(gh, pt)) {
                 if (!gh.equals(lastCalledGraphHopper))
                     lastCalledGraphHopper = gh;
@@ -148,10 +148,10 @@ public class GHPointArea {
     }
 
     public GHPoint getGhPoint() {
-        return ghPoint;
+        return mGhPoint;
     }
 
-    public void setGhPoint(GHPoint ghPoint) {
-        this.ghPoint = ghPoint;
+    public void setGhPoint(GHPoint mGhPoint) {
+        this.mGhPoint = mGhPoint;
     }
 }
