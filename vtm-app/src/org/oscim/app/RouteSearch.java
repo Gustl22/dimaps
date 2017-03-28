@@ -48,6 +48,7 @@ import org.oscim.app.graphhopper.GHPointArea;
 import org.oscim.app.graphhopper.GHPointAreaRoute;
 import org.oscim.app.graphhopper.GHPointListener;
 import org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter;
+import org.oscim.app.utils.FileUtils;
 import org.oscim.backend.canvas.Bitmap;
 import org.oscim.backend.canvas.Paint;
 import org.oscim.core.GeoPoint;

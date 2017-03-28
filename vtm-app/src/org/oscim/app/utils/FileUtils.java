@@ -12,9 +12,11 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.oscim.app;
+package org.oscim.app.utils;
 
 import android.content.res.Resources;
+
+import org.oscim.app.R;
 
 import java.io.File;
 import java.text.DecimalFormat;

@@ -1,5 +1,5 @@
 rootProject.name = 'vtm-parent'
-include ':vtm', ':spatialite-android'
+include ':vtm'
 include ':vtm-http'
 include ':vtm-jts'
 include ':vtm-tests'

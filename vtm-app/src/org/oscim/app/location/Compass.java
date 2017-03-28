@@ -483,10 +483,8 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
             mIsRotationByLocation = true;
             mRotationV[0] = location.getBearing();
             onRotationChanged();
-            //Toast.makeText(App.activity, "Bearing:"+location.getBearing(), Toast.LENGTH_SHORT).show();
         } else {
             mIsRotationByLocation = false;
-            //Toast.makeText(App.activity, "No speed", Toast.LENGTH_SHORT).show();
         }
         mMap.updateMap(true);
     }

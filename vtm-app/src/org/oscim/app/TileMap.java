@@ -51,7 +51,7 @@ import android.widget.Toast;
 
 import org.oscim.android.MapView;
 import org.oscim.app.download.MapDownloadActivity;
-import org.oscim.app.filepicker.Utils;
+import org.oscim.app.utils.ColorUtils;
 import org.oscim.app.graphhopper.CrossMapCalculatorListener;
 import org.oscim.app.location.Compass;
 import org.oscim.app.location.LocationDialog;
@@ -59,6 +59,7 @@ import org.oscim.app.location.LocationHandler;
 import org.oscim.app.preferences.EditPreferences;
 import org.oscim.app.search.PoiFavoritesActivity;
 import org.oscim.app.search.PoiSearchActivity;
+import org.oscim.app.utils.CustomAnimationUtils;
 import org.oscim.core.GeoPoint;
 import org.oscim.core.Tile;
 import org.oscim.overlay.DistanceTouchOverlay;
@@ -573,17 +574,17 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         switch(mCompass.getMode()){
             case OFF:
                 mCompass.setMode(Compass.Mode.C2D);
-                mCompassFab.setBackgroundTintList(ColorStateList.valueOf(Utils.adjustAlpha(getResources().getColor(R.color.colorAccent), 0.4f)));
+                mCompassFab.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.adjustAlpha(getResources().getColor(R.color.colorAccent), 0.4f)));
                 //App.activity.showToastOnUiThread("Compass 2D");
                 break;
             case C2D:
                 mCompass.setMode(Compass.Mode.C3D);
-                mCompassFab.setBackgroundTintList(ColorStateList.valueOf(Utils.adjustAlpha(getResources().getColor(R.color.colorSecondAccent), 0.4f)));
+                mCompassFab.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.adjustAlpha(getResources().getColor(R.color.colorSecondAccent), 0.4f)));
                 //App.activity.showToastOnUiThread("Compass 3D");
                 break;
             case C3D:
                 mCompass.setMode(Compass.Mode.OFF);
-                mCompassFab.setBackgroundTintList(ColorStateList.valueOf(Utils.adjustAlpha(getResources().getColor(R.color.white), 0.4f)));
+                mCompassFab.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.adjustAlpha(getResources().getColor(R.color.white), 0.4f)));
                 mCompass.setRotation(0);
                 mCompass.setTilt(0);
                 //App.activity.showToastOnUiThread("Manual");
@@ -699,9 +700,9 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
 
     private void uncheckBlankMode(){
         if(isBlankMode) {
-            CustomAnimationUtils.SlideUpBack(mToolbar, this);
-            CustomAnimationUtils.SlideRightBack(mLocationFab, this);
-            CustomAnimationUtils.SlideRightBack(mCompassFab, this);
+            CustomAnimationUtils.SlideYBack(mToolbar, this);
+            CustomAnimationUtils.SlideXBack(mLocationFab, this);
+            CustomAnimationUtils.SlideXBack(mCompassFab, this);
             isBlankMode = false;
             delayBlankMode();
         }

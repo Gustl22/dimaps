@@ -5,7 +5,7 @@ import android.util.Log;
 import org.mapsforge.poi.android.storage.AndroidPoiPersistenceManagerFactory;
 import org.mapsforge.poi.storage.PoiPersistenceManager;
 import org.mapsforge.poi.storage.PointOfInterest;
-import org.oscim.app.FileUtils;
+import org.oscim.app.utils.FileUtils;
 import org.oscim.app.MapLayers;
 
 import java.io.File;

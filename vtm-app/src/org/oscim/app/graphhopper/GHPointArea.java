@@ -8,6 +8,8 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.shapes.GHPoint;
 
+import org.oscim.app.App;
+
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
@@ -50,6 +52,9 @@ public class GHPointArea {
                 synchronized (virtualObject) {
                     virtualObject.notifyAll();
                 }
+                if (hopper == null) {
+                    App.activity.showToastOnUiThread("No Hopper matches the point");
+                }
             }
         };
         AsyncTaskCompat.executeParallel(task, ghPoint, ghFiles, sGraphHopperMemory);
@@ -86,9 +91,11 @@ public class GHPointArea {
     public static synchronized GraphHopper autoSelectGraphhopper(GHPoint pt, List<File> ghFiles,
                                                                  Collection<GraphHopper> ghMemory) {
 
-        Log.w("Hopper", "Lock");
+        //Log.w("Hopper", "Lock");
         if (lastCalledGraphHopper != null) {
             if (isInGraphHopper(lastCalledGraphHopper, pt)) {
+//                App.activity.showToastOnUiThread("LastCalledHopper: "
+//                        + lastCalledGraphHopper.getGraphHopperStorage());
                 return lastCalledGraphHopper;
             }
         }
@@ -98,10 +105,13 @@ public class GHPointArea {
             if (isInGraphHopper(gh, pt)) {
                 if (!gh.equals(lastCalledGraphHopper))
                     lastCalledGraphHopper = gh;
+//                App.activity.showToastOnUiThread("Graphhopper from existent: "
+//                        + gh.getGraphHopperStorage());
                 return gh;
             }
         }
         GraphHopper hopper = null;
+        //App.activity.showToastOnUiThread("GHFileCount: "+ghFiles.size());
         //Calculation will be in different area
         fileloop:
         for (File f : ghFiles) {
@@ -122,11 +132,13 @@ public class GHPointArea {
             }
             if (isInGraphHopper(hopper, pt)) {
                 ghMemory.add(hopper);
+//                App.activity.showToastOnUiThread("Hopper was new loaded: "
+//                        + hopper.getGraphHopperStorage());
                 break;
             }
         }
         //lockSelectGraphhoper.unlock();
-        Log.w("Hopper", "Unlock" + hopper.getGraphHopperLocation());
+        //Log.w("Hopper", "Unlock" + hopper.getGraphHopperLocation());
         if (!hopper.equals(lastCalledGraphHopper))
             lastCalledGraphHopper = hopper;
         return hopper;

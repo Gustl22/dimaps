@@ -13,7 +13,7 @@ import com.github.johnkil.print.PrintView;
 
 import org.mapsforge.core.model.Tag;
 import org.mapsforge.poi.storage.PointOfInterest;
-import org.oscim.app.CustomAnimationUtils;
+import org.oscim.app.utils.CustomAnimationUtils;
 import org.oscim.app.R;
 
 import java.io.File;

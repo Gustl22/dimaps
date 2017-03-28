@@ -10,6 +10,7 @@ dependencies {
     compile 'org.mapsforge:vtm-extras:0.+'
     compile 'org.mapsforge:mapsforge-poi:0.8.0-rc1'
     compile 'org.mapsforge:mapsforge-poi-android:0.8.0-rc1'
+    //compile 'org.mapsforge:spatialite-android:0.8.0'
     //causes problems with staticlogger
     //    compile ('com.noveogroup.android:android-logger:1.+'){
     //        exclude module: 'support-v4'
@@ -43,8 +44,12 @@ android {
         versionCode versionCode()
         versionName versionName()
         minSdkVersion androidMinSdk()
-
+        vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
+//        Filters the lib architecture (Spatialite is not available for x64)
+        ndk {
+            abiFilters "armeabi", "armeabi-v7a", "x86"
+        }
     }
 
     sourceSets {
@@ -58,9 +63,10 @@ android {
                 jniLibs.srcDirs += "${dir.path}/lib"
             }
             //Spatialite database for POI search
-            file("${rootDir}/spatialite-android/natives").eachDir() { dir ->
-                jniLibs.srcDirs += "${dir.path}/lib"
-            }
+//            file('libs').eachDir() { dir ->
+//                jniLibs.srcDirs += "${dir.path}/lib"
+//            }
+            jniLibs.srcDirs += ['libs']
         }
         debug.setRoot('build-types/debug')
         release.setRoot('build-types/release')

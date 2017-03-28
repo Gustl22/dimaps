@@ -1,75 +1,57 @@
-package org.oscim.app;
+package org.oscim.app.utils;
 
 import android.content.Context;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.animation.Transformation;
 
 /**
  * Created by Gustl on 09.03.2017.
  */
 
+@RequiresApi(api = Build.VERSION_CODES.HONEYCOMB_MR1)
 public class CustomAnimationUtils {
 
     public static void SlideUp(View view, Context context)
     {
-        view.startAnimation(AnimationUtils.loadAnimation(context,
-                R.anim.slide_up));
-        view.setVisibility(View.GONE);
+        view.animate().translationY(-2 * view.getHeight());
+//      view.setVisibility(View.GONE);
     }
 
 
     public static void SlideDown(View view,Context context)
     {
-        view.startAnimation(AnimationUtils.loadAnimation(context,
-                R.anim.slide_down));
-        view.setVisibility(View.GONE);
+        view.animate().translationY(2 * view.getHeight());
+//      view.setVisibility(View.GONE);
     }
 
     public static void SlideRight(View view,Context context)
     {
-        view.startAnimation(AnimationUtils.loadAnimation(context,
-                R.anim.slide_right));
-        view.setVisibility(View.GONE);
+        view.animate().translationX(2 * view.getHeight());
+//      view.setVisibility(View.GONE);
     }
 
     public static void SlideLeft(View view,Context context)
     {
-        view.startAnimation(AnimationUtils.loadAnimation(context,
-                R.anim.slide_left));
-        view.setVisibility(View.GONE);
+        view.animate().translationX(-2 * view.getHeight());
+//      view.setVisibility(View.GONE);
     }
 
-    public static void SlideUpBack(View view, Context context)
+    public static void SlideYBack(View view, Context context)
     {
-        view.startAnimation(AnimationUtils.loadAnimation(context,
-                R.anim.slide_up_back));
-        view.setVisibility(View.VISIBLE);
+        view.animate().translationY(0);
+        //      view.setVisibility(View.VISIBLE);
     }
 
-
-    public static void SlideDownBack(View view,Context context)
+    public static void SlideXBack(View view, Context context)
     {
-        view.startAnimation(AnimationUtils.loadAnimation(context,
-                R.anim.slide_down_back));
-        view.setVisibility(View.VISIBLE);
+        view.animate().translationX(0);
+//      view.setVisibility(View.VISIBLE);
     }
 
-    public static void SlideRightBack(View view,Context context)
-    {
-        view.startAnimation(AnimationUtils.loadAnimation(context,
-                R.anim.slide_right_back));
-        view.setVisibility(View.VISIBLE);
-    }
-
-    public static void SlideLeftBack(View view,Context context)
-    {
-        view.startAnimation(AnimationUtils.loadAnimation(context,
-                R.anim.slide_left_back));
-        view.setVisibility(View.VISIBLE);
-    }
 
     static int initialHeight = 0;
     public static void expand(final View v) {

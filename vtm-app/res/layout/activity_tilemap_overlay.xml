@@ -8,6 +8,8 @@
     android:id="@+id/coordinatorlayout"
     tools:context="org.oscim.app.TileMap">
 
+    <include layout="@layout/activity_tilemap" />
+
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/location"
@@ -17,8 +19,7 @@
         android:layout_margin="@dimen/fab_margin"
         app:fabSize="normal"
         app:backgroundTint="@color/disabledBackgroundLight"
-        app:srcCompat="@drawable/ic_location_disabled_white_24dp"
-         />
+        app:srcCompat="@drawable/ic_location_disabled_white_24dp" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/compass"
@@ -36,8 +37,6 @@
         app:backgroundTint="#60FFFFFF"
         app:srcCompat="@drawable/ic_explore_colored_35dp"
         app:elevation="1dp"/>
-
-    <include layout="@layout/activity_tilemap" />
 
     <LinearLayout
         android:layout_width="match_parent"

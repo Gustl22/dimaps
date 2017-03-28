@@ -24,6 +24,7 @@ import android.util.Log;
 
 import org.oscim.android.cache.TileCache;
 import org.oscim.app.preferences.StoragePreference;
+import org.oscim.app.utils.FileUtils;
 import org.oscim.layers.GenericLayer;
 import org.oscim.layers.Layer;
 import org.oscim.layers.TileGridLayer;

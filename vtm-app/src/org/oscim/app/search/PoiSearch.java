@@ -27,7 +27,7 @@ import org.mapsforge.poi.storage.PoiCategoryManager;
 import org.mapsforge.poi.storage.PoiFileInfo;
 import org.mapsforge.poi.storage.PoiPersistenceManager;
 import org.mapsforge.poi.storage.PointOfInterest;
-import org.oscim.app.FileUtils;
+import org.oscim.app.utils.FileUtils;
 import org.oscim.app.MapLayers;
 import org.oscim.app.holder.AreaFileInfo;
 
