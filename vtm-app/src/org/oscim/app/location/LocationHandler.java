@@ -334,7 +334,7 @@ public class LocationHandler implements LocationListener {
             double tmpLon = na.getLongitude(iter.getAdjNode());
             float preAngle = (float) Math.atan2(diffLat, diffLon);
             float tmpAngle = (float) Math.atan2(curLat - tmpLat, curLon - tmpLon);
-            if (Math.abs((tmpAngle - preAngle) % (2 * Math.PI)) < Math.PI / 2) {
+            if (Math.abs((tmpAngle - preAngle + Math.PI) % (2 * Math.PI)) < Math.PI / 2) {
                 nextNode = iter.getAdjNode();
                 break;
             }

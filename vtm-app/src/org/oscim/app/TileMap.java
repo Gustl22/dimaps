@@ -46,12 +46,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import org.oscim.android.MapView;
 import org.oscim.app.download.MapDownloadActivity;
-import org.oscim.app.utils.ColorUtils;
 import org.oscim.app.graphhopper.CrossMapCalculatorListener;
 import org.oscim.app.location.Compass;
 import org.oscim.app.location.LocationDialog;
@@ -59,6 +59,7 @@ import org.oscim.app.location.LocationHandler;
 import org.oscim.app.preferences.EditPreferences;
 import org.oscim.app.search.PoiFavoritesActivity;
 import org.oscim.app.search.PoiSearchActivity;
+import org.oscim.app.utils.ColorUtils;
 import org.oscim.app.utils.CustomAnimationUtils;
 import org.oscim.core.GeoPoint;
 import org.oscim.core.Tile;
@@ -96,6 +97,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
     private LinearLayout mToolbar;
     private FloatingActionButton mLocationFab;
     private FloatingActionButton mCompassFab;
+    private FrameLayout mCompassFrame;
     //SearchBar
     private EditText mSearchBar;
 
@@ -157,6 +159,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
 
+        mCompassFrame = (FrameLayout) activity.findViewById(R.id.compass_wrapper);
         mCompassFab = (FloatingActionButton) activity.findViewById(R.id.compass);
         mCompassFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -693,7 +696,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         if(!isBlankMode) {
             CustomAnimationUtils.SlideUp(mToolbar, this);
             CustomAnimationUtils.SlideRight(mLocationFab, this);
-            CustomAnimationUtils.SlideRight(mCompassFab, this);
+            CustomAnimationUtils.SlideRight(mCompassFrame, this);
             isBlankMode = true;
         }
     }
@@ -702,7 +705,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         if(isBlankMode) {
             CustomAnimationUtils.SlideYBack(mToolbar, this);
             CustomAnimationUtils.SlideXBack(mLocationFab, this);
-            CustomAnimationUtils.SlideXBack(mCompassFab, this);
+            CustomAnimationUtils.SlideXBack(mCompassFrame, this);
             isBlankMode = false;
             delayBlankMode();
         }

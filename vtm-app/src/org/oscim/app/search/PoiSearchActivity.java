@@ -49,6 +49,8 @@ public class PoiSearchActivity extends AppCompatActivity {
 
     private void initPoiDisplay() {
         mPoiDisplay = new PoiDisplayUtils(this);
+        //Remove Delete-Favor button
+        findViewById(R.id.favor_delete).setVisibility(View.GONE);
     }
 
     private void initPoiSearchBar() {

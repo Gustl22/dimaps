@@ -13,8 +13,8 @@ import com.github.johnkil.print.PrintView;
 
 import org.mapsforge.core.model.Tag;
 import org.mapsforge.poi.storage.PointOfInterest;
-import org.oscim.app.utils.CustomAnimationUtils;
 import org.oscim.app.R;
+import org.oscim.app.utils.CustomAnimationUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,6 +31,9 @@ public class PoiDisplayUtils {
     public View vPoiActions;
     public PoiActionHandler poiHandler;
     public ListView vPoiListView;
+    private PrintView vSelection_icon;
+    private TextView vSelection_category;
+    private TextView vSelection_name;
     public List<String> stringSuggestions;
     public ArrayAdapter<String> suggestionsAdapter;
     public List<PointOfInterest> poiSuggestions;
@@ -77,8 +80,8 @@ public class PoiDisplayUtils {
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
                 if (poiSuggestions != null && !poiSuggestions.isEmpty()) {
                     selectedPOI = poiSuggestions.get((int) arg3);
-                    setResultText(selectedPOI);
                     currentPoiFile = poiSelector.getPoiFile((int) arg3);
+                    setResultText(selectedPOI);
                     collapseSuggestions();
                 }
             }
@@ -86,13 +89,17 @@ public class PoiDisplayUtils {
 
         vPoiActions = parent.findViewById(R.id.poi_actions);
         CustomAnimationUtils.collapse(vPoiActions);
+        vSelection_icon = (PrintView) parent.findViewById(R.id.poi_selection_icon);
+        vSelection_category = (TextView) parent.findViewById(R.id.poi_selection_category);
+        vSelection_name = (TextView) parent.findViewById(R.id.poi_selection_name);
 
         poiHandler = new PoiActionHandler(parent);
         poiHandler.setDestinationButton(parent.findViewById(R.id.destination_position));
-        poiHandler.setMvShareButton(parent.findViewById(R.id.share_position));
-        poiHandler.setMvFavoriteButton(parent.findViewById(R.id.favor_position));
-        poiHandler.setMvStartButton(parent.findViewById(R.id.start_position));
-        poiHandler.setMvShowMapButton(parent.findViewById(R.id.show_position));
+        poiHandler.setShareButton(parent.findViewById(R.id.share_position));
+        poiHandler.setFavoriteButton(parent.findViewById(R.id.favor_position));
+        poiHandler.setDepartureButton(parent.findViewById(R.id.start_position));
+        poiHandler.setShowMapButton(parent.findViewById(R.id.show_position));
+        poiHandler.setDeleteFavorButton(parent.findViewById(R.id.favor_delete));
     }
 
     public void collapseSuggestions() {
@@ -106,15 +113,18 @@ public class PoiDisplayUtils {
     }
 
     public void setResultText(PointOfInterest mSelectedPOI) {
-        String resText = "<b>" + mSelectedPOI.getCategory().getTitle() + ": </b>" + mSelectedPOI.getName();
+        String resText = mSelectedPOI.getName();
         for (Tag t : mSelectedPOI.getTags()) {
             resText += "<br/>" + t.key + ": " + t.value;
         }
         if (mSelectedPOI.getCategory().getTitle().equals(PoiSearch.CustomPoiCategory.Maparea.name())) {
-            vAreaSelection.setText(Html.fromHtml(resText));
+            vAreaSelection.setText(Html.fromHtml("<b>" + mSelectedPOI.getCategory().getTitle() + ": </b>" + resText));
         } else {
+            vSelection_category.setText(mSelectedPOI.getCategory().getTitle());
+            vSelection_name.setText(mSelectedPOI.getName());
             vResult.setText(Html.fromHtml(resText));
             poiHandler.setPoi(mSelectedPOI, currentPoiFile);
+            vSelection_icon.setIconText(getIconFromPOI(mSelectedPOI));
             CustomAnimationUtils.expand(vPoiActions);
             if (currentPoiFile != null) {
                 vAreaSelection.setText(Html.fromHtml("<b> Maparea: </b>" + currentPoiFile.getName()
@@ -123,24 +133,85 @@ public class PoiDisplayUtils {
         }
     }
 
+    public String getIconFromPOI(PointOfInterest poi) {
+        switch (poi.getCategory().getTitle().toLowerCase()) {
+            case "restaurants":
+                return "ic_restaurant_menu";
+            case "cafes":
+                return "ic_local_cafe";
+            case "bus stations":
+                return "ic_directions_bus";
+            case "fuel stations":
+                return "ic_local_gas_station";
+            case "banks":
+                return "ic_monetization_on";
+            case "cinemas":
+                return "ic_local_movies";
+            case "public toilets":
+                return "ic_wc";
+            case "bus stops":
+                return "ic_directions_bus";
+        }
+        for (Tag tag : poi.getTags()) {
+            switch (tag.key) {
+                case "building":
+                    return "ic_home";
+                case "highway":
+                    switch (tag.value) {
+                        case "footway":
+                            return "ic_directions_walk";
+                    }
+                    return "ic_directions_car";
+                case "amenity":
+                    return "ic_domain";
+                case "place":
+                    return "ic_location_city";
+                case "natural":
+                    return "ic_nature_people";
+            }
+        }
+        return "ic_place";
+    }
+
     public static List<String> getStringListFromPoiList(List<PointOfInterest> poiList) {
         List<String> arr = new ArrayList<>();
         for (PointOfInterest poi : poiList) {
             String builder = poi.getName();
             List<Tag> tags = poi.getTags();
+            String postcode = "";
+            String city = "";
+            String is_in = "";
+            String street = "";
             for (Tag t : tags) {
-                switch (t.key) {
+                switch (t.key.toLowerCase()) {
+                    case "addr:postcode":
+                        postcode = ", " + t.value;
+                        break;
                     case "addr:city":
-                        builder += ", " + t.value;
+                        city = " " + t.value;
                         break;
                     case "addr:street":
-                        builder += ", " + t.value;
+                        street = ", " + t.value;
+                        break;
+                    case "is_in":
+                        is_in = t.value;
                         break;
                     default:
                         break;
                 }
             }
-            arr.add(builder);
+            if (!is_in.isEmpty()) {
+                String[] adArr = is_in.split(",|;");
+                is_in = "";
+                for (String s : adArr) {
+                    if (!s.isEmpty()) {
+                        is_in += (", " + s.trim());
+                    }
+                }
+            }
+            city = city.isEmpty() ? is_in : (postcode.isEmpty() ? "," + city : city);
+
+            arr.add(builder + street + postcode + city);
         }
         return arr;
     }

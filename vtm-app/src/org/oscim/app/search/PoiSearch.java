@@ -27,9 +27,9 @@ import org.mapsforge.poi.storage.PoiCategoryManager;
 import org.mapsforge.poi.storage.PoiFileInfo;
 import org.mapsforge.poi.storage.PoiPersistenceManager;
 import org.mapsforge.poi.storage.PointOfInterest;
-import org.oscim.app.utils.FileUtils;
 import org.oscim.app.MapLayers;
 import org.oscim.app.holder.AreaFileInfo;
+import org.oscim.app.utils.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -118,7 +118,7 @@ public class PoiSearch implements PoiSelector {
                             if(i==j) continue;
                             builder += requests[j] + " ";
                         }
-                        Collection<PointOfInterest> res = getPoiByNameAndCategory(builder.trim(), c);
+                        Collection<PointOfInterest> res = getPoiByTagAndCategory("name", builder.trim(), c);
                         if(res != null && !res.isEmpty()){
                             collection.addAll(res);
                             return collection;
@@ -127,7 +127,10 @@ public class PoiSearch implements PoiSelector {
                 }
             }
             if(collection.isEmpty()){
-                collection.addAll(getPoiByNameAndCategory(text, CustomPoiCategory.Root));
+                collection.addAll(getPoiByTagAndCategory("name", text, CustomPoiCategory.Root));
+                //collection.addAll(getPoiByTagAndCategory("addr:street", text, CustomPoiCategory.Root));
+                //collection.addAll(getPoiByTagAndCategory("highway", "residential", CustomPoiCategory.Root));
+
             }
         }
         return collection;
@@ -192,7 +195,11 @@ public class PoiSearch implements PoiSelector {
         return null;
     }
 
-    public Collection<PointOfInterest> getPoiByNameAndCategory(String name, CustomPoiCategory category){
+    public Collection<PointOfInterest> getPoiByTagAndCategory(String tag, String value, CustomPoiCategory category) {
+        return getPoiByTagsAndCategory(new String[]{tag}, new String[]{value}, category);
+    }
+
+    public Collection<PointOfInterest> getPoiByTagsAndCategory(String[] tags, String[] values, CustomPoiCategory category) {
         PoiPersistenceManager persManager = null;
         assert mPOI_File != null;
         try {
@@ -203,7 +210,16 @@ public class PoiSearch implements PoiSelector {
             PoiCategoryFilter categoryFilter = new ExactMatchPoiCategoryFilter();
             categoryFilter.addCategory(categoryManager.getPoiCategoryByTitle(category.name()));
             persManager.getPoiFileInfo();
-            return persManager.findInRect(bb, categoryFilter, "%name="+name+"%", Integer.MAX_VALUE);
+            if (tags.length != values.length) {
+                return null;
+            }
+            String query = "%";
+            for (int i = 0; i < tags.length; i++) {
+                query += tags[i] + "=" + values[i];
+                if (i + 1 != tags.length) query += " AND ";
+            }
+            query += "%";
+            return persManager.findInRect(bb, categoryFilter, query, Integer.MAX_VALUE);
         } catch (Throwable t) {
             if(t != null && t.getCause() != null)
                 Log.e(t.getMessage(), t.getCause().getMessage());

@@ -25,11 +25,12 @@ public class PoiActionHandler {
     private GHPoint mPoiLocation;
     private RouteSearch mRouteSearch = App.routeSearch;
     private List<File> mGhFiles = RouteSearch.getGraphHopperFiles();
-    private View mvStartButton;
+    private View mvDepartureButton;
     private View mvDestinationButton;
     private View mvShowMapButton;
     private View mvFavoriteButton;
     private View mvShareButton;
+    private View mvDeleteFavorButton;
 
     public PoiActionHandler(Activity activity) {
         this.mActivity = activity;
@@ -47,7 +48,7 @@ public class PoiActionHandler {
         App.activity.showToastOnUiThread("Waypoint added");
     }
 
-    public void setStart() {
+    public void setDeparture() {
         if (mPoi == null || mGhFiles == null) return;
         mRouteSearch.setStartPoint(new GHPointArea(mPoiLocation, mGhFiles));
         App.activity.showToastOnUiThread("Start set");
@@ -67,23 +68,30 @@ public class PoiActionHandler {
         mActivity.finish();
     }
 
-    //Getter and Setter
-    public View getStartButton() {
-        return mvStartButton;
+    public void removeFavorite() {
+        if (mPoi == null || mPoiFile == null || !mPoiFile.exists()) return;
+        PoiFavoritesHandler favorHandler = PoiFavoritesHandler.getInstance();
+        favorHandler.removeFavorite(mPoi, mPoiFile.getParentFile());
+        mActivity.recreate();
     }
 
-    public void setMvStartButton(View button) {
+    //Getter and Setter
+    public View getDepartureButton() {
+        return mvDepartureButton;
+    }
+
+    public void setDepartureButton(View button) {
         if (button == null) return;
-        this.mvStartButton = button;
+        this.mvDepartureButton = button;
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setStart();
+                setDeparture();
             }
         });
     }
 
-    public View getMvDestinationButton() {
+    public View getDestinationButton() {
         return mvDestinationButton;
     }
 
@@ -102,7 +110,7 @@ public class PoiActionHandler {
         return mvShowMapButton;
     }
 
-    public void setMvShowMapButton(View button) {
+    public void setShowMapButton(View button) {
         if (button == null) return;
         this.mvShowMapButton = button;
         button.setOnClickListener(new View.OnClickListener() {
@@ -117,7 +125,7 @@ public class PoiActionHandler {
         return mvFavoriteButton;
     }
 
-    public void setMvFavoriteButton(View button) {
+    public void setFavoriteButton(View button) {
         if (button == null) return;
         this.mvFavoriteButton = button;
         button.setOnClickListener(new View.OnClickListener() {
@@ -132,13 +140,28 @@ public class PoiActionHandler {
         return mvShareButton;
     }
 
-    public void setMvShareButton(View button) {
+    public void setShareButton(View button) {
         if (button == null) return;
         this.mvShareButton = button;
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mRouteSearch.shareLocation(mPoiLocation);
+            }
+        });
+    }
+
+    public View getDeleteFavorButton() {
+        return mvDeleteFavorButton;
+    }
+
+    public void setDeleteFavorButton(View button) {
+        if (button == null) return;
+        this.mvDeleteFavorButton = button;
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                removeFavorite();
             }
         });
     }
@@ -153,4 +176,6 @@ public class PoiActionHandler {
         this.mPoi = poi;
         this.mPoiFile = poiFile;
     }
+
+
 }

@@ -21,22 +21,28 @@
         app:backgroundTint="@color/disabledBackgroundLight"
         app:srcCompat="@drawable/ic_location_disabled_white_24dp" />
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/compass"
-        android:layout_width="wrap_content"
+    <FrameLayout
+        android:id="@+id/compass_wrapper"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_marginBottom="85dp"
-        android:layout_marginRight="@dimen/fab_margin"
-        android:layout_marginLeft="@dimen/fab_margin"
-        android:layout_marginTop="@dimen/fab_margin"
-        app:fabSize="normal"
-        android:scaleType="center"
-        app:layout_anchor="@id/location"
-        app:layout_anchorGravity="top"
-        app:backgroundTint="#60FFFFFF"
-        app:srcCompat="@drawable/ic_explore_colored_35dp"
-        app:elevation="1dp"/>
+        android:layout_width="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:clipToPadding="false"
+        android:layout_marginBottom="73dp">
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/compass"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:fabSize="normal"
+            android:scaleType="center"
+            app:layout_anchor="@id/location"
+            app:layout_anchorGravity="top"
+            app:backgroundTint="#60FFFFFF"
+            android:layout_margin="@dimen/fab_margin"
+            app:srcCompat="@drawable/ic_explore_colored_35dp"
+            app:borderWidth="1dp"
+            app:elevation="1dp" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

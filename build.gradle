@@ -28,7 +28,7 @@ allprojects {
 
 def androidCompileSdk() { return 25 }
 
-def androidMinSdk() { return 11 }
+def androidMinSdk() { return 12 }
 
 def androidTargetSdk() { return 22 }
 

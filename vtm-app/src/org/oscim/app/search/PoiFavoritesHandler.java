@@ -5,8 +5,8 @@ import android.util.Log;
 import org.mapsforge.poi.android.storage.AndroidPoiPersistenceManagerFactory;
 import org.mapsforge.poi.storage.PoiPersistenceManager;
 import org.mapsforge.poi.storage.PointOfInterest;
-import org.oscim.app.utils.FileUtils;
 import org.oscim.app.MapLayers;
+import org.oscim.app.utils.FileUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,8 +15,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +25,7 @@ import java.util.Map;
  */
 
 public class PoiFavoritesHandler {
-    HashMap<String, List<PointOfInterest>> poiFavorites;
+    LinkedHashMap<String, List<PointOfInterest>> poiFavorites;
     private static PoiFavoritesHandler instance;
 
     private PoiFavoritesHandler() {
@@ -42,8 +42,10 @@ public class PoiFavoritesHandler {
         if (poiList == null) {
             poiList = new ArrayList<PointOfInterest>();
         }
-        poiList.add(poi);
-        poiFavorites.put(folder.getAbsolutePath(), poiList);
+        if (!poiList.contains(poi)) {
+            poiList.add(poi);
+            poiFavorites.put(folder.getAbsolutePath(), poiList);
+        }
     }
 
     public void removeFavorite(PointOfInterest poi, File folder) {
@@ -55,7 +57,7 @@ public class PoiFavoritesHandler {
         poiFavorites.put(folder.getAbsolutePath(), poiList);
     }
 
-    public HashMap<String, List<PointOfInterest>> getFavoriteHashMap() {
+    public LinkedHashMap<String, List<PointOfInterest>> getFavoriteHashMap() {
         return poiFavorites;
     }
 
@@ -70,7 +72,7 @@ public class PoiFavoritesHandler {
     }
 
     private void initAllFavorites() {
-        poiFavorites = new HashMap<>();
+        poiFavorites = new LinkedHashMap<>();
         List<File> poiFiles = new ArrayList<>();
         for (File folder : MapLayers.MAP_FOLDERS) {
             poiFiles.addAll(FileUtils.walkExtension(folder, ".poi"));

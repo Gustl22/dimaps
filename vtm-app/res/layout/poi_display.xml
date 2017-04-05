@@ -3,15 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical">
 
     <TextView
         android:id="@+id/poi_area_selection_textview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/activity_horizontal_margin"
-        android:layout_marginLeft="@dimen/activity_vertical_margin"
-        android:layout_marginRight="@dimen/activity_vertical_margin" />
+        android:layout_margin="@dimen/activity_horizontal_margin" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,14 +24,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginLeft="@dimen/activity_vertical_margin"
-            android:layout_marginRight="@dimen/activity_vertical_margin">
+            android:padding="@dimen/activity_vertical_margin"
+            android:paddingBottom="@dimen/activity_horizontal_margin"
+            android:background="@color/colorAccent">
 
             <com.github.johnkil.print.PrintView
                 android:id="@+id/result_expand_btn"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                app:iconColor="@color/colorAccent"
+                app:iconColor="@color/white"
                 app:iconFont="fonts/material-icon-font.ttf"
                 app:iconSize="20dp"
                 app:iconText="@string/ic_keyboard_arrow_right" />
@@ -42,20 +42,72 @@
                 android:layout_height="wrap_content"
                 android:text="Suggestions"
                 android:textSize="20dp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textColor="@color/white" />
         </LinearLayout>
 
         <ListView
             android:id="@+id/poi_listview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:divider="@color/disabledBackgroundLight" />
+            android:divider="?android:attr/listDivider" />
 
-        <TextView
-            android:id="@+id/poi_selection_textview"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/activity_horizontal_margin" />
+            android:orientation="vertical"
+            android:background="@color/disabledBackgroundLight">
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:targetApi="ice_cream_sandwich">
+
+                <TextView
+                    android:id="@+id/poi_selection_category"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_column="0"
+                    android:layout_columnWeight="1"
+                    android:gravity="center"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:foregroundGravity="center"
+                    android:layout_gravity="center_vertical" />
+
+                <com.github.johnkil.print.PrintView
+                    android:id="@+id/poi_selection_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:foregroundGravity="center"
+                    android:gravity="center"
+                    app:iconColor="@color/colorAccent"
+                    app:iconFont="fonts/material-icon-font.ttf"
+                    app:iconSize="50dp"
+                    app:iconText="@string/ic_place"
+                    android:padding="@dimen/activity_horizontal_margin"
+                    android:layout_column="1" />
+
+                <TextView
+                    android:id="@+id/poi_selection_name"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_column="2"
+                    android:layout_columnWeight="1"
+                    android:gravity="center"
+                    android:textSize="18sp"
+                    android:foregroundGravity="center"
+                    android:layout_gravity="center_vertical" />
+            </GridLayout>
+
+            <TextView
+                android:id="@+id/poi_selection_textview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/activity_horizontal_margin"
+                android:textSize="18sp" />
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout

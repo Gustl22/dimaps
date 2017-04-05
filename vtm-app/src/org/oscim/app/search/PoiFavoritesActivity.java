@@ -4,15 +4,17 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 
 import org.mapsforge.poi.storage.PointOfInterest;
 import org.oscim.app.R;
+import org.oscim.app.utils.FileUtils;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -63,6 +65,9 @@ public class PoiFavoritesActivity extends AppCompatActivity implements PoiSelect
         mPoiDisplay.suggestionsAdapter.addAll(mPoiDisplay.stringSuggestions);
         mPoiDisplay.suggestionsAdapter.notifyDataSetChanged();
         mPoiDisplay.expandSuggestions();
+
+        //Remove Add-Favor button
+        findViewById(R.id.favor_position).setVisibility(View.GONE);
     }
 
     @Override
@@ -73,19 +78,23 @@ public class PoiFavoritesActivity extends AppCompatActivity implements PoiSelect
 
     @Override
     public File getPoiFile(int index) {
-        //TODO check this method, the iterator may not has always the same order. so we may use
-        // another list instead of collection
-        HashMap poiFavorites = favorHandler.getFavoriteHashMap();
+        LinkedHashMap poiFavorites = favorHandler.getFavoriteHashMap();
         Iterator it = poiFavorites.entrySet().iterator();
+        File res = null;
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
             List<PointOfInterest> actualPois = (List<PointOfInterest>) pair.getValue();
             if (index > actualPois.size() - 1) {
                 index -= actualPois.size();
             } else {
-                return new File((String) pair.getKey());
+                File tmp = new File((String) pair.getKey());
+                List<File> list = FileUtils.walkExtension(tmp, ".poi");
+                if (list != null && !list.isEmpty()) {
+                    res = list.get(0);
+                    break;
+                }
             }
         }
-        return null;
+        return res;
     }
 }
