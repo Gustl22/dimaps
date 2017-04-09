@@ -17,7 +17,8 @@ import org.oscim.app.graphhopper.GHPointArea;
 import java.util.Iterator;
 
 /**
- * Created by gustl on 05.04.17.
+ * Copyright by Gustl22 on 05.04.17.
+ *
  */
 
 public class Navigation implements LocationListener {
