@@ -123,6 +123,9 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         App.map = mMap;
         activity = this;
 
+        //Keep screen on
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         mMapLayers = new MapLayers();
         mMapLayers.setBaseMap(this);
 
@@ -140,7 +143,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         mMap.layers().add(mCompass);
 
         mLocation = new LocationHandler(this, mCompass);
-        mLocation.addListener(mCompass);
+        mLocation.addVirtualLocationListener(mCompass);
 
         App.poiSearch = new POISearch();
         App.routeSearch = new RouteSearch();
@@ -719,7 +722,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
             public void run() {
                 checkBlankMode();
             }
-        }, 10000);
+        }, 45000);
     }
 
     @Override

@@ -31,13 +31,15 @@ import android.support.v4.os.AsyncTaskCompat;
 import android.view.animation.LinearInterpolator;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.math.Vector2D;
 
 import org.oscim.app.App;
@@ -49,12 +51,23 @@ import org.oscim.core.MapPosition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import static org.oscim.app.App.map;
+import static org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter.convertGHPointToGeoPoint;
 
 public class LocationHandler implements LocationListener {
+
+    public PointList getActualRoute() {
+        return actualRoute;
+    }
+
+    public void setActualRoute(PointList actualRoute) {
+        this.actualRoute = actualRoute;
+    }
 
     public enum Mode {
         OFF,
@@ -74,6 +87,7 @@ public class LocationHandler implements LocationListener {
 
     private boolean mSetCenter;
     private MapPosition mMapPosition;
+    private PointList actualRoute = null;
 
     public LocationHandler(TileMap tileMap, Compass compass) {
         mLocationManager = (LocationManager) tileMap
@@ -140,7 +154,16 @@ public class LocationHandler implements LocationListener {
         Location location = gotoLastKnownPosition();
         if (location == null)
             return false;
+
         initGraphHopperLocation(location.getLatitude(), location.getLongitude());
+        //Set start point if not set yet
+        if ((App.routeSearch.getStartPoint() == null)
+                && (App.routeSearch.getDestinationPoint() != null)) {
+            App.routeSearch.setStartPoint(new GHPointArea(
+                    new GHPoint(location.getLatitude(), location.getLongitude()),
+                    RouteSearch.getGraphHopperFiles()));
+        }
+
         //Handle Showing position
         mLocationLayer.setEnabled(true);
         mLocationLayer.setPosition(location.getLatitude(),
@@ -225,7 +248,7 @@ public class LocationHandler implements LocationListener {
 
     public void onVirtualLocationChanged(Location location) {
         //Inform Compass about big location changes
-        for (LocationListener hl : listeners)
+        for (LocationListener hl : virtualLocationListeners)
             hl.onLocationChanged(location);
 
         if (mMode == Mode.OFF)
@@ -273,87 +296,220 @@ public class LocationHandler implements LocationListener {
             }
         };
         AsyncTaskCompat.executeParallel(task, lat, lon);
-        App.activity.showToastOnUiThread("Way animation in progress");
+        //App.activity.showToastOnUiThread("Way animation in progress");
     }
 
     private GraphHopper locationGh;
-    public synchronized Location calculateNextLocation(Location preLocation, Location currentLocation) {
+
+    public synchronized ArrayList<Location> calculateVirtualPath(Location preLocation, Location currentLocation) {
         //TODO Add File list for better results
         double curLat = currentLocation.getLatitude();
         double curLon = currentLocation.getLongitude();
 
-        if (locationGh == null) {
-            App.activity.showToastOnUiThread("No GraphHopper matches the point or it is loading");
-            AsyncTask<Object, Void, Void> task = new AsyncTask<Object, Void, Void>() {
-                @Override
-                protected Void doInBackground(Object[] params) {
-                    GHPointArea tempPointArea = new GHPointArea(new GHPoint(
-                            (double) params[0], (double) params[1]),
-                            RouteSearch.getGraphHopperFiles());
-                    if (tempPointArea.getGraphHopper() == null) {
-                        synchronized (tempPointArea.virtualObject) {
-                            try {
-                                // Calling wait() will block this thread until another thread
-                                // calls notify() on the object.
-                                tempPointArea.virtualObject.wait();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                    locationGh = tempPointArea.getGraphHopper();
-                    App.activity.showToastOnUiThread("GraphHopper loaded");
-                    return null;
-                }
-            };
-            AsyncTaskCompat.executeParallel(task, curLat, curLon);
-            return null;
-        }
-
-        Location location = new Location(currentLocation);
         double diffLat = curLat - preLocation.getLatitude();
         double diffLon = curLon - preLocation.getLongitude();
         double abs = new Vector2D(diffLat, diffLon).length();
-        //App.activity.showToastOnUiThread("GraphHopper found");
-        int curNode = locationGh.getLocationIndex().findClosest(curLat, curLon,
-                EdgeFilter.ALL_EDGES).getClosestNode();
-        if (curNode < 1) {
-            App.activity.showToastOnUiThread("Closest calculated point not existent. " +
-                    "Recalculate GraphHopper...");
-            locationGh = new GHPointArea(new GHPoint(curLat, curLon),
-                    RouteSearch.getGraphHopperFiles()).getGraphHopper();
-            return null;
-        }
-        NodeAccess na = locationGh.getGraphHopperStorage().getNodeAccess();
-        Graph graph = locationGh.getGraphHopperStorage().getBaseGraph();
-        EdgeExplorer explorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);
-        EdgeIterator iter = explorer.setBaseNode(curNode);
-        int nextNode = 0;
-        while (iter.next()) {
-            double tmpLat = na.getLatitude(iter.getAdjNode());
-            double tmpLon = na.getLongitude(iter.getAdjNode());
-            float preAngle = (float) Math.atan2(diffLat, diffLon);
-            float tmpAngle = (float) Math.atan2(curLat - tmpLat, curLon - tmpLon);
-            if (Math.abs((tmpAngle - preAngle + Math.PI) % (2 * Math.PI)) < Math.PI / 2) {
-                nextNode = iter.getAdjNode();
-                break;
+
+        Location locationEnd = new Location(currentLocation);
+        Location locationStart = new Location(currentLocation);
+        if (getActualRoute() == null) {
+            if (locationGh == null) {
+                App.activity.showToastOnUiThread("No GraphHopper matches the point or it is loading");
+                AsyncTask<Object, Void, Void> task = new AsyncTask<Object, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Object[] params) {
+                        GHPointArea tempPointArea = new GHPointArea(new GHPoint(
+                                (double) params[0], (double) params[1]),
+                                RouteSearch.getGraphHopperFiles());
+                        if (tempPointArea.getGraphHopper() == null) {
+                            synchronized (tempPointArea.virtualObject) {
+                                try {
+                                    // Calling wait() will block this thread until another thread
+                                    // calls notify() on the object.
+                                    tempPointArea.virtualObject.wait();
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                        locationGh = tempPointArea.getGraphHopper();
+                        App.activity.showToastOnUiThread("GraphHopper loaded");
+                        return null;
+                    }
+                };
+                AsyncTaskCompat.executeParallel(task, curLat, curLon);
+                return null;
             }
-        }
-        if (nextNode < 1) return null;
+
+            //App.activity.showToastOnUiThread("GraphHopper found");
+            int curNode = locationGh.getLocationIndex().findClosest(curLat, curLon,
+                    EdgeFilter.ALL_EDGES).getClosestNode();
+            if (curNode < 1) {
+                App.activity.showToastOnUiThread("Closest calculated point not existent. " +
+                        "Recalculate GraphHopper...");
+                locationGh = new GHPointArea(new GHPoint(curLat, curLon),
+                        RouteSearch.getGraphHopperFiles()).getGraphHopper();
+                return null;
+            }
+            NodeAccess na = locationGh.getGraphHopperStorage().getNodeAccess();
+            Graph graph = locationGh.getGraphHopperStorage().getBaseGraph();
+            EdgeExplorer explorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);
+            EdgeIterator iter = explorer.setBaseNode(curNode);
+            int nextNode = 0;
+            while (iter.next()) {
+                double tmpLat = na.getLatitude(iter.getAdjNode());
+                double tmpLon = na.getLongitude(iter.getAdjNode());
+                float preAngle = (float) Math.atan2(diffLat, diffLon);
+                float tmpAngle = (float) Math.atan2(curLat - tmpLat, curLon - tmpLon);
+                if (Math.abs((tmpAngle - preAngle + Math.PI) % (2 * Math.PI)) < Math.PI / 2) {
+                    nextNode = iter.getAdjNode();
+                    break;
+                }
+            }
+            if (nextNode < 1) return null;
 //        QueryGraph queryGraph = new QueryGraph(graph);
 //        queryGraph.lookup(curNode, nextNode);
-        //TODO Improve waypoint calculation by using virtual nodes
-        //Normalize point
-        diffLat = na.getLatitude(nextNode) - curLat;
-        diffLon = na.getLongitude(nextNode) - curLon;
-        Vector2D vec = new Vector2D(diffLat, diffLon);
-        vec = vec.divide(vec.length()).multiply(abs);
+            //TODO Improve waypoint calculation by using virtual nodes
+            //Normalize point
+            diffLat = na.getLatitude(nextNode) - curLat;
+            diffLon = na.getLongitude(nextNode) - curLon;
 
-        location.setLatitude(curLat + vec.getX());
-        location.setLongitude(curLon + vec.getY());
+            Vector2D vec = new Vector2D(diffLon, diffLat);
+            vec = vec.divide(vec.length()).multiply(abs);
 
-        App.activity.showToastOnUiThread("Next location calculated");
-        return location;
+            locationEnd.setLatitude(curLat + vec.getY());
+            locationEnd.setLongitude(curLon + vec.getX());
+        } else {
+            return calcVirtualPointsOnPath(currentLocation, abs);
+        }
+        ArrayList<Location> result = new ArrayList<>();
+        result.add(locationStart);
+        result.add(locationEnd);
+        //App.activity.showToastOnUiThread("Next location calculated");
+        return result;
+    }
+
+    private ArrayList<Location> calcVirtualPointsOnPath(Location currentLocation, double abs) {
+        App.activity.showToastOnUiThread("Stop 1");
+        double curLat = currentLocation.getLatitude();
+        double curLon = currentLocation.getLongitude();
+        double distance = Double.MAX_VALUE;
+
+        Iterator<GHPoint3D> iterator = actualRoute.iterator();
+        boolean foundNearest = false;
+        PointList drawPoints = new PointList();
+        GHPoint secNearestPoint = null;
+        GHPoint nearestPoint = null;
+        GHPoint afterPoint = null;
+        while (iterator.hasNext()) {
+            GHPoint next = iterator.next();
+            double actDis = convertGHPointToGeoPoint(next)
+                    .sphericalDistance(convertGHPointToGeoPoint(new GHPoint(curLat, curLon))); //in meters
+            if (!foundNearest && (actDis < distance)) {
+                distance = actDis;
+                secNearestPoint = nearestPoint;
+                nearestPoint = next;
+            } else if (!foundNearest) {
+                foundNearest = true;
+                if (secNearestPoint != null) {
+                    drawPoints.add(secNearestPoint);
+                }
+                drawPoints.add(nearestPoint);
+                afterPoint = next;
+            }
+            if (foundNearest) {
+                drawPoints.add(next);
+            }
+        }
+        if (drawPoints.isEmpty()) actualRoute = null;
+
+        App.activity.showToastOnUiThread("Stop 2");
+        if (nearestPoint == null) return null;
+        Coordinate curLoc = new Coordinate(curLon, curLat);
+        Coordinate nearLoc = new Coordinate(nearestPoint.getLon(), nearestPoint.getLat());
+
+        Coordinate first = null;
+        Coordinate second = null;
+        double firstDistance = Double.MAX_VALUE;
+        double secDistance = Double.MAX_VALUE;
+        if (secNearestPoint != null) {
+            Coordinate secNearLoc = new Coordinate(secNearestPoint.getLon(), secNearestPoint.getLat());
+            first = projectCoordinate(secNearLoc, nearLoc, curLoc);
+            firstDistance = curLoc.distance(first);
+        }
+        if (afterPoint != null) {
+            Coordinate afterLoc = new Coordinate(afterPoint.getLon(), afterPoint.getLat());
+            second = projectCoordinate(afterLoc, nearLoc, curLoc);
+            secDistance = curLoc.distance(second);
+        }
+        Coordinate startCoord = null;
+        if (firstDistance < secDistance) {
+            if (first != null) {
+                startCoord = first;
+            }
+        } else {
+            if (second != null) {
+                drawPoints = drawPoints.copy(1, drawPoints.getSize() - 1);
+                startCoord = second;
+            }
+        }
+
+        App.activity.showToastOnUiThread("Stop 3");
+        if (startCoord == null) return null;
+
+//        //calculate end point
+//        Coordinate afterLoc = null;
+//        curLoc = null;
+//        iterator = actualRoute.iterator();
+//        boolean isFirst = true;
+//        while(iterator.hasNext()){
+//            nearestPoint = iterator.next();
+//            afterLoc = curLoc;
+//            curLoc = new Coordinate(nearestPoint.getLon(), nearestPoint.getLat());
+//            if(afterLoc != null){
+//                if(isFirst){
+//                    isFirst = false;
+//                    curLoc = startCoord;
+//                }
+//                abs = abs - curLoc.distance(afterLoc);
+//                if(abs<0){
+//                    break;
+//                }
+//            }
+//        }
+//        Coordinate endCoord = null;
+//        App.activity.showToastOnUiThread("Stop 4");
+//        if(curLoc == null || afterLoc == null) return null;
+//        Vector2D endVector = new Vector2D(curLoc, afterLoc);
+//        endVector = endVector.normalize().multiply(-abs);
+//        endCoord = new Coordinate(curLoc.x + endVector.getX(), curLoc.y + endVector.getY());
+
+        actualRoute = drawPoints;
+        drawPoints.set(0, startCoord.y, startCoord.x, startCoord.z);
+//        Location endLocation = new Location(currentLocation);
+//        endLocation.setLatitude(endCoord.y);
+//        endLocation.setLongitude(endCoord.x);
+        App.activity.showToastOnUiThread("StartLat: " + startCoord.y + "StartLon: " + startCoord.x);
+        iterator = drawPoints.iterator();
+        ArrayList<Location> locations = new ArrayList<>();
+        while (iterator.hasNext()) {
+            GHPoint pt = iterator.next();
+            Location l = new Location(currentLocation);
+            l.setLongitude(pt.getLon());
+            l.setLatitude(pt.getLat());
+            locations.add(l);
+        }
+        return locations;
+    }
+
+    private Coordinate projectCoordinate(Coordinate line1, Coordinate line2, Coordinate toProject) {
+        double m = (line2.y - line1.y) / (line2.x - line1.x);
+        double b = line1.y - (m * line1.x);
+
+        double x = (m * toProject.y + toProject.x - m * b) / (m * m + 1);
+        double y = (m * m * toProject.y + m * toProject.x + b) / (m * m + 1);
+
+        return new Coordinate(x, y);
     }
 
     public Location calculateProgressLocation(Location startLocation, Location endLocation, float progress) {
@@ -369,7 +525,7 @@ public class LocationHandler implements LocationListener {
         if (diffTime != 0) location.setTime(location.getTime() + (long) (diffTime * progress));
         if (diffSpeed != 0f) location.setSpeed(location.getSpeed() + diffSpeed * progress);
 
-        App.activity.showToastOnUiThread("Calculate Progress: " + progress);
+        //App.activity.showToastOnUiThread("Calculate Progress: " + progress);
         return location;
     }
 
@@ -377,6 +533,7 @@ public class LocationHandler implements LocationListener {
     private Location preLocation;
     @Override
     public void onLocationChanged(final Location location) {
+        App.activity.showToastOnUiThread("Location changed");
         if (preLocation == null) {
             App.activity.showToastOnUiThread("Prelocation is null");
             onVirtualLocationChanged(location);
@@ -384,53 +541,75 @@ public class LocationHandler implements LocationListener {
             return;
         }
         //Animate big rotation steps
-        App.activity.showToastOnUiThread("Init next location calculation");
-        final Location endLocation = calculateNextLocation(preLocation, location);
-        if (endLocation != null) {
-            App.activity.showToastOnUiThread("Next location is: " + endLocation.getLongitude());
-            //if(anim != null) anim.end();
-            anim = ValueAnimator.ofFloat(0f, 1f);
-            anim.setDuration(GPS_MINIMUM_TIME_ELAPSE);
-            anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    float progress = (float) animation.getAnimatedValue();
-                    Location l = calculateProgressLocation(location, endLocation, progress);
-                    onVirtualLocationChanged(l);
-                }
-            });
-            anim.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    App.activity.showToastOnUiThread("Virtual location end");
-                }
-            });
-            anim.setInterpolator(new LinearInterpolator());
-            anim.start();
-            App.activity.showToastOnUiThread("0 start");
+        //App.activity.showToastOnUiThread("Init location calculation");
+        final ArrayList<Location> path = calculateVirtualPath(preLocation, location);
+        if (path != null && path.size() > 1) {
+            animateLocation(path);
+            //App.activity.showToastOnUiThread("0 start");
+            for (LocationListener hl : snapLocationListeners)
+                //It's important to send the second element, so this is a real Point on path
+                //First is a calculated path dependent on position
+                hl.onLocationChanged(path.get(1));
+        } else {
+            onVirtualLocationChanged(location);
         }
 
         preLocation = location;
     }
 
+    private void animateLocation(final ArrayList<Location> path) {
+        if (path.size() < 2) return;
+        if (anim != null) anim.end();
+        anim = ValueAnimator.ofFloat(0f, 1f);
+        Location first = path.get(0);
+        double distance = first.distanceTo(path.get(1));
+        long time = (long) ((distance / first.getSpeed()) * 1000);
+        anim.setDuration(time);
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float progress = (float) animation.getAnimatedValue();
+                Location l = calculateProgressLocation(path.get(0), path.get(1), progress);
+                onVirtualLocationChanged(l);
+            }
+        });
+        anim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                ArrayList<Location> p = (ArrayList<Location>) path.clone();
+                p.remove(0);
+                animateLocation(p);
+                //App.activity.showToastOnUiThread("Virtual location end");
+            }
+        });
+        anim.setInterpolator(new LinearInterpolator());
+        anim.start();
+    }
+
     @Override
     public void onProviderDisabled(String provider) {
         // Notify everybody that may be interested.
-        for (LocationListener hl : listeners)
+        for (LocationListener hl : virtualLocationListeners)
+            hl.onProviderDisabled(provider);
+        for (LocationListener hl : snapLocationListeners)
             hl.onProviderDisabled(provider);
     }
 
     @Override
     public void onProviderEnabled(String provider) {
         // Notify everybody that may be interested.
-        for (LocationListener hl : listeners)
+        for (LocationListener hl : virtualLocationListeners)
+            hl.onProviderEnabled(provider);
+        for (LocationListener hl : snapLocationListeners)
             hl.onProviderEnabled(provider);
     }
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
         // Notify everybody that may be interested.
-        for (LocationListener hl : listeners)
+        for (LocationListener hl : virtualLocationListeners)
+            hl.onStatusChanged(provider, status, extras);
+        for (LocationListener hl : snapLocationListeners)
             hl.onStatusChanged(provider, status, extras);
     }
 
@@ -456,9 +635,16 @@ public class LocationHandler implements LocationListener {
 
     //Location Listeners, which listen this Location-Handler
     private final static Logger log = LoggerFactory.getLogger(LocationHandler.class);
-    private Collection<LocationListener> listeners = new HashSet<LocationListener>();
+    private Collection<LocationListener> virtualLocationListeners = new HashSet<LocationListener>();
 
-    public void addListener(LocationListener toAdd) {
-        listeners.add(toAdd);
+    public void addVirtualLocationListener(LocationListener toAdd) {
+        virtualLocationListeners.add(toAdd);
     }
+
+    private Collection<LocationListener> snapLocationListeners = new HashSet<LocationListener>();
+
+    public void addSnapLocationListener(LocationListener toAdd) {
+        snapLocationListeners.add(toAdd);
+    }
+
 }

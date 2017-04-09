@@ -35,6 +35,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.routing.Path;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.Parameters;
@@ -48,6 +49,7 @@ import org.oscim.app.graphhopper.GHPointArea;
 import org.oscim.app.graphhopper.GHPointAreaRoute;
 import org.oscim.app.graphhopper.GHPointListener;
 import org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter;
+import org.oscim.app.navigation.Navigation;
 import org.oscim.app.utils.FileUtils;
 import org.oscim.backend.canvas.Bitmap;
 import org.oscim.backend.canvas.Paint;
@@ -89,6 +91,7 @@ public class RouteSearch implements GHPointListener {
     private ExtendedMarkerItem markerStart, markerDestination;
 
     private UpdateRouteTask mRouteTask;
+    private Navigation mNavigation;
 
     private static ArrayList<File> ghFiles;
 
@@ -334,7 +337,7 @@ public class RouteSearch implements GHPointListener {
     }
 
     //------------ Route and Directions
-    private void updateOverlays(PathWrapper route) {
+    public void updateOverlays(PathWrapper route) {
         //mRouteMarkers.removeAllItems();
 
         mRouteOverlay.clearPath();
@@ -371,6 +374,7 @@ public class RouteSearch implements GHPointListener {
     }
 
     void clearOverlays() {
+        mNavigation = null;
         //mRouteMarkers.removeAllItems(true);
         mItineraryMarkers.removeAllItems(true);
 
@@ -449,8 +453,9 @@ public class RouteSearch implements GHPointListener {
                 GHRequest req = new GHRequest(getRouteListOfAreaList(pointList)).
                         setAlgorithm(Parameters.Algorithms.DIJKSTRA_BI);
                 req.getHints().
-                        put(Parameters.Routing.INSTRUCTIONS, "false");
-                GHResponse resp = hopper.route(req);
+                        put(Parameters.Routing.INSTRUCTIONS, "true");
+                GHResponse resp = new GHResponse();
+                List<Path> pathList = hopper.calcPaths(req, resp);
                 if (!resp.getErrors().isEmpty()) {
                     return null;
                 }
@@ -514,11 +519,17 @@ public class RouteSearch implements GHPointListener {
             pathWrapper.setWaypoints(wayPoints);
 
             activity.showToastOnUiThread("Route found in: " + time + " Seconds.");
+
+            //Set Navigation
+            mNavigation = new Navigation(pathWrapper);
+            App.activity.getLocationHandler().addSnapLocationListener(mNavigation);
+
             updateOverlays(pathWrapper);
 
             mRouteBar.set(GraphhopperOsmdroidAdapter.convertPathWrapperToRoute(pathWrapper));
 
             mRouteTask = null;
+            App.activity.getLocationHandler().setActualRoute(pointList);
         }
 
         @Override
@@ -544,6 +555,7 @@ public class RouteSearch implements GHPointListener {
 
         if (mStartPoint == null || mDestinationPoint == null) {
             mRouteOverlay.clearPath();
+            App.activity.getLocationHandler().setActualRoute(null);
             return;
         }
 
