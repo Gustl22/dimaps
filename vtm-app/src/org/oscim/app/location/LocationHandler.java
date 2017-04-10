@@ -551,6 +551,9 @@ public class LocationHandler implements LocationListener {
                 //First is a calculated path dependent on position
                 hl.onLocationChanged(path.get(1));
         } else {
+            if (anim != null) {
+                anim.cancel();
+            }
             onVirtualLocationChanged(location);
         }
 
@@ -559,7 +562,7 @@ public class LocationHandler implements LocationListener {
 
     private void animateLocation(final ArrayList<Location> path) {
         if (path.size() < 2) return;
-        if (anim != null) anim.end();
+        if (anim != null) anim.cancel();
         anim = ValueAnimator.ofFloat(0f, 1f);
         Location first = path.get(0);
         double distance = first.distanceTo(path.get(1));
@@ -580,6 +583,12 @@ public class LocationHandler implements LocationListener {
                 p.remove(0);
                 animateLocation(p);
                 //App.activity.showToastOnUiThread("Virtual location end");
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                //Remove onAnimationEndListeners to avoid calling a new animation
+                animation.removeAllListeners();
             }
         });
         anim.setInterpolator(new LinearInterpolator());
