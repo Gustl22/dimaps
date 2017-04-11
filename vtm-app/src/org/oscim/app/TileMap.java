@@ -51,6 +51,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import org.oscim.android.MapView;
+import org.oscim.app.debug.RemoteDebugger;
 import org.oscim.app.download.MapDownloadActivity;
 import org.oscim.app.graphhopper.CrossMapCalculatorListener;
 import org.oscim.app.location.Compass;
@@ -65,6 +66,7 @@ import org.oscim.core.GeoPoint;
 import org.oscim.core.Tile;
 import org.oscim.overlay.DistanceTouchOverlay;
 import org.osmdroid.location.POI;
+import org.osmdroid.overlays.ExtendedMarkerItem;
 import org.osmdroid.overlays.MapEventsReceiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,10 +74,12 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 import static org.oscim.app.App.activity;
+import static org.oscim.app.App.routeSearch;
 
 
 public class TileMap extends MapActivity implements MapEventsReceiver,
-        NavigationView.OnNavigationItemSelectedListener, CrossMapCalculatorListener {
+        NavigationView.OnNavigationItemSelectedListener, CrossMapCalculatorListener,
+        RouteSearch.RouteSearchListener {
     final static Logger log = LoggerFactory.getLogger(TileMap.class);
 
     private static final int DIALOG_ENTER_COORDINATES = 0;
@@ -115,6 +119,9 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
+        //Debug
+        RemoteDebugger.setExceptionHandler(this);
+
         Tile.SIZE = Tile.calculateTileSize(getResources().getDisplayMetrics().scaledDensity);
         setContentView(R.layout.activity_tilemap_nav);
         App.view = (MapView) findViewById(R.id.mapView);
@@ -147,6 +154,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
 
         App.poiSearch = new POISearch();
         App.routeSearch = new RouteSearch();
+        routeSearch.addRoutSearchListener(this);
 
         registerForContextMenu(App.view);
         //Navigationview
@@ -174,7 +182,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         mLocationFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                toggleLoction();
+                toggleLocation(null);
             }
         });
 
@@ -602,40 +610,70 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         App.map.updateMap(true);
     }
 
-    private void toggleLoction() {
+    private void toggleLocation(LocationHandler.Mode setMode) {
         final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        LocationHandler.Mode mode = mLocation.getMode();
+        if (setMode == null) {
+            LocationHandler.Mode mode = mLocation.getMode();
+            if (routeSearch != null && routeSearch.getDestinationPoint() != null
+                    && mode != LocationHandler.Mode.NAV) {
+                setMode = LocationHandler.Mode.NAV;
+            } else {
+                switch (mode) {
+                    case OFF:
+                        setMode = LocationHandler.Mode.SHOW;
+                        break;
+                    case SHOW:
+                        setMode = LocationHandler.Mode.SNAP;
+                        break;
+                    case SNAP:
+                        setMode = LocationHandler.Mode.OFF;
+                        break;
+                    default:
+                        setMode = LocationHandler.Mode.SHOW;
+                        break;
+                }
+            }
+        }
         //Ask if GPS is activated?
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             buildAlertMessageNoGps();
-            if(mode != LocationHandler.Mode.OFF){
+            if (setMode != LocationHandler.Mode.OFF) {
                 mLocation.setMode(LocationHandler.Mode.OFF);
                 mLocationFab.setBackgroundTintList(getBaseContext().getResources().getColorStateList(R.color.disabledBackgroundLight));
                 mLocationFab.setImageResource(R.drawable.ic_location_disabled_white_24dp);
             }
         } else {
-            boolean success = true;
-            switch (mode){
-                case OFF:
+            boolean success = false;
+            switch (setMode) {
+                case SHOW:
                     if(success = mLocation.setMode(LocationHandler.Mode.SHOW)){
                         mLocationFab.setBackgroundTintList(getBaseContext().getResources().getColorStateList(R.color.colorSecondAccent));
                         mLocationFab.setImageResource(R.drawable.ic_find_location_white_24dp);
                     }
                     break;
-                case SHOW:
+                case SNAP:
                     if(success = mLocation.setMode(LocationHandler.Mode.SNAP)){
                         mLocationFab.setBackgroundTintList(getBaseContext().getResources().getColorStateList(R.color.colorAccent));
                         mLocationFab.setImageResource(R.drawable.ic_my_location_white_24dp);
                     }
                     break;
-                case SNAP:
+                case OFF:
                     if(success = mLocation.setMode(LocationHandler.Mode.OFF)){
                         mLocationFab.setBackgroundTintList(getBaseContext().getResources().getColorStateList(R.color.disabledBackgroundLight));
                         mLocationFab.setImageResource(R.drawable.ic_location_disabled_white_24dp);
                     }
                     break;
+                case NAV:
+                    if (routeSearch != null && routeSearch.getDestinationPoint() != null) {
+                        if (success = mLocation.setMode(LocationHandler.Mode.NAV)) {
+                            mLocationFab.setBackgroundTintList(getBaseContext().getResources().getColorStateList(R.color.white));
+                            mLocationFab.setImageResource(R.drawable.ic_navigation_black_24dp);
+                        }
+                    }
+                    break;
                 default:
+                    success = true;
                     break;
             }
             if(!success){
@@ -812,5 +850,20 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
                     progressDialog.setProgress(progress);
             }
         });
+    }
+
+    @Override
+    public void onWaypointSet(RouteSearch.MarkerType type, ExtendedMarkerItem item) {
+        if (type.equals(RouteSearch.MarkerType.Destination)) {
+            mLocationFab.setBackgroundTintList(getBaseContext().getResources().getColorStateList(R.color.white));
+            mLocationFab.setImageResource(R.drawable.ic_navigation_black_24dp);
+        }
+    }
+
+    @Override
+    public void onWaypointRemoved(RouteSearch.MarkerType type, ExtendedMarkerItem item) {
+        if (type.equals(RouteSearch.MarkerType.Destination)) {
+            toggleLocation(LocationHandler.Mode.SNAP);
+        }
     }
 }

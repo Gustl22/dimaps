@@ -67,6 +67,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.oscim.app.App.activity;
@@ -152,6 +154,7 @@ public class RouteSearch implements GHPointListener {
 
         markerStart = putMarkerItem(markerStart, mStartPoint.getGhPoint(), START_INDEX,
                 R.string.departure, R.drawable.ic_place_green_24dp, -1);
+        notifyWayPointSet(MarkerType.Departure, markerStart);
     }
 
     public GHPointArea getDestinationPoint() {
@@ -164,6 +167,7 @@ public class RouteSearch implements GHPointListener {
         markerDestination = putMarkerItem(markerDestination, mDestinationPoint.getGhPoint(), DEST_INDEX,
                 R.string.destination,
                 R.drawable.ic_place_red_24dp, -1);
+        notifyWayPointSet(MarkerType.Destination, markerDestination);
     }
 
     public List<GHPointArea> getViaPoints() {
@@ -173,28 +177,34 @@ public class RouteSearch implements GHPointListener {
     public void addViaPoint(GHPointArea ghPointArea) {
         GHPointAreaRoute.getInstance().add(ghPointArea, this);
         mViaPoints.add(ghPointArea);
-        putMarkerItem(null, ghPointArea.getGhPoint(), mViaPoints.size() - 1,
+        ExtendedMarkerItem item = putMarkerItem(null, ghPointArea.getGhPoint(), mViaPoints.size() - 1,
                 R.string.viapoint, R.drawable.ic_place_yellow_24dp, -1);
+        notifyWayPointSet(MarkerType.Via, item);
     }
 
     public void addNonRoutePoint(GHPointArea ghPointArea) {
         mNonRoutePoints.add(ghPointArea);
-        putMarkerItem(null, ghPointArea.getGhPoint(), (-(mNonRoutePoints.size() - 1)) - 3,
+        ExtendedMarkerItem item = putMarkerItem(null, ghPointArea.getGhPoint(), (-(mNonRoutePoints.size() - 1)) - 3,
                 R.string.poi, R.drawable.ic_place_black_24dp, -1);
+        notifyWayPointSet(MarkerType.Other, item);
     }
 
     public void removePoint(int index) {
         if (index == START_INDEX) {
+            notifyWayPointRemoved(MarkerType.Departure, markerStart);
             GHPointAreaRoute.getInstance().remove(mStartPoint);
             mStartPoint = null;
         } else if (index == DEST_INDEX) {
+            notifyWayPointRemoved(MarkerType.Destination, markerDestination);
             GHPointAreaRoute.getInstance().remove(mDestinationPoint);
             mDestinationPoint = null;
         } else if (index < -2) {
             //Non route point markers
+            notifyWayPointRemoved(MarkerType.Other, null);
             int i = -(index + 3);
             mNonRoutePoints.remove(i);
         } else {
+            notifyWayPointRemoved(MarkerType.Via, null);
             GHPointAreaRoute.getInstance().getGHPointAreas().remove(mViaPoints.get(index));
             mViaPoints.remove(index);
         }
@@ -705,6 +715,42 @@ public class RouteSearch implements GHPointListener {
             mTravelTime.setText(time);
             mRouteLength.setText(shortpath + " km");
         }
+    }
+
+    private Collection<RouteSearchListener> routeSearchListeners = new HashSet<RouteSearchListener>();
+
+    public void addRoutSearchListener(RouteSearchListener listener) {
+        routeSearchListeners.add(listener);
+    }
+
+    public void removeRoutSearchListener(RouteSearchListener listener) {
+        routeSearchListeners.remove(listener);
+    }
+
+    public interface RouteSearchListener {
+        public void onWaypointSet(MarkerType type, ExtendedMarkerItem item);
+
+        public void onWaypointRemoved(MarkerType type, ExtendedMarkerItem item);
+    }
+
+    public void notifyWayPointSet(MarkerType type, ExtendedMarkerItem item) {
+        for (RouteSearchListener routeSearchListener : routeSearchListeners) {
+            routeSearchListener.onWaypointSet(type, item);
+        }
+    }
+
+    public void notifyWayPointRemoved(MarkerType type, ExtendedMarkerItem item) {
+        for (RouteSearchListener routeSearchListener : routeSearchListeners) {
+            routeSearchListener.onWaypointRemoved(type, item);
+        }
+    }
+
+    public enum MarkerType {
+        Departure,
+        Via,
+        Destination,
+        Poi,
+        Other
     }
 }
 

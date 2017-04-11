@@ -73,10 +73,12 @@ public class LocationHandler implements LocationListener {
         OFF,
         SHOW,
         SNAP,
+        NAV
     }
 
     private final static int DIALOG_LOCATION_PROVIDER_DISABLED = 2;
     private final static int SHOW_LOCATION_ZOOM = 14;
+    private final static int NAVIGATION_ZOOM = 20;
     private final static int GPS_MINIMUM_DISTANCE = 10; //Standard 10
     private final static int GPS_MINIMUM_TIME_ELAPSE = 5000; //Standard 10000
 
@@ -105,7 +107,7 @@ public class LocationHandler implements LocationListener {
         if (mode == Mode.OFF) {
             disableShowMyLocation();
 
-            if (mMode == Mode.SNAP)
+            if (mMode == Mode.SNAP || mMode == Mode.NAV)
                 map.getEventLayer().enableMove(true);
         }
 
@@ -116,7 +118,10 @@ public class LocationHandler implements LocationListener {
 
         if (mode == Mode.SNAP) {
             map.getEventLayer().enableMove(false);
-            gotoLastKnownPosition();
+            gotoLastKnownPosition(SHOW_LOCATION_ZOOM);
+        } else if (mode == Mode.NAV) {
+            map.getEventLayer().enableMove(false);
+            gotoLastKnownPosition(NAVIGATION_ZOOM);
         } else {
             map.getEventLayer().enableMove(true);
         }
@@ -137,7 +142,7 @@ public class LocationHandler implements LocationListener {
     }
 
     @SuppressWarnings("deprecation")
-    private boolean enableShowMyLocation() {
+    private boolean enableShowMyLocation() throws SecurityException {
 
         Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
@@ -151,7 +156,7 @@ public class LocationHandler implements LocationListener {
         mLocationManager.requestLocationUpdates(bestProvider, GPS_MINIMUM_TIME_ELAPSE,
                 GPS_MINIMUM_DISTANCE, this);
 
-        Location location = gotoLastKnownPosition();
+        Location location = gotoLastKnownPosition(SHOW_LOCATION_ZOOM);
         if (location == null)
             return false;
 
@@ -191,7 +196,7 @@ public class LocationHandler implements LocationListener {
         return true;
     }
 
-    public Location gotoLastKnownPosition() {
+    public Location gotoLastKnownPosition(int zoomLevel) throws SecurityException {
         Location location = null;
         float bestAccuracy = Float.MAX_VALUE;
 
@@ -218,8 +223,8 @@ public class LocationHandler implements LocationListener {
 
         map.getMapPosition(mMapPosition);
 
-        if (mMapPosition.zoomLevel < SHOW_LOCATION_ZOOM)
-            mMapPosition.setZoomLevel(SHOW_LOCATION_ZOOM);
+        if (mMapPosition.zoomLevel < zoomLevel)
+            mMapPosition.setZoomLevel(zoomLevel);
 
         double lat = location.getLatitude();
         double lon = location.getLongitude();
@@ -259,7 +264,7 @@ public class LocationHandler implements LocationListener {
 
         //log.debug("update location " + lat + ":" + lon);
 
-        if (mSetCenter || mMode == Mode.SNAP) {
+        if (mSetCenter || mMode == Mode.SNAP || mMode == Mode.NAV) {
             mSetCenter = false;
 
             map.getMapPosition(mMapPosition);
@@ -632,7 +637,7 @@ public class LocationHandler implements LocationListener {
         }
     }
 
-    public void resume() {
+    public void resume() throws SecurityException {
         if (mMode != Mode.OFF) {
             Criteria criteria = new Criteria();
             criteria.setAccuracy(Criteria.ACCURACY_FINE);
