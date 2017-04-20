@@ -238,6 +238,7 @@ public class PoiSearch implements PoiSelector {
                     }
 
                     tagFilter.put("name", builder);
+                    tagFilter.remove("addr:city");
 
                     collection.addAll(getPoiByTagsAndCategory(tagFilter, category));
                     //collection.addAll(getPoiByTagAndCategory("addr:street", text, CustomPoiCategory.Root));
@@ -331,11 +332,10 @@ public class PoiSearch implements PoiSelector {
             while (it.hasNext()) {
                 Map.Entry pair = (Map.Entry) it.next();
                 if (((String) pair.getValue()).isEmpty()) continue;
-                query.add("%" + pair.getKey() + "=" + pair.getValue()+"%");
+                query.add("%" + pair.getKey() + "=%" + pair.getValue() + "%");
             }
             return persManager.findInRect(bb, categoryFilter,
                     query.toArray(new String[query.size()]), Integer.MAX_VALUE);
-            //query.toArray(new String[query.size()])
         } catch (Throwable t) {
             if (t.getCause() != null)
                 Log.e(t.getMessage(), t.getCause().getMessage());

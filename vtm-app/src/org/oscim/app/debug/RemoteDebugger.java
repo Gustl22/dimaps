@@ -66,6 +66,6 @@ public class RemoteDebugger {
                 crashActivity.finish();
             }
         };
-        //Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
+        Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
     }
 }
