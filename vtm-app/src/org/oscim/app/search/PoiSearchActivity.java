@@ -16,12 +16,13 @@ import android.widget.TextView;
 import org.mapsforge.poi.storage.PointOfInterest;
 import org.oscim.app.App;
 import org.oscim.app.R;
+import org.oscim.app.debug.RemoteDebugger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
-import static org.oscim.app.search.PoiDisplayUtils.getStringListFromPoiList;
+import static org.oscim.app.search.PoiDisplayUtils.getSearchItemListFromPoiList;
 
 /**
  * Created by gustl on 17.03.17.
@@ -36,6 +37,10 @@ public class PoiSearchActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         //requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
+
+        //Debug
+        RemoteDebugger.setExceptionHandler(this);
+
         setContentView(R.layout.activity_poi_search);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -80,7 +85,11 @@ public class PoiSearchActivity extends AppCompatActivity {
         //Setup search logic
         mPoiSearch = new PoiSearch();
         try {
-            mPoiSearch.setPoiFile(mPoiDisplay.currentPoiFile);
+            if (mPoiDisplay.currentPoiFile == null) {
+                mPoiSearch.initPoiFile();
+            } else {
+                mPoiSearch.setPoiFile(mPoiDisplay.currentPoiFile);
+            }
         } catch (FileNotFoundException ex) {
             App.activity.showToastOnUiThread("No POI data found. Download it first");
             finish();
@@ -122,10 +131,10 @@ public class PoiSearchActivity extends AppCompatActivity {
                     progDialog.dismiss();
                 super.onPostExecute(pointOfInterests);
                 mPoiDisplay.poiSuggestions = pointOfInterests;
-                mPoiDisplay.stringSuggestions = getStringListFromPoiList(mPoiDisplay.poiSuggestions);
+                mPoiDisplay.listItemSuggestions = getSearchItemListFromPoiList(mPoiDisplay.poiSuggestions);
 
                 mPoiDisplay.suggestionsAdapter.clear();
-                mPoiDisplay.suggestionsAdapter.addAll(mPoiDisplay.stringSuggestions);
+                mPoiDisplay.suggestionsAdapter.addAll(mPoiDisplay.listItemSuggestions);
                 mPoiDisplay.suggestionsAdapter.notifyDataSetChanged();
                 mPoiDisplay.expandSuggestions();
 //                mAutoCompleteSearchBarAdapter.notifyDataSetChanged();

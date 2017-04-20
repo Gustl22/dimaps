@@ -6,3 +6,16 @@ include ':vtm-android'
 include ':vtm-themes'
 include ':vtm-jeo'
 include ':vtm-app'
+
+//include ':mapsforge'
+//project(':mapsforge').projectDir =
+//        new File(settingsDir, '../../mapsforge/mapsforge')
+//include ':mapsforge-core'
+//project(':mapsforge-core').projectDir =
+//        new File(settingsDir, '../../mapsforge/mapsforge/mapsforge-core')
+//include ':mapsforge-poi'
+//project(':mapsforge-poi').projectDir =
+//        new File(settingsDir, '../../mapsforge/mapsforge/mapsforge-poi')
+//include ':mapsforge-poi-android'
+//project(':mapsforge-poi-android').projectDir =
+//        new File(settingsDir, '../../mapsforge/mapsforge/mapsforge-poi-android')

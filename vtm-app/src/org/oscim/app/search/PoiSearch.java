@@ -22,11 +22,13 @@ import org.mapsforge.core.model.BoundingBox;
 import org.mapsforge.core.model.LatLong;
 import org.mapsforge.poi.android.storage.AndroidPoiPersistenceManagerFactory;
 import org.mapsforge.poi.storage.ExactMatchPoiCategoryFilter;
+import org.mapsforge.poi.storage.PoiCategory;
 import org.mapsforge.poi.storage.PoiCategoryFilter;
 import org.mapsforge.poi.storage.PoiCategoryManager;
 import org.mapsforge.poi.storage.PoiFileInfo;
 import org.mapsforge.poi.storage.PoiPersistenceManager;
 import org.mapsforge.poi.storage.PointOfInterest;
+import org.mapsforge.poi.storage.UnknownPoiCategoryException;
 import org.oscim.app.MapLayers;
 import org.oscim.app.holder.AreaFileInfo;
 import org.oscim.app.utils.FileUtils;
@@ -34,9 +36,14 @@ import org.oscim.app.utils.FileUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * POI search.<br/>
@@ -46,6 +53,7 @@ import java.util.List;
 public class PoiSearch implements PoiSelector {
     private File mPOI_File;
     private PointOfInterest poiArea; //The Area of poiFile expressed as POI
+    public Set<String> CustomPoiCategory;
 
     public PoiSearch() {
     }
@@ -55,34 +63,70 @@ public class PoiSearch implements PoiSelector {
         return mPOI_File;
     }
 
+    public void initPoiFile() throws FileNotFoundException {
+        ArrayList<File> files = getPoiFilesByAreaFolder(null);
+        if (files == null || files.isEmpty())
+            throw new FileNotFoundException("No point of interest files found");
+        setPoiFile(files.get(0));
+    }
+
+    /**
+     * Sets POI-File for current search, if it not exists,
+     * it searches the parent directories for a file
+     *
+     * @param poiFile The file, which should be set
+     * @throws FileNotFoundException If no files exist, it throws an Exception
+     */
     public void setPoiFile(File poiFile) throws FileNotFoundException {
+        //if(poiFile == null) return;
         if (poiFile != null && poiFile.exists()) {
-                mPOI_File = poiFile;
-                Collection<File> poiAreas = fetchAreaFiles(poiFile.getName());
-                if(poiAreas != null && !poiAreas.isEmpty())
-                    setPoiArea(getPoiFromFile(new ArrayList<>(poiAreas).get(0), 0));
+            mPOI_File = poiFile;
         } else if (mPOI_File != null && mPOI_File.getParentFile().exists()) {
-            setPoiFileByAreaFolder(mPOI_File.getParentFile());
+            ArrayList<File> files = getPoiFilesByAreaFolder(mPOI_File.getParentFile());
+            if (files == null || files.isEmpty())
+                throw new FileNotFoundException("No point of interest files found");
+            mPOI_File = files.get(0);
         } else {
-            setPoiFileByAreaFolder(null);
+            throw new FileNotFoundException("Point of Interest not exists");
+        }
+        if (mPOI_File != null) {
+            Collection<File> poiAreas = fetchAreaFiles(mPOI_File.getName());
+            //Sets the current poiFile as a PointOfInterest
+            if (poiAreas != null && !poiAreas.isEmpty())
+                setPoiArea(getPoiFromFile(new ArrayList<>(poiAreas).get(0), 0));
+        } else {
+            throw new FileNotFoundException("No point of interest files found");
+        }
+
+
+        //Add all PoiCategories
+        CustomPoiCategory = new HashSet<String>(Arrays.asList("Maparea", "Root"));
+        PoiPersistenceManager ppm = openPoiConnection(mPOI_File);
+        try {
+            Collection<PoiCategory> poiCategories = ppm.getCategoryManager().getRootCategory().deepChildren();
+            for (PoiCategory poiCategory : poiCategories) {
+                CustomPoiCategory.add(poiCategory.getTitle());
+            }
+        } catch (UnknownPoiCategoryException e) {
+            e.printStackTrace();
+        } finally {
+            if (ppm != null)
+                ppm.close();
         }
     }
 
-    public void setPoiFileByAreaFolder(File areaFolder) throws FileNotFoundException {
+    public ArrayList<File> getPoiFilesByAreaFolder(File areaFolder) {
         ArrayList<File> files;
         if(areaFolder == null || !areaFolder.exists()){
             files = new ArrayList<File>();
+            if (MapLayers.MAP_FOLDERS == null) return null;
             for (File f : MapLayers.MAP_FOLDERS) {
                 files.addAll(FileUtils.walkExtension(f, ".poi"));
             }
         } else {
             files = FileUtils.walkExtension(areaFolder, ".poi");
         }
-        if(!files.isEmpty()){
-            setPoiFile(files.get(0));
-        } else {
-            throw new FileNotFoundException("No point of interest files found");
-        }
+        return files;
     }
 
     public PoiPersistenceManager openPoiConnection(File poiFile){
@@ -94,10 +138,11 @@ public class PoiSearch implements PoiSelector {
         Collection<PointOfInterest> collection = new HashSet<PointOfInterest>();
         List<File> files;
         text = text.toLowerCase();
-        String[] requests = text.split("-|\\.|\\s+|,");
+        List<String> requests = new ArrayList<String>(Arrays.asList(text.split("-|\\.|\\s+|,")));
 //        for(int i=0; i<requests.length; i++){
 //            requests[i] = requests[i].trim();
 //        }
+        //Search for Poi Files
         files = new ArrayList<>(fetchAreaFiles(text));
         for(int i= 0; i< files.size(); i++){
             File f = files.get(i);
@@ -107,30 +152,97 @@ public class PoiSearch implements PoiSelector {
             mPOI_File = files.get(files.size()-1);
             return collection;
         } else {
+            Map<String, String> tagFilter = new HashMap();
 
-            outer:
-            for(CustomPoiCategory c : CustomPoiCategory.values()){
-                String cat = c.name().substring(0,c.name().length()-1).toLowerCase();
-                for(int i=0; i<requests.length; i++){
-                    if(requests[i].contains(cat)){
+            //Postcodes and house numbers
+            String houseNo = "";
+            String postCode = "";
+            for (String request : requests) {
+                try {
+                    int no = Integer.parseInt(request);
+                    if (no > 1000) {
+                        postCode = request;
+                    } else {
+                        houseNo = request;
+                    }
+                } catch (NumberFormatException ex) {
+                    continue;
+                }
+            }
+
+            if (!houseNo.isEmpty()) {
+                tagFilter.put("addr:housenumber", houseNo);
+                requests.remove(houseNo);
+            }
+            if (!postCode.isEmpty()) {
+                tagFilter.put("addr:postcode", postCode);
+                requests.remove(postCode);
+            }
+
+            //Poi category filter
+            for (String c : CustomPoiCategory) {
+                String cat;
+                //Category name without "s"
+                if (c.endsWith("s")) {
+                    if (c.endsWith("ies")) {
+                        cat = c.substring(0, c.length() - 3).toLowerCase();
+                    } else {
+                        cat = c.substring(0, c.length() - 1).toLowerCase();
+                    }
+                } else {
+                    cat = c.toLowerCase();
+                }
+                for (int i = 0; i < requests.size(); i++) {
+                    if (requests.get(i).contains(cat)){
                         String builder = "";
-                        for(int j=0; j<requests.length; j++){
+                        for (int j = 0; j < requests.size(); j++){
                             if(i==j) continue;
-                            builder += requests[j] + " ";
+                            builder += requests.get(j) + " ";
                         }
-                        Collection<PointOfInterest> res = getPoiByTagAndCategory("name", builder.trim(), c);
+                        tagFilter.put("name", builder.trim());
+                        Collection<PointOfInterest> res = getPoiByTagsAndCategory(tagFilter, c);
                         if(res != null && !res.isEmpty()){
                             collection.addAll(res);
+                            if (collection.isEmpty()) continue;
                             return collection;
                         }
                     }
                 }
             }
-            if(collection.isEmpty()){
-                collection.addAll(getPoiByTagAndCategory("name", text, CustomPoiCategory.Root));
+            if(collection.isEmpty()) {
+                if (requests.size() > 1) {
+                    tagFilter.put("name", requests.get(0));
+                    tagFilter.put("addr:city", requests.get(1));
+
+                    collection.addAll(getPoiByTagsAndCategory(tagFilter, "Root"));
+
+                    tagFilter.put("addr:city", requests.get(0));
+                    tagFilter.put("name", requests.get(1));
+
+                    collection.addAll(getPoiByTagsAndCategory(tagFilter, "Root"));
+                }
                 //collection.addAll(getPoiByTagAndCategory("addr:street", text, CustomPoiCategory.Root));
                 //collection.addAll(getPoiByTagAndCategory("highway", "residential", CustomPoiCategory.Root));
+                if (collection.isEmpty()) {
+                    String category = "Root";
+                    String builder = "";
+                    for (String request : requests) {
+                        builder += (" " + request);
+                    }
+                    builder = builder.trim();
+                    //Extras
+                    if (builder.isEmpty()) {
+                        if (tagFilter.containsKey("addr:postcode")) {
+                            category = "Places";
+                        }
+                    }
 
+                    tagFilter.put("name", builder);
+
+                    collection.addAll(getPoiByTagsAndCategory(tagFilter, category));
+                    //collection.addAll(getPoiByTagAndCategory("addr:street", text, CustomPoiCategory.Root));
+                    //collection.addAll(getPoiByTagAndCategory("highway", "residential", CustomPoiCategory.Root));
+                }
             }
         }
         return collection;
@@ -177,14 +289,14 @@ public class PoiSearch implements PoiSelector {
         return poi;
     }
 
-    public Collection<PointOfInterest> getPoiInBounds(BoundingBox boundingBox, CustomPoiCategory poiCategory){
+    public Collection<PointOfInterest> getPoiInBounds(BoundingBox boundingBox, String poiCategory){
         PoiPersistenceManager persManager = null;
         try {
             persManager = openPoiConnection(mPOI_File);
             PoiCategoryManager categoryManager = persManager.getCategoryManager();
             PoiCategoryFilter categoryFilter = new ExactMatchPoiCategoryFilter();
-            categoryFilter.addCategory(categoryManager.getPoiCategoryByTitle(poiCategory.name()));
-            return persManager.findInRect(boundingBox, categoryFilter, null, Integer.MAX_VALUE);
+            categoryFilter.addCategory(categoryManager.getPoiCategoryByTitle(poiCategory));
+            return persManager.findInRect(boundingBox, categoryFilter, (String) null, Integer.MAX_VALUE);
         } catch (Throwable t) {
             Log.e(t.getMessage(), t.getCause().getMessage());
         } finally {
@@ -195,11 +307,13 @@ public class PoiSearch implements PoiSelector {
         return null;
     }
 
-    public Collection<PointOfInterest> getPoiByTagAndCategory(String tag, String value, CustomPoiCategory category) {
-        return getPoiByTagsAndCategory(new String[]{tag}, new String[]{value}, category);
+    public Collection<PointOfInterest> getPoiByTagAndCategory(String tag, String value, String category) {
+        Map<String, String> m = new HashMap<>();
+        m.put(tag, value);
+        return getPoiByTagsAndCategory(m, category);
     }
 
-    public Collection<PointOfInterest> getPoiByTagsAndCategory(String[] tags, String[] values, CustomPoiCategory category) {
+    public Collection<PointOfInterest> getPoiByTagsAndCategory(Map<String, String> tags, String category) {
         PoiPersistenceManager persManager = null;
         assert mPOI_File != null;
         try {
@@ -208,20 +322,22 @@ public class PoiSearch implements PoiSelector {
             BoundingBox bb = persManager.getPoiFileInfo().bounds;
             PoiCategoryManager categoryManager = persManager.getCategoryManager();
             PoiCategoryFilter categoryFilter = new ExactMatchPoiCategoryFilter();
-            categoryFilter.addCategory(categoryManager.getPoiCategoryByTitle(category.name()));
+            categoryFilter.addCategory(categoryManager.getPoiCategoryByTitle(category));
             persManager.getPoiFileInfo();
-            if (tags.length != values.length) {
-                return null;
+
+            List<String> query = new ArrayList<>();
+
+            Iterator it = tags.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry pair = (Map.Entry) it.next();
+                if (((String) pair.getValue()).isEmpty()) continue;
+                query.add("%" + pair.getKey() + "=" + pair.getValue()+"%");
             }
-            String query = "%";
-            for (int i = 0; i < tags.length; i++) {
-                query += tags[i] + "=" + values[i];
-                if (i + 1 != tags.length) query += " AND ";
-            }
-            query += "%";
-            return persManager.findInRect(bb, categoryFilter, query, Integer.MAX_VALUE);
+            return persManager.findInRect(bb, categoryFilter,
+                    query.toArray(new String[query.size()]), Integer.MAX_VALUE);
+            //query.toArray(new String[query.size()])
         } catch (Throwable t) {
-            if(t != null && t.getCause() != null)
+            if (t.getCause() != null)
                 Log.e(t.getMessage(), t.getCause().getMessage());
         } finally {
             if (persManager != null) {
@@ -239,17 +355,6 @@ public class PoiSearch implements PoiSelector {
         return poiArea;
     }
 
-    //Make shure has a natural name;
-    public enum CustomPoiCategory{
-        Restaurants,
-        Shops,
-        Fastfood,
-        Bars,
-        Electronics,
-        Clothes,
-        Maparea,
-        Root
-    }
 
     /**
      * @params .execute(BoundingBox bounds, File poiFile)
@@ -265,7 +370,7 @@ public class PoiSearch implements PoiSelector {
 
         @Override
         protected Collection<PointOfInterest> doInBackground(Object... params) {
-            return getPoiInBounds((BoundingBox) params[0], CustomPoiCategory.Restaurants);
+            return getPoiInBounds((BoundingBox) params[0], "Restaurants");
         }
 
         @Override

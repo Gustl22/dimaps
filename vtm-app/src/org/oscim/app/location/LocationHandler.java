@@ -395,7 +395,7 @@ public class LocationHandler implements LocationListener {
     }
 
     private ArrayList<Location> calcVirtualPointsOnPath(Location currentLocation, double abs) {
-        App.activity.showToastOnUiThread("Stop 1");
+//        App.activity.showToastOnUiThread("Stop 1");
         double curLat = currentLocation.getLatitude();
         double curLon = currentLocation.getLongitude();
         double distance = Double.MAX_VALUE;
@@ -428,7 +428,7 @@ public class LocationHandler implements LocationListener {
         }
         if (drawPoints.isEmpty()) actualRoute = null;
 
-        App.activity.showToastOnUiThread("Stop 2");
+//        App.activity.showToastOnUiThread("Stop 2");
         if (nearestPoint == null) return null;
         Coordinate curLoc = new Coordinate(curLon, curLat);
         Coordinate nearLoc = new Coordinate(nearestPoint.getLon(), nearestPoint.getLat());
@@ -459,7 +459,7 @@ public class LocationHandler implements LocationListener {
             }
         }
 
-        App.activity.showToastOnUiThread("Stop 3");
+//        App.activity.showToastOnUiThread("Stop 3");
         if (startCoord == null) return null;
 
 //        //calculate end point
@@ -490,11 +490,12 @@ public class LocationHandler implements LocationListener {
 //        endCoord = new Coordinate(curLoc.x + endVector.getX(), curLoc.y + endVector.getY());
 
         actualRoute = drawPoints;
+        if (drawPoints.isEmpty()) return null;
         drawPoints.set(0, startCoord.y, startCoord.x, startCoord.z);
 //        Location endLocation = new Location(currentLocation);
 //        endLocation.setLatitude(endCoord.y);
 //        endLocation.setLongitude(endCoord.x);
-        App.activity.showToastOnUiThread("StartLat: " + startCoord.y + "StartLon: " + startCoord.x);
+//        App.activity.showToastOnUiThread("StartLat: " + startCoord.y + "StartLon: " + startCoord.x);
         iterator = drawPoints.iterator();
         ArrayList<Location> locations = new ArrayList<>();
         while (iterator.hasNext()) {
@@ -540,7 +541,7 @@ public class LocationHandler implements LocationListener {
     public void onLocationChanged(final Location location) {
         App.activity.showToastOnUiThread("Location changed");
         if (preLocation == null) {
-            App.activity.showToastOnUiThread("Prelocation is null");
+//            App.activity.showToastOnUiThread("Prelocation is null");
             onVirtualLocationChanged(location);
             preLocation = location;
             return;

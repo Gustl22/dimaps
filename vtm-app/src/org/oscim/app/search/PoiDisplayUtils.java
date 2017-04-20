@@ -34,8 +34,8 @@ public class PoiDisplayUtils {
     private PrintView vSelection_icon;
     private TextView vSelection_category;
     private TextView vSelection_name;
-    public List<String> stringSuggestions;
-    public ArrayAdapter<String> suggestionsAdapter;
+    public List<QuickSearchListItem> listItemSuggestions;
+    public ArrayAdapter<QuickSearchListItem> suggestionsAdapter;
     public List<PointOfInterest> poiSuggestions;
     public PointOfInterest selectedPOI;
     public File currentPoiFile;
@@ -52,8 +52,8 @@ public class PoiDisplayUtils {
         LinearLayout mExpandLine;
         this.mParent = parent;
         //Set search-Bar on-hit-Enter-Listener
-        stringSuggestions = new ArrayList<>();
-        stringSuggestions.add("No suggestions");
+        listItemSuggestions = new ArrayList<>();
+//        listItemSuggestions.add("No suggestions");
         vResult = (TextView) parent.findViewById(R.id.poi_selection_textview);
         vPoiListView = (ListView) parent.findViewById(R.id.poi_listview);
         mExpandLine = (LinearLayout) parent.findViewById(R.id.expand_line);
@@ -71,8 +71,7 @@ public class PoiDisplayUtils {
         vAreaSelection = (TextView) parent.findViewById(R.id.poi_area_selection_textview);
 
         //Set autocompletion-List
-        suggestionsAdapter = new ArrayAdapter<String>
-                (parent, R.layout.simple_dropdown_item_1line, stringSuggestions);
+        suggestionsAdapter = new QuickSearchListAdapter(parent, listItemSuggestions);
         vPoiListView.setAdapter(suggestionsAdapter);
         //Onclick suggested item
         vPoiListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -117,7 +116,7 @@ public class PoiDisplayUtils {
         for (Tag t : mSelectedPOI.getTags()) {
             resText += "<br/>" + t.key + ": " + t.value;
         }
-        if (mSelectedPOI.getCategory().getTitle().equals(PoiSearch.CustomPoiCategory.Maparea.name())) {
+        if (mSelectedPOI.getCategory().getTitle().equals("Maparea")) {
             vAreaSelection.setText(Html.fromHtml("<b>" + mSelectedPOI.getCategory().getTitle() + ": </b>" + resText));
         } else {
             vSelection_category.setText(mSelectedPOI.getCategory().getTitle());
@@ -133,10 +132,10 @@ public class PoiDisplayUtils {
         }
     }
 
-    public String getIconFromPOI(PointOfInterest poi) {
+    public static String getIconFromPOI(PointOfInterest poi) {
         switch (poi.getCategory().getTitle().toLowerCase()) {
             case "restaurants":
-                return "ic_restaurant_menu";
+                return "ic_local_dining";
             case "cafes":
                 return "ic_local_cafe";
             case "bus stations":
@@ -151,6 +150,35 @@ public class PoiDisplayUtils {
                 return "ic_wc";
             case "bus stops":
                 return "ic_directions_bus";
+            case "museums":
+                return "ic_local_activity";
+            case "beacons":
+                return "ic_lightbulb_outline";
+            case "fast food restaurants":
+                return "ic_local_pizza";
+            case "information":
+                return "ic_information_outline";
+            case "bicycle rental stations":
+                return "ic_directions_bike";
+            case "boutiques":
+                return "ic_local_grocery_store";
+            case "toys":
+                return "ic_toys";
+            case "sport centres":
+                return "ic_directions_run";
+            case "school grounds":
+                return "ic_school";
+            case "car parks":
+                return "ic_local_parking";
+            case "university campus or buildings":
+                return "ic_school";
+            case "public libraries":
+                return "ic_local_library";
+            case "hospitals":
+                return "ic_local_hospital";
+            case "newsagents":
+            case "works":
+                return "ic_work";
         }
         for (Tag tag : poi.getTags()) {
             switch (tag.key) {
@@ -161,22 +189,28 @@ public class PoiDisplayUtils {
                         case "footway":
                             return "ic_directions_walk";
                     }
-                    return "ic_directions_car";
+                    return "ic_timeline";
                 case "amenity":
                     return "ic_domain";
-                case "place":
-                    return "ic_location_city";
                 case "natural":
                     return "ic_nature_people";
+                case "railway":
+                    return "ic_directions_subway";
+                case "tourism":
+                    return "ic_photo_camera";
+                case "place":
+                    return "ic_location_city";
+                case "bus":
+                    return "ic_directions_bus";
             }
         }
         return "ic_place";
     }
 
-    public static List<String> getStringListFromPoiList(List<PointOfInterest> poiList) {
-        List<String> arr = new ArrayList<>();
+    public static List<QuickSearchListItem> getSearchItemListFromPoiList(List<PointOfInterest> poiList) {
+        List<QuickSearchListItem> arr = new ArrayList<>();
         for (PointOfInterest poi : poiList) {
-            String builder = poi.getName();
+            String name = poi.getName();
             List<Tag> tags = poi.getTags();
             String postcode = "";
             String city = "";
@@ -185,13 +219,13 @@ public class PoiDisplayUtils {
             for (Tag t : tags) {
                 switch (t.key.toLowerCase()) {
                     case "addr:postcode":
-                        postcode = ", " + t.value;
+                        postcode = t.value;
                         break;
                     case "addr:city":
                         city = " " + t.value;
                         break;
                     case "addr:street":
-                        street = ", " + t.value;
+                        street = t.value + ", ";
                         break;
                     case "is_in":
                         is_in = t.value;
@@ -200,6 +234,7 @@ public class PoiDisplayUtils {
                         break;
                 }
             }
+            QuickSearchListItem item = new QuickSearchListItem(name);
             if (!is_in.isEmpty()) {
                 String[] adArr = is_in.split(",|;");
                 is_in = "";
@@ -210,8 +245,11 @@ public class PoiDisplayUtils {
                 }
             }
             city = city.isEmpty() ? is_in : (postcode.isEmpty() ? "," + city : city);
-
-            arr.add(builder + street + postcode + city);
+            item.setCategory(poi.getCategory().getTitle());
+            item.setCategoryIcon(getIconFromPOI(poi));
+            item.setDistance("0m");
+            item.setTown(street + postcode + city);
+            arr.add(item);
         }
         return arr;
     }

@@ -33,31 +33,44 @@ public class Navigation implements LocationListener {
 
     public PathWrapper calculateCurrentPath(Location snapLocation) {
         GHPoint ghPoint = new GHPoint(snapLocation.getLatitude(), snapLocation.getLongitude());
+        PointList points = pathWrapper.getPoints();
+        Iterator<GHPoint3D> pointIterator = points.iterator();
+
+        int i = 0;
+        boolean pointOccured = false;
+        while (pointIterator.hasNext()) {
+            GHPoint pt = pointIterator.next();
+            if (!pointOccured) {
+                if (ghPoint.equals(pt)) {
+                    pointOccured = true;
+                    break;
+                } else {
+                    i++;
+                }
+            }
+        }
 
         //TODO Replace waypoints with getpoints or iterate instructions!
 
         InstructionList instructions = pathWrapper.getInstructions();
         Iterator<Instruction> iterator = instructions.iterator();
 
+        int j = i + 1;
         boolean meetCurrent = false;
         Instruction instruction = null;
-        boolean pointOccured = false;
-        int i = 0;
         while (iterator.hasNext()) {
             instruction = iterator.next();
             if (!meetCurrent && instruction.equals(mLastInstruction)) {
                 meetCurrent = true;
             }
             if (meetCurrent || mLastInstruction == null) {
-                PointList points = instruction.getPoints();
-                for (GHPoint3D pt : points) {
-                    if (ghPoint.equals(pt)) {
-                        pointOccured = true;
-                        mLastInstruction = instruction;
-                        break;
-                    }
-                    i++;
+                PointList pointsI = instruction.getPoints();
+                if (j >= pointsI.getSize()) {
+                    j -= pointsI.getSize();
+                } else {
+                    break;
                 }
+                mLastInstruction = instruction;
             }
         }
         if (!pointOccured) {
@@ -75,8 +88,7 @@ public class Navigation implements LocationListener {
 //        Graph graph = graphHopper.getGraphHopperStorage().getBaseGraph();
 //        EdgeExplorer explorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);
 
-        PointList points = pathWrapper.getPoints();
-        points = points.copy(i - 1, points.getSize() - 1);
+        points = points.copy(i, points.getSize() - 1);
         if (instruction == null || instructions.isEmpty()) return pathWrapper;
         double currentDistance = pathWrapper.getDistance() - instruction.getDistance();
         long currentTime = pathWrapper.getTime() - instruction.getTime();
@@ -124,6 +136,7 @@ public class Navigation implements LocationListener {
                 .setDistance(currentDistance)
                 .setPoints(points)
                 .setTime(currentTime);
+        App.activity.showToastOnUiThread("Pathwrapper set");
         return currentWrapper;
     }
 

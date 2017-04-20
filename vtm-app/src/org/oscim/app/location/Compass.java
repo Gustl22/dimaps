@@ -115,6 +115,11 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
         return mMap.getMapPosition().getTilt();
     }
 
+    /**
+     * Set tilt of map
+     *
+     * @param tilt in degree (orthogonal is 0, the more flat up to 90 degrees)
+     */
     public synchronized void setTilt(float tilt) {
         mMap.viewport().setTilt(mMap.viewport().limitTilt(tilt));
         mCurTilt = tilt;

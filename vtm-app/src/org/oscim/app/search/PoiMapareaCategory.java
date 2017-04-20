@@ -32,7 +32,7 @@ public class PoiMapareaCategory implements PoiCategory {
 
     @Override
     public String getTitle() {
-        return PoiSearch.CustomPoiCategory.Maparea.name();
+        return "Maparea";
     }
 
     @Override

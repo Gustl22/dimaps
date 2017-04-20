@@ -18,7 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.oscim.app.search.PoiDisplayUtils.getStringListFromPoiList;
+import static org.oscim.app.search.PoiDisplayUtils.getSearchItemListFromPoiList;
 
 /**
  * Created by gustl on 24.03.17.
@@ -59,10 +59,10 @@ public class PoiFavoritesActivity extends AppCompatActivity implements PoiSelect
         List<PointOfInterest> actualPois = favorHandler.getFavorites();
 
         mPoiDisplay.poiSuggestions = actualPois;
-        mPoiDisplay.stringSuggestions = getStringListFromPoiList(mPoiDisplay.poiSuggestions);
+        mPoiDisplay.listItemSuggestions = getSearchItemListFromPoiList(mPoiDisplay.poiSuggestions);
 
         mPoiDisplay.suggestionsAdapter.clear();
-        mPoiDisplay.suggestionsAdapter.addAll(mPoiDisplay.stringSuggestions);
+        mPoiDisplay.suggestionsAdapter.addAll(mPoiDisplay.listItemSuggestions);
         mPoiDisplay.suggestionsAdapter.notifyDataSetChanged();
         mPoiDisplay.expandSuggestions();
 

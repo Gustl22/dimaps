@@ -13,4 +13,7 @@
     <color name="disabledBackgroundLight">#e0e0e0</color>
     <color name="disabledForegroundLight">#646464</color>
     <color name="selection">#009bc6</color>
+
+    <color name="dashboard_divider_light">#F0F0F0</color>
+    <color name="dashboard_divider_dark">#3d474c</color>
 </resources>

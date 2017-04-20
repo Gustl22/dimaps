@@ -175,7 +175,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         mCompassFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                toggleCompass();
+                toggleCompass(null);
             }
         });
         mLocationFab = (FloatingActionButton) activity.findViewById(R.id.location);
@@ -581,22 +581,35 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         });
     }
 
-    public void toggleCompass() {
+    public void toggleCompass(Compass.Mode mode) {
+        if (mode == null) {
+            switch (mCompass.getMode()) {
+                case OFF:
+                    mode = Compass.Mode.C2D;
+                    break;
+                case C2D:
+                    mode = Compass.Mode.C3D;
+                    break;
+                case C3D:
+                    mode = Compass.Mode.OFF;
+                    break;
+            }
 
+        }
         ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
 
-        switch(mCompass.getMode()){
-            case OFF:
+        switch (mode) {
+            case C2D:
                 mCompass.setMode(Compass.Mode.C2D);
                 mCompassFab.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.adjustAlpha(getResources().getColor(R.color.colorAccent), 0.4f)));
                 //App.activity.showToastOnUiThread("Compass 2D");
                 break;
-            case C2D:
+            case C3D:
                 mCompass.setMode(Compass.Mode.C3D);
                 mCompassFab.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.adjustAlpha(getResources().getColor(R.color.colorSecondAccent), 0.4f)));
                 //App.activity.showToastOnUiThread("Compass 3D");
                 break;
-            case C3D:
+            case OFF:
                 mCompass.setMode(Compass.Mode.OFF);
                 mCompassFab.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.adjustAlpha(getResources().getColor(R.color.white), 0.4f)));
                 mCompass.setRotation(0);
@@ -667,9 +680,11 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
                 case NAV:
                     if (routeSearch != null && routeSearch.getDestinationPoint() != null) {
                         if (success = mLocation.setMode(LocationHandler.Mode.NAV)) {
-                            mLocationFab.setBackgroundTintList(getBaseContext().getResources().getColorStateList(R.color.white));
-                            mLocationFab.setImageResource(R.drawable.ic_navigation_black_24dp);
+                            mLocationFab.setBackgroundTintList(getBaseContext().getResources().getColorStateList(R.color.colorAccent));
+                            mLocationFab.setImageResource(R.drawable.ic_navigation_white_24dp);
                         }
+                        toggleCompass(Compass.Mode.C2D);
+                        mCompass.setTilt(80);
                     }
                     break;
                 default:
