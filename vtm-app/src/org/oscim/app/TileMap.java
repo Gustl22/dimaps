@@ -154,7 +154,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
 
         App.poiSearch = new POISearch();
         App.routeSearch = new RouteSearch();
-        routeSearch.addRoutSearchListener(this);
+        routeSearch.addRouteSearchListener(this);
 
         registerForContextMenu(App.view);
         //Navigationview

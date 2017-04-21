@@ -19,7 +19,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.location.Address;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.content.ContextCompat;
@@ -57,14 +56,12 @@ import org.oscim.core.GeoPoint;
 import org.oscim.layers.PathLayer;
 import org.oscim.layers.marker.MarkerSymbol;
 import org.oscim.theme.styles.LineStyle;
-import org.osmdroid.location.GeocoderNominatim;
 import org.osmdroid.overlays.DefaultInfoWindow;
 import org.osmdroid.overlays.ExtendedMarkerItem;
 import org.osmdroid.overlays.ItemizedOverlayWithBubble;
 import org.osmdroid.routing.Route;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -238,31 +235,31 @@ public class RouteSearch implements GHPointListener {
      * Reverse Geocoding
      */
     public String getAddress(GeoPoint p) {
-        GeocoderNominatim geocoder = new GeocoderNominatim(activity);
-        String theAddress;
-        try {
-            double dLatitude = p.getLatitude();
-            double dLongitude = p.getLongitude();
-            List<Address> addresses = geocoder.getFromLocation(dLatitude, dLongitude, 1);
-            StringBuilder sb = new StringBuilder();
-            if (addresses.size() > 0) {
-                Address address = addresses.get(0);
-                int n = address.getMaxAddressLineIndex();
-                for (int i = 0; i <= n; i++) {
-                    if (i != 0)
-                        sb.append(", ");
-                    sb.append(address.getAddressLine(i));
-                }
-                theAddress = new String(sb.toString());
-            } else {
-                theAddress = null;
-            }
-        } catch (IOException e) {
-            theAddress = null;
-        }
-        if (theAddress != null) {
-            return theAddress;
-        }
+//        GeocoderNominatim geocoder = new GeocoderNominatim(activity);
+//        String theAddress;
+//        try {
+//            double dLatitude = p.getLatitude();
+//            double dLongitude = p.getLongitude();
+//            List<Address> addresses = geocoder.getFromLocation(dLatitude, dLongitude, 1);
+//            StringBuilder sb = new StringBuilder();
+//            if (addresses.size() > 0) {
+//                Address address = addresses.get(0);
+//                int n = address.getMaxAddressLineIndex();
+//                for (int i = 0; i <= n; i++) {
+//                    if (i != 0)
+//                        sb.append(", ");
+//                    sb.append(address.getAddressLine(i));
+//                }
+//                theAddress = new String(sb.toString());
+//            } else {
+//                theAddress = null;
+//            }
+//        } catch (IOException e) {
+//            theAddress = null;
+//        }
+//        if (theAddress != null) {
+//            return theAddress;
+//        }
         return "";
     }
 
@@ -719,11 +716,11 @@ public class RouteSearch implements GHPointListener {
 
     private Collection<RouteSearchListener> routeSearchListeners = new HashSet<RouteSearchListener>();
 
-    public void addRoutSearchListener(RouteSearchListener listener) {
+    public void addRouteSearchListener(RouteSearchListener listener) {
         routeSearchListeners.add(listener);
     }
 
-    public void removeRoutSearchListener(RouteSearchListener listener) {
+    public void removeRouteSearchListener(RouteSearchListener listener) {
         routeSearchListeners.remove(listener);
     }
 

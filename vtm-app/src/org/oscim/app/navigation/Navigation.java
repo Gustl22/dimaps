@@ -36,17 +36,15 @@ public class Navigation implements LocationListener {
         PointList points = pathWrapper.getPoints();
         Iterator<GHPoint3D> pointIterator = points.iterator();
 
-        int i = 0;
+        int i = -1;
         boolean pointOccured = false;
         while (pointIterator.hasNext()) {
             GHPoint pt = pointIterator.next();
-            if (!pointOccured) {
-                if (ghPoint.equals(pt)) {
-                    pointOccured = true;
-                    break;
-                } else {
-                    i++;
-                }
+            if (ghPoint.equals(pt)) {
+                pointOccured = true;
+                break;
+            } else {
+                i++;
             }
         }
 
@@ -136,7 +134,7 @@ public class Navigation implements LocationListener {
                 .setDistance(currentDistance)
                 .setPoints(points)
                 .setTime(currentTime);
-        App.activity.showToastOnUiThread("Pathwrapper set");
+//        App.activity.showToastOnUiThread("Pathwrapper set");
         return currentWrapper;
     }
 
