@@ -127,7 +127,8 @@ public class GHPointArea {
             try {
                 hopper = GHAsyncLoader.loadGraphhopperStorage(f.getAbsolutePath());
             } catch (Exception ex) {
-                ex.printStackTrace();
+                //Storage not exists or has wrong type
+                //ex.printStackTrace();
                 continue;
             }
             if (isInGraphHopper(hopper, pt)) {

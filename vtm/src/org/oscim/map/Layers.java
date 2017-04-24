@@ -1,7 +1,8 @@
 /*
  * Copyright 2013 Hannes Janetzek
- * Copyright 2016 devemux86
+ * Copyright 2016-2017 devemux86
  * Copyright 2016 Andrey Novikov
+ * Copyright 2017 Longri
  *
  * This file is part of the OpenScienceMap project (http://www.opensciencemap.org).
  *
@@ -36,6 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public final class Layers extends AbstractList<Layer> {
 
     private final Map mMap;
+    private final Layer.EnableHandler mEnableHandler;
 
     private final List<Layer> mLayerList = new CopyOnWriteArrayList<>();
     private final List<Integer> mGroupList = new ArrayList<>();
@@ -47,7 +49,14 @@ public final class Layers extends AbstractList<Layer> {
 
     Layers(Map map) {
         mMap = map;
+        mEnableHandler = new Layer.EnableHandler() {
+            @Override
+            public void changed(boolean enabled) {
+                mDirtyLayers = true;
+            }
+        };
     }
+
 
     @Override
     public synchronized Layer get(int index) {
@@ -81,6 +90,7 @@ public final class Layers extends AbstractList<Layer> {
             }
         }
 
+        layer.setEnableHandler(mEnableHandler);
         mLayerList.add(index, layer);
         mDirtyLayers = true;
     }
@@ -137,6 +147,7 @@ public final class Layers extends AbstractList<Layer> {
                 mGroupIndex.put(group, pointer - 1);
         }
 
+        remove.setEnableHandler(null);
         return remove;
     }
 
@@ -165,6 +176,7 @@ public final class Layers extends AbstractList<Layer> {
             }
         }
 
+        remove.setEnableHandler(null);
         return remove;
     }
 
@@ -225,13 +237,13 @@ public final class Layers extends AbstractList<Layer> {
         for (int i = 0, n = mLayerList.size(); i < n; i++) {
             Layer o = mLayerList.get(i);
 
-            if (o.getRenderer() != null)
+            if (o.isEnabled() && o.getRenderer() != null)
                 numRenderLayers++;
 
             if (o instanceof GroupLayer) {
                 GroupLayer groupLayer = (GroupLayer) o;
                 for (Layer gl : groupLayer.layers) {
-                    if (gl.getRenderer() != null)
+                    if (gl.isEnabled() && gl.getRenderer() != null)
                         numRenderLayers++;
                 }
             }
@@ -244,14 +256,14 @@ public final class Layers extends AbstractList<Layer> {
         for (int i = 0, cnt = 0, n = mLayerList.size(); i < n; i++) {
             Layer o = mLayerList.get(i);
             LayerRenderer l = o.getRenderer();
-            if (l != null)
+            if (o.isEnabled() && l != null)
                 mLayerRenderer[cnt++] = l;
 
             if (o instanceof GroupLayer) {
                 GroupLayer groupLayer = (GroupLayer) o;
                 for (Layer gl : groupLayer.layers) {
                     l = gl.getRenderer();
-                    if (l != null)
+                    if (gl.isEnabled() && l != null)
                         mLayerRenderer[cnt++] = l;
                 }
             }

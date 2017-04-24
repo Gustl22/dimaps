@@ -421,26 +421,31 @@ public class LocationHandler implements LocationListener {
         GHPoint secNearestPoint = null;
         GHPoint nearestPoint = null;
         GHPoint afterPoint = null;
+        int i = 0;
+        int secIndex = -1;
         while (iterator.hasNext()) {
             GHPoint next = iterator.next();
             double actDis = convertGHPointToGeoPoint(next)
                     .sphericalDistance(convertGHPointToGeoPoint(new GHPoint(curLat, curLon))); //in meters
-            if (!foundNearest && (actDis < distance)) {
+            if (actDis < distance) {
+                foundNearest = false;
                 distance = actDis;
                 secNearestPoint = nearestPoint;
                 nearestPoint = next;
+                secIndex = (i == 0) ? 0 : (i - 1);
             } else if (!foundNearest) {
                 foundNearest = true;
-                if (secNearestPoint != null) {
-                    drawPoints.add(secNearestPoint);
-                }
-                drawPoints.add(nearestPoint);
                 afterPoint = next;
             }
-            if (foundNearest) {
-                drawPoints.add(next);
-            }
+            i++;
         }
+        if (secIndex != -1) {
+            drawPoints = actualRoute.copy(secIndex, actualRoute.size() - 1);
+        } else {
+            return null;
+        }
+
+
         if (drawPoints.isEmpty()) actualRoute = null;
 
 //        App.activity.showToastOnUiThread("Stop 2");
@@ -508,14 +513,21 @@ public class LocationHandler implements LocationListener {
         return locations;
     }
 
-    private Coordinate projectCoordinate(Coordinate line1, Coordinate line2, Coordinate pPoint) {
-        double m = (line2.y - line1.y) / (line2.x - line1.x);
-        double t = line1.y - (m * line1.x);
+    private Coordinate projectCoordinate(Coordinate a, Coordinate b, Coordinate p) {
+        Coordinate c = new Coordinate(b.x - a.x, b.y - a.y);
 
-        double x = (m * pPoint.y + pPoint.x - m * t) / (m * m + 1);
-        double y = (m * m * pPoint.y + m * pPoint.x + t) / (m * m + 1);
+        double lamda = ((p.x - a.x) * c.x + (p.y - a.y) * c.y) / ((c.x * c.x) + (c.y * c.y));
+        Coordinate r;
+        if (lamda < 0) {
+            r = a;
+        } else {
+            r = new Coordinate(a.x + lamda * c.x, a.y + lamda * c.y);
+            if (a.distance(b) < a.distance(r)) {
+                r = b;
+            }
+        }
 
-        return new Coordinate(x, y);
+        return r;
     }
 
     public Location calculateProgressLocation(Location startLocation, Location endLocation, float progress) {

@@ -332,7 +332,7 @@ public class PoiSearch implements PoiSelector {
             while (it.hasNext()) {
                 Map.Entry pair = (Map.Entry) it.next();
                 if (((String) pair.getValue()).isEmpty()) continue;
-                query.add("%" + pair.getKey() + "=%" + pair.getValue() + "%");
+                query.add("%" + pair.getKey() + "=" + pair.getValue() + "%");
             }
             return persManager.findInRect(bb, categoryFilter,
                     query.toArray(new String[query.size()]), Integer.MAX_VALUE);

@@ -28,7 +28,7 @@ public class RemoteDebugger {
             outputFile.delete();
         try {
             Process logcat = Runtime.getRuntime().exec(
-                    "logcat -d -f " + outputFile.getAbsolutePath());
+                    "logcat *:W -d -f " + outputFile.getAbsolutePath());
             logcat.waitFor();
             Runtime.getRuntime().exec("logcat -c");
         } catch (IOException | InterruptedException e) {

@@ -43,8 +43,6 @@ import org.oscim.tiling.source.mapfile.MapFileTileSource;
 import org.oscim.tiling.source.mapfile.MultiMapFileTileSource;
 import org.oscim.tiling.source.mapnik.MapnikVectorTileSource;
 import org.oscim.tiling.source.oscimap4.OSciMap4TileSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -57,7 +55,7 @@ public class MapLayers {
 
     public static File[] MAP_FOLDERS;
 
-    final static Logger log = LoggerFactory.getLogger(MapLayers.class);
+    //final static Logger log = LoggerFactory.getLogger(MapLayers.class);
     static Config[] configs = new Config[]{new Config("OPENSCIENCEMAP4") {
         TileSource init() {
             return new OSciMap4TileSource();

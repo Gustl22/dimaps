@@ -1,5 +1,7 @@
 /*
  * Copyright 2013 Hannes Janetzek
+ * Copyright 2017 Longri
+ * Copyright 2017 devemux86
  *
  * This file is part of the OpenScienceMap project (http://www.opensciencemap.org).
  *
@@ -26,6 +28,7 @@ public abstract class Layer {
     }
 
     private boolean mEnabled = true;
+    private EnableHandler mHandler;
     protected final Map mMap;
 
     protected LayerRenderer mRenderer;
@@ -41,11 +44,18 @@ public abstract class Layer {
      * @param enabled
      */
     public void setEnabled(boolean enabled) {
+        boolean changed = mEnabled != enabled;
         mEnabled = enabled;
+        if (mHandler != null && changed)
+            mHandler.changed(enabled);
     }
 
     public boolean isEnabled() {
         return mEnabled;
+    }
+
+    public void setEnableHandler(EnableHandler handler) {
+        mHandler = handler;
     }
 
     /**
@@ -56,5 +66,9 @@ public abstract class Layer {
 
     public Map map() {
         return mMap;
+    }
+
+    public interface EnableHandler {
+        void changed(boolean enabled);
     }
 }
