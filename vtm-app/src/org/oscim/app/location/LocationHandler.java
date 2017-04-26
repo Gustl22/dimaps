@@ -42,6 +42,7 @@ import com.graphhopper.util.shapes.GHPoint3D;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.math.Vector2D;
 
+import org.mapsforge.core.model.LatLong;
 import org.oscim.app.App;
 import org.oscim.app.R;
 import org.oscim.app.TileMap;
@@ -476,12 +477,12 @@ public class LocationHandler implements LocationListener {
         }
         Coordinate secNearLoc = new Coordinate(secNearestPoint.getLon(), secNearestPoint.getLat());
         first = projectCoordinate(secNearLoc, nearLoc, curLoc);
-        firstDistance = curLoc.distance(first);
+        firstDistance = new LatLong(curLoc.y, curLoc.x).sphericalDistance(new LatLong(first.y, first.x));
 
         if (afterPoint != null) {
             Coordinate afterLoc = new Coordinate(afterPoint.getLon(), afterPoint.getLat());
             second = projectCoordinate(nearLoc, afterLoc, curLoc);
-            secDistance = curLoc.distance(second);
+            secDistance = new LatLong(curLoc.y, curLoc.x).sphericalDistance(new LatLong(second.y, second.x));
         }
         Coordinate startCoord = null;
         if (firstDistance <= secDistance) {
@@ -496,9 +497,6 @@ public class LocationHandler implements LocationListener {
             drawPoints = drawPoints.copy(1, drawPoints.getSize());
             startCoord = second;
         }
-
-//        App.activity.showToastOnUiThread("Stop 3");
-        if (startCoord == null) return null;
 
         actualRoute = drawPoints;
         if (drawPoints.isEmpty()) return null;
