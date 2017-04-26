@@ -55,7 +55,7 @@ public class PoiFavoritesActivity extends AppCompatActivity implements PoiSelect
         mPoiDisplay = new PoiDisplayUtils(this);
         mPoiDisplay.poiSelector = this;
 
-        favorHandler = PoiFavoritesHandler.getInstance();
+        favorHandler = new PoiFavoritesHandler("poiFavor.list");
         List<PointOfInterest> actualPois = favorHandler.getFavorites();
 
         mPoiDisplay.poiSuggestions = actualPois;

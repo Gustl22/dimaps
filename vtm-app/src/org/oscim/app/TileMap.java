@@ -58,6 +58,8 @@ import org.oscim.app.location.Compass;
 import org.oscim.app.location.LocationDialog;
 import org.oscim.app.location.LocationHandler;
 import org.oscim.app.preferences.EditPreferences;
+import org.oscim.app.route.RouteActivity;
+import org.oscim.app.route.RouteSearch;
 import org.oscim.app.search.PoiFavoritesActivity;
 import org.oscim.app.search.PoiSearchActivity;
 import org.oscim.app.utils.ColorUtils;
@@ -276,7 +278,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         int position = 0;
         switch (id) {
             case R.id.waypoints:
-//                TODO handle waypoints for route
+                startActivity(new Intent(this, RouteActivity.class));
                 break;
             case R.id.route_instructions:
 //                TODO fetch instructions
@@ -493,6 +495,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
 
     @Override
     protected void onDestroy() {
+        routeSearch.storeRoutePoints();
         super.onDestroy();
     }
 

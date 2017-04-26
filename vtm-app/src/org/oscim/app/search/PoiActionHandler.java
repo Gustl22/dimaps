@@ -8,7 +8,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import org.mapsforge.poi.storage.PointOfInterest;
 import org.oscim.app.App;
-import org.oscim.app.RouteSearch;
+import org.oscim.app.route.RouteSearch;
 import org.oscim.app.graphhopper.GHPointArea;
 
 import java.io.File;
@@ -62,16 +62,18 @@ public class PoiActionHandler {
 
     public void markAsFavorite() {
         if (mPoi == null || mPoiFile == null || !mPoiFile.exists()) return;
-        PoiFavoritesHandler favorHandler = PoiFavoritesHandler.getInstance();
+        PoiFavoritesHandler favorHandler = new PoiFavoritesHandler("poiFavor.list");
         favorHandler.addFavorite(mPoi, mPoiFile.getParentFile());
+        favorHandler.storeAllFavorites();
         mActivity.startActivity(new Intent(App.activity, PoiFavoritesActivity.class));
         mActivity.finish();
     }
 
     public void removeFavorite() {
         if (mPoi == null || mPoiFile == null || !mPoiFile.exists()) return;
-        PoiFavoritesHandler favorHandler = PoiFavoritesHandler.getInstance();
+        PoiFavoritesHandler favorHandler = new PoiFavoritesHandler("poiFavor.list");
         favorHandler.removeFavorite(mPoi, mPoiFile.getParentFile());
+        favorHandler.storeAllFavorites();
         mActivity.recreate();
     }
 

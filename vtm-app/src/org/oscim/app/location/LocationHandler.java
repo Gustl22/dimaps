@@ -44,7 +44,7 @@ import com.vividsolutions.jts.math.Vector2D;
 
 import org.oscim.app.App;
 import org.oscim.app.R;
-import org.oscim.app.RouteSearch;
+import org.oscim.app.route.RouteSearch;
 import org.oscim.app.TileMap;
 import org.oscim.app.graphhopper.GHPointArea;
 import org.oscim.core.MapPosition;
@@ -119,10 +119,10 @@ public class LocationHandler implements LocationListener {
         }
 
         if (mode == Mode.SNAP) {
-            map.getEventLayer().enableMove(false);
+            //map.getEventLayer().enableMove(false);
             gotoLastKnownPosition(SHOW_LOCATION_ZOOM);
         } else if (mode == Mode.NAV) {
-            map.getEventLayer().enableMove(false);
+            //map.getEventLayer().enableMove(false);
             gotoLastKnownPosition(NAVIGATION_ZOOM);
         } else {
             map.getEventLayer().enableMove(true);

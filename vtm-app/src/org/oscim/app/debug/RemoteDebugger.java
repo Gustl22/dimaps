@@ -9,6 +9,7 @@ import org.oscim.app.R;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * Created by gustl on 11.04.17.
@@ -18,7 +19,7 @@ public class RemoteDebugger {
     private static Thread.UncaughtExceptionHandler mUEHandler;
     private static boolean isFirstLog = true;
 
-    public static synchronized void sendLoagcatMail(Activity logActivity) {
+    public static synchronized void sendLoagcatMail(Activity logActivity, Thread t, Throwable te) {
         if (!isFirstLog) return;
         isFirstLog = false;
         // save logcat in file
@@ -26,14 +27,26 @@ public class RemoteDebugger {
                 "logcat.txt");
         if (outputFile.exists())
             outputFile.delete();
+//        try {
+//            Process logcat = Runtime.getRuntime().exec(
+//                    "logcat *:W -d -f " + outputFile.getAbsolutePath());
+//            logcat.waitFor();
+//            Runtime.getRuntime().exec("logcat -c");
+//        } catch (IOException | InterruptedException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
         try {
-            Process logcat = Runtime.getRuntime().exec(
-                    "logcat *:W -d -f " + outputFile.getAbsolutePath());
-            logcat.waitFor();
-            Runtime.getRuntime().exec("logcat -c");
-        } catch (IOException | InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
+            writer.println("Process: " + t.getName() + "\n");
+            writer.printf(te.getMessage());
+            StackTraceElement[] stackTrace = te.getStackTrace();
+            for (StackTraceElement stackTraceElement : stackTrace) {
+                writer.println("\tat " + stackTraceElement.toString());
+            }
+            writer.close();
+        } catch (IOException e) {
+            return;
         }
 
         if (!outputFile.exists() || !outputFile.canRead()) return;
@@ -62,10 +75,10 @@ public class RemoteDebugger {
 
             @Override
             public void uncaughtException(Thread t, Throwable e) {
-                sendLoagcatMail(crashActivity);
+                sendLoagcatMail(crashActivity, t, e);
                 crashActivity.finish();
             }
         };
-        Thread.setDefaultUncaughtExceptionHandler(mUEHandler);
+        Thread.currentThread().setUncaughtExceptionHandler(mUEHandler);
     }
 }

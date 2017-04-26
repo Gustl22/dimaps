@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.oscim.app;
+package org.oscim.app.route;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -42,13 +42,19 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 
+import org.mapsforge.core.model.LatLong;
 import org.oscim.android.canvas.AndroidGraphics;
+import org.oscim.app.App;
+import org.oscim.app.MapLayers;
+import org.oscim.app.R;
 import org.oscim.app.graphhopper.CrossMapCalculator;
 import org.oscim.app.graphhopper.GHPointArea;
 import org.oscim.app.graphhopper.GHPointAreaRoute;
 import org.oscim.app.graphhopper.GHPointListener;
 import org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter;
+import org.oscim.app.location.LocationPersistenceManager;
 import org.oscim.app.navigation.Navigation;
+import org.oscim.app.preferences.StoragePreference;
 import org.oscim.app.utils.FileUtils;
 import org.oscim.backend.canvas.Bitmap;
 import org.oscim.backend.canvas.Paint;
@@ -74,7 +80,7 @@ import static org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter.convertPointL
 import static org.oscim.app.graphhopper.OsmdroidGraphhopperAdapter.convertGeoPointToGHPoint;
 
 public class RouteSearch implements GHPointListener {
-    private static int START_INDEX = -2, DEST_INDEX = -1;
+    public static int START_INDEX = -2, DEST_INDEX = -1;
     //other points which aren't contained in route are negative
 
     private final PathLayer mRouteOverlay;
@@ -97,7 +103,7 @@ public class RouteSearch implements GHPointListener {
     //private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
 
-    RouteSearch() {
+    public RouteSearch() {
         mViaPoints = new ArrayList<GHPointArea>();
         mNonRoutePoints = new ArrayList<GHPointArea>();
 
@@ -131,6 +137,9 @@ public class RouteSearch implements GHPointListener {
             ghFiles.addAll(FileUtils.walkExtension(f, "-gh"));
             ghFiles.add(f); //Add default folder for loading unzipped GH-Files
         }
+
+        //fetch stored route points from last session if existant.
+        fetchRoutePoints();
     }
 
     //Getters and Setters
@@ -269,6 +278,46 @@ public class RouteSearch implements GHPointListener {
         updateIternaryMarkers();
     }
 
+    public void storeRoutePoints() {
+        List<LatLong> storeList = new ArrayList<>();
+        GHPoint curP;
+        if (mStartPoint != null) {
+            curP = mStartPoint.getGhPoint();
+            storeList.add(new LatLong(curP.getLat(), curP.getLon()));
+        }
+        for (GHPointArea mViaPoint : mViaPoints) {
+            curP = mViaPoint.getGhPoint();
+            storeList.add(new LatLong(curP.getLat(), curP.getLon()));
+        }
+        if (mDestinationPoint != null) {
+            curP = mDestinationPoint.getGhPoint();
+            storeList.add(new LatLong(curP.getLat(), curP.getLon()));
+        }
+        File destination = new File(StoragePreference.getPreferredStorageLocation().getAbsolutePath(),
+                "/maps/route.list");
+        LocationPersistenceManager.storeLocations(destination, storeList);
+    }
+
+    public void fetchRoutePoints() {
+        File destination = new File(StoragePreference.getPreferredStorageLocation().getAbsolutePath(),
+                "/maps/route.list");
+        List<LatLong> storeList = LocationPersistenceManager.fetchLocations(destination);
+        if (storeList == null) return;
+        int i = 0;
+        for (LatLong routePoint : storeList) {
+            GHPointArea area = new GHPointArea(
+                    new GHPoint(routePoint.getLatitude(), routePoint.getLongitude()), ghFiles);
+            if (i == storeList.size() - 1) {
+                setDestinationPoint(area);
+            } else if (i == 0) {
+                setStartPoint(area);
+            } else {
+                addViaPoint(area);
+            }
+            i++;
+        }
+    }
+
     // Async task to reverse-geocode the marker position in a separate thread:
     class GeocodingTask extends AsyncTask<Object, Void, String> {
         ExtendedMarkerItem marker;
@@ -286,8 +335,8 @@ public class RouteSearch implements GHPointListener {
     }
 
     /* add (or replace) an item in markerOverlays. p position. */
-    public ExtendedMarkerItem putMarkerItem(ExtendedMarkerItem item, GHPoint p, int index,
-                                            int titleResId, int markerResId, int iconResId) {
+    public synchronized ExtendedMarkerItem putMarkerItem(ExtendedMarkerItem item, GHPoint p, int index,
+                                                         int titleResId, int markerResId, int iconResId) {
 
         if (item != null)
             mItineraryMarkers.removeItem(item);
@@ -591,7 +640,7 @@ public class RouteSearch implements GHPointListener {
     /**
      * handle action of items, popped up with long press on map
      */
-    boolean onContextItemSelected(MenuItem item, GeoPoint geoPoint) {
+    public boolean onContextItemSelected(MenuItem item, GeoPoint geoPoint) {
         switch (item.getItemId()) {
             case R.id.menu_share_location:
                 shareLocation(convertGeoPointToGHPoint(geoPoint));

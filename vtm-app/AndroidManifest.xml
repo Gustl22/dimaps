@@ -87,6 +87,16 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".TileMap" />
         </activity>
+        <activity
+            android:name=".route.RouteActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="stateVisible"
+            android:theme="@style/AppTheme.NoActionBar.TranslucentStatus">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".TileMap" />
+        </activity>
 
         <!-- <receiver
              android:name=".ConnectionHandler"

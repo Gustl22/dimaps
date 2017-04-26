@@ -25,6 +25,8 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import org.oscim.android.MapView;
+import org.oscim.app.route.RouteSearch;
+import org.oscim.app.search.PoiSearch;
 import org.oscim.map.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
