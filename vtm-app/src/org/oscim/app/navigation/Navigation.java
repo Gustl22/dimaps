@@ -18,7 +18,6 @@ import java.util.Iterator;
 
 /**
  * Copyright by Gustl22 on 05.04.17.
- *
  */
 
 public class Navigation implements LocationListener {
@@ -48,7 +47,13 @@ public class Navigation implements LocationListener {
             }
         }
 
-        //TODO Replace waypoints with getpoints or iterate instructions!
+        if (!pointOccured) {
+            App.activity.showToastOnUiThread("Distance too big. Calculate again.");
+            App.routeSearch.setStartPoint(new GHPointArea(
+                    new GHPoint(snapLocation.getLatitude(), snapLocation.getLongitude()),
+                    App.routeSearch.getGraphHopperFiles()));
+            return pathWrapper;
+        }
 
         InstructionList instructions = pathWrapper.getInstructions();
         Iterator<Instruction> iterator = instructions.iterator();
@@ -71,62 +76,11 @@ public class Navigation implements LocationListener {
                 mLastInstruction = instruction;
             }
         }
-        if (!pointOccured) {
-            //TODO calc the path again with graphhopper
-            App.activity.showToastOnUiThread("Distance too big. Calculate again.");
-            App.routeSearch.setStartPoint(new GHPointArea(
-                    new GHPoint(snapLocation.getLatitude(), snapLocation.getLongitude()),
-                    App.routeSearch.getGraphHopperFiles()));
-            return pathWrapper;
-        }
 
-//        GHPointArea ghPointArea = new GHPointArea(ghPoint, RouteSearch.getGraphHopperFiles());
-//        GraphHopper graphHopper = ghPointArea.getGraphHopper();
-//        NodeAccess na = graphHopper.getGraphHopperStorage().getNodeAccess();
-//        Graph graph = graphHopper.getGraphHopperStorage().getBaseGraph();
-//        EdgeExplorer explorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);
-
-        points = points.copy(i, points.getSize() - 1);
+        points = points.copy(i < 0 ? 0 : i, points.getSize());
         if (instruction == null || instructions.isEmpty()) return pathWrapper;
         double currentDistance = pathWrapper.getDistance() - instruction.getDistance();
         long currentTime = pathWrapper.getTime() - instruction.getTime();
-
-
-//        int last = -1;
-//        for (Path path : pathList) {
-//            path.setFound(false);
-//            TIntList tIntList = path.calcNodes();
-//            TIntIterator iterator = tIntList.iterator();
-//            boolean meetCurrent = false;
-//            while(iterator.hasNext()){
-//                int next = iterator.next();
-//                if(currentRouteProgressPoint < 0) currentRouteProgressPoint = next;
-//                if(!meetCurrent && next == currentRouteProgressPoint) {
-//                    meetCurrent = true;
-//                }
-//                if(meetCurrent){
-//                    GHPoint pathPoint = new GHPoint(na.getLatitude(next), na.getLongitude(next));
-//                    if(pathPoint.equals(nearestPoint)){
-//                        EdgeIterator iter = explorer.setBaseNode(last);
-//                        while (iter.next()) {
-//                            if(iter.getAdjNode() == next){
-//                                iter.getEdge();
-//                            }
-//
-//                            double tmpLat = na.getLatitude(iter.getAdjNode());
-//                            double tmpLon = na.getLongitude(iter.getAdjNode());
-//                            float preAngle = (float) Math.atan2(diffLat, diffLon);
-//                            float tmpAngle = (float) Math.atan2(curLat - tmpLat, curLon - tmpLon);
-//                            if (Math.abs((tmpAngle - preAngle + Math.PI) % (2 * Math.PI)) < Math.PI / 2) {
-//                                nextNode = iter.getAdjNode();
-//                                break;
-//                            }
-//                        }
-//                    }
-//                }
-//                last = next;
-//            }
-//        }
 
         PathWrapper currentWrapper = new PathWrapper();
         currentWrapper.setWaypoints(pathWrapper.getWaypoints());

@@ -52,9 +52,11 @@ class ItemAdapter extends DragItemAdapter<Triplet<Long, String, Integer>, ItemAd
         holder.mRemoveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mItemList.remove(pos);
-                notifyDragItemRemoved(pos);
-                notifyDataSetChanged();
+                if (mItemList.size() > pos) {
+                    mItemList.remove(pos);
+                    notifyDragItemRemoved(pos);
+                    notifyDataSetChanged();
+                }
             }
         });
     }

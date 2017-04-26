@@ -44,9 +44,9 @@ import com.vividsolutions.jts.math.Vector2D;
 
 import org.oscim.app.App;
 import org.oscim.app.R;
-import org.oscim.app.route.RouteSearch;
 import org.oscim.app.TileMap;
 import org.oscim.app.graphhopper.GHPointArea;
+import org.oscim.app.route.RouteSearch;
 import org.oscim.core.MapPosition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +61,6 @@ import static org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter.convertGHPoin
 
 public class LocationHandler implements LocationListener {
 
-    private static final double MAX_GPS_DISTANCE_DEVIATION = 15;
 
     public PointList getActualRoute() {
         return actualRoute;
@@ -81,8 +80,9 @@ public class LocationHandler implements LocationListener {
     private final static int DIALOG_LOCATION_PROVIDER_DISABLED = 2;
     private final static int SHOW_LOCATION_ZOOM = 14;
     private final static int NAVIGATION_ZOOM = 20;
+    private final static int GPS_MAXIMUM_DISTANCE_DEVIATION = 15;
     private final static int GPS_MINIMUM_DISTANCE = 10; //Standard 10
-    private final static int GPS_MINIMUM_TIME_ELAPSE = 5000; //Standard 10000
+    private final static int GPS_MINIMUM_TIME_ELAPSE = 2500; //Standard 10000
 
     private final LocationManager mLocationManager;
     private final LocationLayerImpl mLocationLayer;
@@ -123,7 +123,8 @@ public class LocationHandler implements LocationListener {
             gotoLastKnownPosition(SHOW_LOCATION_ZOOM);
         } else if (mode == Mode.NAV) {
             //map.getEventLayer().enableMove(false);
-            gotoLastKnownPosition(NAVIGATION_ZOOM);
+            Location l = gotoLastKnownPosition(NAVIGATION_ZOOM);
+            onLocationChanged(l);
         } else {
             map.getEventLayer().enableMove(true);
         }
@@ -198,7 +199,7 @@ public class LocationHandler implements LocationListener {
         return true;
     }
 
-    public Location gotoLastKnownPosition(int zoomLevel) throws SecurityException {
+    public Location getLastKnownLocation() throws SecurityException {
         Location location = null;
         float bestAccuracy = Float.MAX_VALUE;
 
@@ -216,7 +217,11 @@ public class LocationHandler implements LocationListener {
                 bestAccuracy = accuracy;
             }
         }
+        return location;
+    }
 
+    public Location gotoLastKnownPosition(int zoomLevel) throws SecurityException {
+        Location location = getLastKnownLocation();
         if (location == null) {
             App.activity.showToastOnUiThread(App.activity
                     .getString(R.string.error_last_location_unknown));
@@ -309,7 +314,10 @@ public class LocationHandler implements LocationListener {
     private synchronized ArrayList<Location> decideVirtualPath(Location preLocation, Location currentLocation) {
         if (getActualRoute() == null) {
             App.activity.showToastOnUiThread("Predict path");
-            return predictVirtualPath(preLocation, currentLocation);
+            ArrayList<Location> locations = new ArrayList<>();
+            locations.add(currentLocation);
+            return locations;
+            //return predictVirtualPath(preLocation, currentLocation);
         } else {
             return calcVirtualPointsOnPath(currentLocation);
         }
@@ -417,7 +425,7 @@ public class LocationHandler implements LocationListener {
 
         Iterator<GHPoint3D> iterator = actualRoute.iterator();
         boolean foundNearest = false;
-        PointList drawPoints = new PointList();
+        PointList drawPoints;
         GHPoint secNearestPoint = null;
         GHPoint nearestPoint = null;
         GHPoint afterPoint = null;
@@ -439,8 +447,13 @@ public class LocationHandler implements LocationListener {
             }
             i++;
         }
+
+//        if(distance > GPS_MAXIMUM_DISTANCE_DEVIATION){
+//            return null;
+//        }
+
         if (secIndex != -1) {
-            drawPoints = actualRoute.copy(secIndex, actualRoute.size() - 1);
+            drawPoints = actualRoute.copy(secIndex, actualRoute.size());
         } else {
             return null;
         }
@@ -457,27 +470,30 @@ public class LocationHandler implements LocationListener {
         Coordinate second = null;
         double firstDistance = Double.MAX_VALUE;
         double secDistance = Double.MAX_VALUE;
-        if (secNearestPoint != null) {
-            Coordinate secNearLoc = new Coordinate(secNearestPoint.getLon(), secNearestPoint.getLat());
-            first = projectCoordinate(secNearLoc, nearLoc, curLoc);
-            firstDistance = curLoc.distance(first);
+
+        if (secNearestPoint == null) {
+            secNearestPoint = nearestPoint;
         }
+        Coordinate secNearLoc = new Coordinate(secNearestPoint.getLon(), secNearestPoint.getLat());
+        first = projectCoordinate(secNearLoc, nearLoc, curLoc);
+        firstDistance = curLoc.distance(first);
+
         if (afterPoint != null) {
             Coordinate afterLoc = new Coordinate(afterPoint.getLon(), afterPoint.getLat());
             second = projectCoordinate(nearLoc, afterLoc, curLoc);
             secDistance = curLoc.distance(second);
         }
         Coordinate startCoord = null;
-        if (firstDistance < secDistance) {
-            if (firstDistance > MAX_GPS_DISTANCE_DEVIATION) {
+        if (firstDistance <= secDistance) {
+            if (firstDistance > GPS_MAXIMUM_DISTANCE_DEVIATION) {
                 return null;
             }
             startCoord = first;
         } else {
-            if (secDistance > MAX_GPS_DISTANCE_DEVIATION) {
+            if (secDistance > GPS_MAXIMUM_DISTANCE_DEVIATION) {
                 return null;
             }
-            drawPoints = drawPoints.copy(1, drawPoints.getSize() - 1);
+            drawPoints = drawPoints.copy(1, drawPoints.getSize());
             startCoord = second;
         }
 
@@ -515,6 +531,7 @@ public class LocationHandler implements LocationListener {
 
     private Coordinate projectCoordinate(Coordinate a, Coordinate b, Coordinate p) {
         Coordinate c = new Coordinate(b.x - a.x, b.y - a.y);
+        if (c.x == 0 && c.y == 0) return a;
 
         double lamda = ((p.x - a.x) * c.x + (p.y - a.y) * c.y) / ((c.x * c.x) + (c.y * c.y));
         Coordinate r;

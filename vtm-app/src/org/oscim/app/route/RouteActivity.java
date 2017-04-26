@@ -1,6 +1,7 @@
 package org.oscim.app.route;
 
 import android.app.Activity;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -24,11 +25,13 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.oscim.app.App.activity;
 import static org.oscim.app.App.routeSearch;
 
 
 /**
  * Created by gustl on 24.04.17.
+ * Shows actual route points and allow manipulate the list
  */
 
 public class RouteActivity extends AppCompatActivity implements ItemAdapter.DragItemsChangeListener {
@@ -67,7 +70,7 @@ public class RouteActivity extends AppCompatActivity implements ItemAdapter.Drag
         try {
             ps.initPoiFile();
         } catch (FileNotFoundException e) {
-            App.activity.showToastOnUiThread("No Poidata found, Download it for geoCoding");
+            activity.showToastOnUiThread("No Poidata found, Download it for geoCoding");
             finish();
         }
         GHPointArea rDepart = rs.getStartPoint();
@@ -78,7 +81,12 @@ public class RouteActivity extends AppCompatActivity implements ItemAdapter.Drag
         if (rDepart != null) {
             mRoutePoints.add(rDepart);
         } else {
-            //TODO set current location as routepoint
+            Location l = App.activity.getLocationHandler().getLastKnownLocation();
+            if (l != null) {
+                GHPoint ghpoint = new GHPoint(l.getLatitude(), l.getLongitude());
+                GHPointArea area = new GHPointArea(ghpoint, RouteSearch.getGraphHopperFiles());
+                mRoutePoints.add(area);
+            }
         }
         if (rVia != null) {
             mRoutePoints.addAll(rVia);
@@ -152,9 +160,8 @@ public class RouteActivity extends AppCompatActivity implements ItemAdapter.Drag
         //Update Icons
         List<Triplet<Long, String, Integer>> items = mDragListView.getAdapter().getItemList();
         for (i = 0; i < items.size(); i++) {
-            int imageId = (items.size() == i + 1) ? R.drawable.ic_place_red_24dp :
+            items.get(i).third = (items.size() == i + 1) ? R.drawable.ic_place_red_24dp :
                     (i == 0 ? R.drawable.ic_place_green_24dp : R.drawable.ic_place_yellow_24dp);
-            items.get(i).third = imageId;
         }
     }
 
@@ -171,6 +178,12 @@ public class RouteActivity extends AppCompatActivity implements ItemAdapter.Drag
     public void onDragItemRemoved(int position) {
         mRoutePoints.remove(position);
         updateRoutePoints();
+    }
+
+    @Override
+    protected void onDestroy() {
+        updateRoutePoints();
+        super.onDestroy();
     }
 }
 
