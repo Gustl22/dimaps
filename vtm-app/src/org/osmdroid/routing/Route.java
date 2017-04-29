@@ -122,7 +122,7 @@ public class Route {
         return routeLow;
     }
 
-    public void setRouteLow(ArrayList<GeoPoint> route) {
+    public void setRouteLow(List<GeoPoint> route) {
         routeLow = route;
     }
 

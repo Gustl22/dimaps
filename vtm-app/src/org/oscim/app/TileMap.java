@@ -77,6 +77,7 @@ import java.util.Map;
 
 import static org.oscim.app.App.activity;
 import static org.oscim.app.App.routeSearch;
+import static org.oscim.app.location.LocationHandler.Mode.SNAP;
 
 
 public class TileMap extends MapActivity implements MapEventsReceiver,
@@ -180,11 +181,25 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
                 toggleCompass(null);
             }
         });
+        mCompassFab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                toggleCompass(Compass.Mode.C3D);
+                return true;
+            }
+        });
         mLocationFab = (FloatingActionButton) activity.findViewById(R.id.location);
         mLocationFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 toggleLocation(null);
+            }
+        });
+        mLocationFab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                toggleLocation(LocationHandler.Mode.SNAP);
+                return true;
             }
         });
 
@@ -419,7 +434,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         mMenu.findItem(R.id.menu_position_my_location_enable)
                 .setChecked(mLocation.getMode() == LocationHandler.Mode.SHOW);
         mMenu.findItem(R.id.menu_position_follow_location)
-                .setChecked(mLocation.getMode() == LocationHandler.Mode.SNAP);
+                .setChecked(mLocation.getMode() == SNAP);
 
         int bgId = mMapLayers.getBackgroundId();
         mMenu.findItem(R.id.menu_layer_naturalearth)
@@ -590,30 +605,27 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
                 case OFF:
                     mode = Compass.Mode.C2D;
                     break;
-                case C2D:
-                    mode = Compass.Mode.C3D;
-                    break;
-                case C3D:
+                default:
                     mode = Compass.Mode.OFF;
                     break;
             }
-
         }
         ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
 
+        mCompass.setMode(mode);
         switch (mode) {
+            case NAV:
+                mCompassFab.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.adjustAlpha(getResources().getColor(R.color.colorAccent), 0.4f)));
+                break;
             case C2D:
-                mCompass.setMode(Compass.Mode.C2D);
                 mCompassFab.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.adjustAlpha(getResources().getColor(R.color.colorAccent), 0.4f)));
                 //App.activity.showToastOnUiThread("Compass 2D");
                 break;
             case C3D:
-                mCompass.setMode(Compass.Mode.C3D);
                 mCompassFab.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.adjustAlpha(getResources().getColor(R.color.colorSecondAccent), 0.4f)));
                 //App.activity.showToastOnUiThread("Compass 3D");
                 break;
             case OFF:
-                mCompass.setMode(Compass.Mode.OFF);
                 mCompassFab.setBackgroundTintList(ColorStateList.valueOf(ColorUtils.adjustAlpha(getResources().getColor(R.color.white), 0.4f)));
                 mCompass.setRotation(0);
                 mCompass.setTilt(0);
@@ -626,30 +638,29 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         App.map.updateMap(true);
     }
 
-    private void toggleLocation(LocationHandler.Mode setMode) {
+    public void toggleLocation(LocationHandler.Mode setMode) {
         final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         if (setMode == null) {
             LocationHandler.Mode mode = mLocation.getMode();
-            if (routeSearch != null && routeSearch.getDestinationPoint() != null
-                    && mode != LocationHandler.Mode.NAV) {
-                setMode = LocationHandler.Mode.NAV;
-            } else {
-                switch (mode) {
+
+
+            switch (mode) {
                     case OFF:
-                        setMode = LocationHandler.Mode.SHOW;
-                        break;
-                    case SHOW:
-                        setMode = LocationHandler.Mode.SNAP;
+                        if (routeSearch != null && routeSearch.getDestinationPoint() != null
+                                && mode != LocationHandler.Mode.NAV) {
+                            setMode = LocationHandler.Mode.NAV;
+                        } else {
+                            setMode = SNAP;
+                        }
                         break;
                     case SNAP:
                         setMode = LocationHandler.Mode.OFF;
                         break;
                     default:
-                        setMode = LocationHandler.Mode.SHOW;
+                        setMode = SNAP;
                         break;
                 }
-            }
         }
         //Ask if GPS is activated?
         if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -669,7 +680,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
                     }
                     break;
                 case SNAP:
-                    if(success = mLocation.setMode(LocationHandler.Mode.SNAP)){
+                    if (success = mLocation.setMode(SNAP)) {
                         mLocationFab.setBackgroundTintList(getBaseContext().getResources().getColorStateList(R.color.colorAccent));
                         mLocationFab.setImageResource(R.drawable.ic_my_location_white_24dp);
                     }
@@ -686,7 +697,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
                             mLocationFab.setBackgroundTintList(getBaseContext().getResources().getColorStateList(R.color.colorAccent));
                             mLocationFab.setImageResource(R.drawable.ic_navigation_white_24dp);
                         }
-                        toggleCompass(Compass.Mode.C2D);
+                        toggleCompass(Compass.Mode.NAV);
                         mCompass.setTilt(80);
                     }
                     break;
@@ -791,8 +802,16 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
     @Override
     public boolean longPressHelper(final GeoPoint p1, final GeoPoint p2) {
         ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
-        showToastOnUiThread("Distance Touch!");
+//        showToastOnUiThread("Distance Touch!");
         App.routeSearch.showRoute( p1, p2);
+        return true;
+    }
+
+    @Override
+    public boolean tabSlideHelper(GeoPoint p1, GeoPoint p2) {
+        if (mLocation.getMode() == SNAP
+                || mLocation.getMode() == LocationHandler.Mode.NAV)
+            toggleLocation(LocationHandler.Mode.SHOW);
         return true;
     }
 
@@ -881,7 +900,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
     @Override
     public void onWaypointRemoved(RouteSearch.MarkerType type, ExtendedMarkerItem item) {
         if (type.equals(RouteSearch.MarkerType.Destination)) {
-            toggleLocation(LocationHandler.Mode.SNAP);
+            toggleLocation(SNAP);
         }
     }
 }

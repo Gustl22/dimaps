@@ -31,4 +31,11 @@ public interface MapEventsReceiver {
      * by other objects.
      */
     boolean longPressHelper(GeoPoint p1, GeoPoint p2);
+
+    /**
+     * @param p1 p2
+     *           the position where pressed and released.
+     * @return true if slided over map surface
+     */
+    boolean tabSlideHelper(GeoPoint p1, GeoPoint p2);
 }

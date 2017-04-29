@@ -48,7 +48,7 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
     // final static Logger log = LoggerFactory.getLogger(Compass.class);
 
     public enum Mode {
-        OFF, C2D, C3D,
+        OFF, NAV, C2D, C3D,
     }
 
     private final SensorManager mSensorManager;
@@ -138,6 +138,8 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
         if (mode == mMode)
             return;
 
+        mIsRotationByLocation = false;
+
         if (mode == Mode.OFF) {
             setEnabled(false);
 
@@ -153,6 +155,10 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
         } else if (mode == Mode.C2D) {
             mMap.getEventLayer().enableRotation(false);
             mMap.getEventLayer().enableTilt(true);
+        } else if (mode == Mode.NAV) {
+            mMap.getEventLayer().enableRotation(false);
+            mMap.getEventLayer().enableTilt(true);
+            mIsRotationByLocation = true;
         }
 
         mMode = mode;
@@ -298,39 +304,12 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
                 anim.end();
             }
             float absChange = Math.abs(change);
-            if (absChange > 0.2) {
+            if (absChange > 0) {
                 adjustArrow(mCurRotation, rotation);
                 mMap.viewport().setRotation(-rotation);
                 redraw = true;
-//                if(absChange > 0.4){
-//                    //Animate big rotation steps
-//                    float startRotation = mCurRotation;
-//                    anim = ValueAnimator.ofFloat(startRotation, rotation);
-//                    anim.setDuration(500);
-//                    setTilt(60); //Test purposes
-//                    anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-//                        @Override
-//                        public void onAnimationUpdate(ValueAnimator animation) {
-//                            mCurRotation = (float) animation.getAnimatedValue();
-//                            mMap.updateMap(true);
-//                        }
-//                    });
-//                    anim.addListener(new AnimatorListenerAdapter()
-//                    {
-//                        @Override
-//                        public void onAnimationEnd(Animator animation)
-//                        {
-//                            setTilt(50); //Test purposes
-//                        }
-//                    });
-//                    anim.start();
-//                } else {
-//                    mCurRotation = rotation;
-//                }
             }
-//            else {
-//                mCurRotation = rotation;
-//            }
+
 
             if (mMode == Mode.C3D){
                 // float tilt = (float) Math.toDegrees(mRotationV[1]);
@@ -489,7 +468,8 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
             mRotationV[0] = location.getBearing();
             onRotationChanged();
         } else {
-            mIsRotationByLocation = false;
+            if (Mode.NAV != mMode)
+                mIsRotationByLocation = false;
         }
         mMap.updateMap(true);
     }

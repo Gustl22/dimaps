@@ -79,7 +79,7 @@
             android:id="@+id/route_bar_distance_icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_flight_white_24dp" />
+            app:srcCompat="@drawable/ic_flight_white_24dp" />
 
         <TextView
             android:id="@+id/route_bar_distance"
@@ -97,7 +97,7 @@
             android:layout_height="wrap_content"
             android:layout_toEndOf="@+id/route_bar_distance"
             android:layout_toRightOf="@+id/route_bar_distance"
-            android:src="@drawable/ic_directions_car_white_24dp" />
+            app:srcCompat="@drawable/ic_directions_car_white_24dp" />
 
         <TextView
             android:id="@+id/route_bar_route_length"
@@ -115,7 +115,7 @@
             android:layout_height="wrap_content"
             android:layout_toEndOf="@+id/route_bar_route_length"
             android:layout_toRightOf="@+id/route_bar_route_length"
-            android:src="@drawable/ic_timelapse_white_24dp" />
+            app:srcCompat="@drawable/ic_timelapse_white_24dp" />
 
         <TextView
             android:id="@+id/route_bar_travel_time"
@@ -123,6 +123,26 @@
             android:layout_height="match_parent"
             android:layout_toEndOf="@+id/route_bar_travel_time_icon"
             android:layout_toRightOf="@+id/route_bar_travel_time_icon"
+            android:gravity="center"
+            android:textColor="@color/text_dark"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/route_bar_text"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_toEndOf="@+id/route_bar_travel_time"
+            android:layout_toRightOf="@+id/route_bar_travel_time"
+            android:gravity="center"
+            android:textColor="@color/text_dark"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/route_bar_maxspeed"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_toEndOf="@+id/route_bar_text"
+            android:layout_toRightOf="@+id/route_bar_text"
             android:gravity="center"
             android:textColor="@color/text_dark"
             android:textSize="14sp" />

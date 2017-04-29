@@ -13,6 +13,7 @@ import com.graphhopper.util.shapes.GHPoint3D;
 
 import org.oscim.app.App;
 import org.oscim.app.graphhopper.GHPointArea;
+import org.oscim.app.location.LocationHandler;
 
 import java.util.Iterator;
 
@@ -22,7 +23,7 @@ import java.util.Iterator;
 
 public class Navigation implements LocationListener {
     private PathWrapper pathWrapper;
-    private Instruction mLastInstruction;
+    private Instruction lastInstruction;
 //    private List<Path> pathList;
 //    private int currentRouteProgressPoint = -1;
 
@@ -52,7 +53,7 @@ public class Navigation implements LocationListener {
             App.routeSearch.setStartPoint(new GHPointArea(
                     new GHPoint(snapLocation.getLatitude(), snapLocation.getLongitude()),
                     App.routeSearch.getGraphHopperFiles()));
-            return pathWrapper;
+            return null;
         }
 
         InstructionList instructions = pathWrapper.getInstructions();
@@ -63,24 +64,29 @@ public class Navigation implements LocationListener {
         Instruction instruction = null;
         while (iterator.hasNext()) {
             instruction = iterator.next();
-            if (!meetCurrent && instruction.equals(mLastInstruction)) {
+            if (!meetCurrent && instruction.equals(lastInstruction)) {
                 meetCurrent = true;
             }
-            if (meetCurrent || mLastInstruction == null) {
+            if (meetCurrent || lastInstruction == null) {
                 PointList pointsI = instruction.getPoints();
+                lastInstruction = instruction;
                 if (j >= pointsI.getSize()) {
                     j -= pointsI.getSize();
                 } else {
                     break;
                 }
-                mLastInstruction = instruction;
             }
         }
 
         points = points.copy(i < 0 ? 0 : i, points.getSize());
+        if (points.size() < 3) {
+            //If Route ends, finish nav mode;
+            App.activity.toggleLocation(LocationHandler.Mode.SNAP);
+        }
+
         if (instruction == null || instructions.isEmpty()) return pathWrapper;
-        double currentDistance = pathWrapper.getDistance() - instruction.getDistance();
-        long currentTime = pathWrapper.getTime() - instruction.getTime();
+        double currentDistance = pathWrapper.getDistance() - lastInstruction.getDistance();
+        long currentTime = pathWrapper.getTime() - lastInstruction.getTime();
 
         PathWrapper currentWrapper = new PathWrapper();
         currentWrapper.setWaypoints(pathWrapper.getWaypoints());
@@ -90,6 +96,10 @@ public class Navigation implements LocationListener {
                 .setTime(currentTime);
 //        App.activity.showToastOnUiThread("Pathwrapper set");
         return currentWrapper;
+    }
+
+    public Instruction getLastInstruction() {
+        return lastInstruction;
     }
 
     @Override

@@ -16,7 +16,8 @@ import java.util.ArrayList;
 public class GraphhopperOsmdroidAdapter {
     public static Route convertPathWrapperToRoute(PathWrapper PathWrapper) {
         Route route = new Route();
-        route.setRouteLow(convertPointListToGeoPoints(PathWrapper.getPoints()));
+        route.routeHigh = convertPointListToGeoPoints(PathWrapper.getPoints());
+        route.setRouteLow(route.routeHigh);
         route.duration = PathWrapper.getTime() / 1000;
         route.length = PathWrapper.getDistance() / 1000;
         //... May should be extended

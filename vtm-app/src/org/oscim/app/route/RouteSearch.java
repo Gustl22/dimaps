@@ -426,6 +426,9 @@ public class RouteSearch implements GHPointListener {
         //    mRouteMarkers.addItem(nodeMarker);
         //}
 
+        //Set Route Bar infos
+        mRouteBar.set(GraphhopperOsmdroidAdapter.convertPathWrapperToRoute(route));
+
         App.map.updateMap(true);
     }
 
@@ -446,7 +449,7 @@ public class RouteSearch implements GHPointListener {
      * Async task to get the route in a separate thread.
      */
     class UpdateRouteTask extends AsyncTask<List<GHPointArea>, Void, List<GHResponse>> implements GHPointListener {
-        float time;
+        float calctime;
 
         @Override
         protected List<GHResponse> doInBackground(List<GHPointArea>... wp) {
@@ -518,7 +521,7 @@ public class RouteSearch implements GHPointListener {
                 responses.add(resp);
             }
 
-            time = sw.stop().getSeconds();
+            calctime = Math.round(sw.stop().getSeconds() * 100) / 100f;
             return responses;
         }
 
@@ -574,15 +577,14 @@ public class RouteSearch implements GHPointListener {
             pathWrapper.setTime(time);
             pathWrapper.setWaypoints(wayPoints);
 
-            activity.showToastOnUiThread("Route found in: " + time + " Seconds.");
+            activity.showToastOnUiThread("Route found in: " + calctime + " Seconds.");
 
             //Set Navigation
+            App.activity.getLocationHandler().removeSnapLocationListener(mNavigation);
             mNavigation = new Navigation(pathWrapper);
             App.activity.getLocationHandler().addSnapLocationListener(mNavigation);
 
             updateOverlays(pathWrapper);
-
-            mRouteBar.set(GraphhopperOsmdroidAdapter.convertPathWrapperToRoute(pathWrapper));
 
             mRouteTask = null;
             App.activity.getLocationHandler().setActualRoute(pointList);
@@ -702,6 +704,8 @@ public class RouteSearch implements GHPointListener {
         TextView mDistance = null;
         TextView mRouteLength = null;
         TextView mTravelTime = null;
+        TextView mText = null;
+        TextView mMaxSpeed = null;
         ImageView mClearButton = null;
         RelativeLayout mRouteBarView = null;
 
@@ -711,6 +715,8 @@ public class RouteSearch implements GHPointListener {
             mDistance = (TextView) activity.findViewById(R.id.route_bar_distance);
             mRouteLength = (TextView) activity.findViewById(R.id.route_bar_route_length);
             mTravelTime = (TextView) activity.findViewById(R.id.route_bar_travel_time);
+            mText = (TextView) activity.findViewById(R.id.route_bar_text);
+            mMaxSpeed = (TextView) activity.findViewById(R.id.route_bar_maxspeed);
 
             mClearButton = (ImageView) activity.findViewById(R.id.route_bar_clear);
 
@@ -739,8 +745,10 @@ public class RouteSearch implements GHPointListener {
                 time = hour + "h " + minute + "m";
             }
 
-            double dis = convertGHPointToGeoPoint(mStartPoint.getGhPoint())
-                    .sphericalDistance(convertGHPointToGeoPoint(mDestinationPoint.getGhPoint())) / 1000;
+            List<GeoPoint> routeLow = result.getRouteLow();
+            double dis = 0;
+            if (routeLow.size() > 1)
+                dis = routeLow.get(0).sphericalDistance(routeLow.get(routeLow.size() - 1)) / 1000;
             String distance;
             String shortpath;
             if (dis < 100) {
@@ -756,6 +764,13 @@ public class RouteSearch implements GHPointListener {
                 shortpath = oneDForm.format(result.length);
             }
 
+            Instruction lastIns = mNavigation.getLastInstruction();
+            if (lastIns != null) {
+                if (!(lastIns.getDistance() == 0)) ;
+                mMaxSpeed.setText(Math.round(lastIns.getDistance() / (lastIns.getTime() / 3600.)) + " km/h");
+                if (!lastIns.getName().isEmpty())
+                    mText.setText(lastIns.getName());
+            }
             mRouteBarView.setVisibility(View.VISIBLE);
             mDistance.setText(distance + " km");
             mTravelTime.setText(time);

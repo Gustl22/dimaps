@@ -82,7 +82,7 @@ public class LocationHandler implements LocationListener {
     private final static int SHOW_LOCATION_ZOOM = 14;
     private final static int NAVIGATION_ZOOM = 20;
     private final static int GPS_MAXIMUM_DISTANCE_DEVIATION = 15;
-    private final static int GPS_MINIMUM_DISTANCE = 10; //Standard 10
+    private final static int GPS_MINIMUM_DISTANCE = 0; //Standard 10
     private final static int GPS_MINIMUM_TIME_ELAPSE = 2500; //Standard 10000
 
     private final LocationManager mLocationManager;
@@ -259,8 +259,8 @@ public class LocationHandler implements LocationListener {
      * LocationListener
      ***/
 
-    public void onVirtualLocationChanged(Location location) {
-        //Inform Compass about big location changes
+    public void notifyVirtualLocationChanged(Location location) {
+        //Inform Compass about location changes
         for (LocationListener hl : virtualLocationListeners)
             hl.onLocationChanged(location);
 
@@ -554,7 +554,12 @@ public class LocationHandler implements LocationListener {
         float diffSpeed = endLocation.getSpeed() - startLocation.getSpeed();
         if (diffLat != 0) location.setLatitude(location.getLatitude() + diffLat * progress);
         if (diffLon != 0) location.setLongitude(location.getLongitude() + diffLon * progress);
-        if (diffBearing != 0f) location.setBearing(location.getBearing() + diffBearing * progress);
+        if (Math.abs(diffBearing) > 180) {
+            diffBearing = (diffBearing > 0) ? (360 - diffBearing) : (-360 - diffBearing);
+        }
+        if (diffBearing != 0f) {
+            location.setBearing((location.getBearing() + diffBearing * progress) % 360);
+        }
         if (diffTime != 0) location.setTime(location.getTime() + (long) (diffTime * progress));
         if (diffSpeed != 0f) location.setSpeed(location.getSpeed() + diffSpeed * progress);
 
@@ -569,7 +574,7 @@ public class LocationHandler implements LocationListener {
         App.activity.showToastOnUiThread("Location changed");
         if (preLocation == null) {
 //            App.activity.showToastOnUiThread("Prelocation is null");
-            onVirtualLocationChanged(location);
+            notifyVirtualLocationChanged(location);
             preLocation = location;
             return;
         }
@@ -578,19 +583,16 @@ public class LocationHandler implements LocationListener {
         final ArrayList<Location> path = decideVirtualPath(preLocation, location);
         if (path != null && path.size() > 1) {
             animateLocation(path);
-            //App.activity.showToastOnUiThread("0 start");
-            for (LocationListener hl : snapLocationListeners)
-                //It's important to send the second element, so this is a real Point on path
-                //First is a calculated path dependent on position
-                hl.onLocationChanged(path.get(1));
+            //It's important to send the second element, so this is a real Point on path
+            //First is a calculated path dependent on position
+            notifySnapLocationChanged(path.get(1));
         } else {
             if (anim != null) {
                 anim.cancel();
             }
-            onVirtualLocationChanged(location);
+            notifyVirtualLocationChanged(location);
             //Set real location to get a new Route
-            for (LocationListener hl : snapLocationListeners)
-                hl.onLocationChanged(location);
+            notifySnapLocationChanged(location);
         }
 
         preLocation = location;
@@ -609,7 +611,7 @@ public class LocationHandler implements LocationListener {
             public void onAnimationUpdate(ValueAnimator animation) {
                 float progress = (float) animation.getAnimatedValue();
                 Location l = calculateProgressLocation(path.get(0), path.get(1), progress);
-                onVirtualLocationChanged(l);
+                notifyVirtualLocationChanged(l);
             }
         });
         anim.addListener(new AnimatorListenerAdapter() {
@@ -686,10 +688,23 @@ public class LocationHandler implements LocationListener {
         virtualLocationListeners.add(toAdd);
     }
 
+    public void removeVirtualLocationListener(LocationListener toRemove) {
+        virtualLocationListeners.add(toRemove);
+    }
+
     private Collection<LocationListener> snapLocationListeners = new HashSet<LocationListener>();
 
     public void addSnapLocationListener(LocationListener toAdd) {
         snapLocationListeners.add(toAdd);
+    }
+
+    public void removeSnapLocationListener(LocationListener toRemove) {
+        snapLocationListeners.remove(toRemove);
+    }
+
+    public void notifySnapLocationChanged(Location location) {
+        for (LocationListener hl : snapLocationListeners)
+            hl.onLocationChanged(location);
     }
 
 }

@@ -77,15 +77,31 @@ public class DistanceTouchOverlay extends Layer implements Map.InputListener,
             return;
         }
 
+        if (action == MotionEvent.ACTION_POINTER_UP
+                || action == MotionEvent.ACTION_UP) {
+
+            if (mPrevX1 > 0 && mPrevY1 > 0) {
+                mCurX1 = e.getX();
+                mCurY1 = e.getY();
+
+                float maxSq = 10 * 10;
+                float d = (mCurX1 - mPrevX1) * (mCurX1 - mPrevX1)
+                        + (mCurY1 - mPrevY1) * (mCurY1 - mPrevY1);
+                if (d > maxSq) {
+                    mReceiver.tabSlideHelper(
+                            new GeoPoint(mPrevX1, mPrevY1), new GeoPoint(mCurX1, mCurY1));
+                    return;
+                }
+
+            }
+            mPrevX1 = mPrevY1 = -1;
+            cancel();
+            return;
+        }
+
         if (mLongpressTimer != null) {
             // any pointer up while long press detection
             // cancels timer
-            if (action == MotionEvent.ACTION_POINTER_UP
-                    || action == MotionEvent.ACTION_UP) {
-
-                cancel();
-                return;
-            }
 
             // two fingers must still be down, tested
             // one above.
@@ -94,46 +110,58 @@ public class DistanceTouchOverlay extends Layer implements Map.InputListener,
                 // int idx1 = e.findPointerIndex(mPointer1);
                 // int idx2 = e.findPointerIndex(mPointer2);
 
-                mCurX1 = e.getX(0);
-                mCurY1 = e.getY(0);
-                mCurX2 = e.getX(1);
-                mCurY2 = e.getY(1);
-
-                // cancel if moved one finger more than 50 pixel
-                float maxSq = 10 * 10;
-                float d = (mCurX1 - mPrevX1) * (mCurX1 - mPrevX1)
-                        + (mCurY1 - mPrevY1) * (mCurY1 - mPrevY1);
-                if (d > maxSq) {
-                    cancel();
-                    return;
-                }
-                d = (mCurX2 - mPrevX2) * (mCurX2 - mPrevX2)
-                        + (mCurY2 - mPrevY2) * (mCurY2 - mPrevY2);
-                if (d > maxSq) {
-                    cancel();
-                    return;
-                }
+//                mCurX1 = e.getX(0);
+//                mCurY1 = e.getY(0);
+//                mCurX2 = e.getX(1);
+//                mCurY2 = e.getY(1);
+//
+//                // cancel if moved one finger more than 50 pixel
+//                float maxSq = 10 * 10;
+//                float d = (mCurX1 - mPrevX1) * (mCurX1 - mPrevX1)
+//                        + (mCurY1 - mPrevY1) * (mCurY1 - mPrevY1);
+//                if (d > maxSq) {
+//                    cancel();
+//                    return;
+//                }
+//                d = (mCurX2 - mPrevX2) * (mCurX2 - mPrevX2)
+//                        + (mCurY2 - mPrevY2) * (mCurY2 - mPrevY2);
+//                if (d > maxSq) {
+//                    cancel();
+//                    return;
+//                }
             }
         }
 
         if ((action == MotionEvent.ACTION_POINTER_DOWN)
                 && (e.getPointerCount() == 2)) {
-            // App.log.debug("down");
+            //Set value to fault
+            mPrevX1 = mPrevY1 = -2;
+//            // App.log.debug("down");
+//
+//            // keep track of pointer ids, only
+//            // use these for gesture, ignoring
+//            // more than two pointer
+//
+//            // mPointer1 = e.getPointerId(0);
+//            // mPointer2 = e.getPointerId(1);
+//
+//            if (mLongpressTimer == null) {
+//                // start timer, keep initial down position
+//                mCurX1 = mPrevX1 = e.getX(0);
+//                mCurY1 = mPrevY1 = e.getY(0);
+//                mCurX2 = mPrevX2 = e.getX(1);
+//                mCurY2 = mPrevY2 = e.getY(1);
+//                runLongpressTimer();
+//            }
+        }
 
-            // keep track of pointer ids, only
-            // use these for gesture, ignoring
-            // more than two pointer
-
-            // mPointer1 = e.getPointerId(0);
-            // mPointer2 = e.getPointerId(1);
-
+        if (action == MotionEvent.ACTION_DOWN) {
             if (mLongpressTimer == null) {
-                // start timer, keep initial down position
-                mCurX1 = mPrevX1 = e.getX(0);
-                mCurY1 = mPrevY1 = e.getY(0);
-                mCurX2 = mPrevX2 = e.getX(1);
-                mCurY2 = mPrevY2 = e.getY(1);
-                runLongpressTimer();
+                if (mPrevX1 == -1 && mPrevY1 == -1) {
+                    // start timer, keep initial down position
+                    mPrevX1 = e.getX();
+                    mPrevY1 = e.getY();
+                }
             }
         }
     }
@@ -181,5 +209,4 @@ public class DistanceTouchOverlay extends Layer implements Map.InputListener,
         }
         return false;
     }
-
 }
