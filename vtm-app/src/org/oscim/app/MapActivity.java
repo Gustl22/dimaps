@@ -120,7 +120,9 @@ public abstract class MapActivity extends DownloadReceiverActivity {
             mapPosition.setPosition(latitudeE6 / 1E6, longitudeE6 / 1E6);
             mapPosition.setScale(scale);
 
-            mMap.setMapPosition(mapPosition);
+            mMap.animator().animateTo(500, mapPosition);
+            mMap.updateMap(true);
+            //mMap.setMapPosition(mapPosition);
         }
     }
 }

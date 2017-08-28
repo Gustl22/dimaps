@@ -57,6 +57,7 @@ import org.oscim.app.graphhopper.CrossMapCalculatorListener;
 import org.oscim.app.location.Compass;
 import org.oscim.app.location.LocationDialog;
 import org.oscim.app.location.LocationHandler;
+import org.oscim.app.navigation.Navigation;
 import org.oscim.app.preferences.EditPreferences;
 import org.oscim.app.route.RouteActivity;
 import org.oscim.app.route.RouteSearch;
@@ -64,6 +65,7 @@ import org.oscim.app.search.PoiFavoritesActivity;
 import org.oscim.app.search.PoiSearchActivity;
 import org.oscim.app.utils.ColorUtils;
 import org.oscim.app.utils.CustomAnimationUtils;
+import org.oscim.core.BoundingBox;
 import org.oscim.core.GeoPoint;
 import org.oscim.core.Tile;
 import org.oscim.overlay.DistanceTouchOverlay;
@@ -198,7 +200,16 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         mLocationFab.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                toggleLocation(LocationHandler.Mode.SNAP);
+                Navigation nav;
+                if (routeSearch != null && (nav = routeSearch.getNavigation()) != null) {
+                    BoundingBox bbox = nav.getRouteBounds();
+                    if (bbox != null) {
+                        bbox = bbox.extendMargin(2f);
+                        mMap.animator().animateTo(bbox);
+                        mMap.updateMap(true);
+                    }
+                }
+                //toggleLocation(LocationHandler.Mode.SNAP);
                 return true;
             }
         });
@@ -508,6 +519,27 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         }
     }
 
+    boolean doubleBackToExitPressedOnce = false;
+
+    @Override
+    public void onBackPressed() {
+        if (doubleBackToExitPressedOnce) {
+            super.onBackPressed();
+            return;
+        }
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Click BACK again to exit", Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce = false;
+            }
+        }, 2000);
+    }
+
     @Override
     protected void onDestroy() {
         routeSearch.storeRoutePoints();
@@ -654,6 +686,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
                             setMode = SNAP;
                         }
                         break;
+                case NAV:
                     case SNAP:
                         setMode = LocationHandler.Mode.OFF;
                         break;

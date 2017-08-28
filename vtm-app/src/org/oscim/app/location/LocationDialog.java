@@ -88,7 +88,11 @@ public class LocationDialog {
                         MapPosition mapPosition = new MapPosition();
                         mapPosition.setPosition(latitude, longitude);
                         mapPosition.setZoomLevel(zoom);
-                        App.map.setMapPosition(mapPosition);
+
+                        mapPosition.getZoomScale();
+                        App.map.animator().animateTo(500, mapPosition);
+                        App.map.updateMap(true);
+                        //App.map.setMapPosition(mapPosition);
                     }
                 });
         builder.setNegativeButton(R.string.cancel, null);

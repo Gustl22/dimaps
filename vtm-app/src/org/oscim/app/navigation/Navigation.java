@@ -14,6 +14,8 @@ import com.graphhopper.util.shapes.GHPoint3D;
 import org.oscim.app.App;
 import org.oscim.app.graphhopper.GHPointArea;
 import org.oscim.app.location.LocationHandler;
+import org.oscim.core.BoundingBox;
+import org.oscim.core.GeoPoint;
 
 import java.util.Iterator;
 
@@ -34,12 +36,21 @@ public class Navigation implements LocationListener {
     public PathWrapper calculateCurrentPath(Location snapLocation) {
         GHPoint ghPoint = new GHPoint(snapLocation.getLatitude(), snapLocation.getLongitude());
         PointList points = pathWrapper.getPoints();
+        PointList waypoints = pathWrapper.getWaypoints();
         Iterator<GHPoint3D> pointIterator = points.iterator();
+        Iterator<GHPoint3D> wayPointIterator = waypoints.iterator();
+        GHPoint wayPoint = null;
 
         int i = -1;
         boolean pointOccured = false;
         while (pointIterator.hasNext()) {
             GHPoint pt = pointIterator.next();
+            //Handle Waypoints
+            if (wayPoint == null || wayPoint.equals(pt)) {
+                if (wayPointIterator.hasNext())
+                    wayPoint = wayPointIterator.next();
+            }
+            //Handle pathpoints
             if (ghPoint.equals(pt)) {
                 pointOccured = true;
                 break;
@@ -87,19 +98,40 @@ public class Navigation implements LocationListener {
         if (instruction == null || instructions.isEmpty()) return pathWrapper;
         double currentDistance = pathWrapper.getDistance() - lastInstruction.getDistance();
         long currentTime = pathWrapper.getTime() - lastInstruction.getTime();
+        PointList wayPointList = new PointList();
+        wayPointList.add(wayPoint);
+        while (wayPointIterator.hasNext()) {
+            wayPointList.add(wayPointIterator.next());
+        }
 
         PathWrapper currentWrapper = new PathWrapper();
-        currentWrapper.setWaypoints(pathWrapper.getWaypoints());
         currentWrapper
                 .setDistance(currentDistance)
                 .setPoints(points)
-                .setTime(currentTime);
+                .setTime(currentTime)
+                .setWaypoints(wayPointList);
 //        App.activity.showToastOnUiThread("Pathwrapper set");
         return currentWrapper;
     }
 
     public Instruction getLastInstruction() {
         return lastInstruction;
+    }
+
+    public BoundingBox getRouteBounds() {
+        PointList pl = pathWrapper.getWaypoints();
+        Iterator<GHPoint3D> iterator = pl.iterator();
+        BoundingBox bbox = null;
+        while (iterator.hasNext()) {
+            GHPoint3D ghp = iterator.next();
+            if (bbox == null) {
+                bbox = new BoundingBox(ghp.getLat(), ghp.getLon(),
+                        ghp.getLat(), ghp.getLon());
+            } else {
+                bbox = bbox.extendCoordinates(new GeoPoint(ghp.getLat(), ghp.getLon()));
+            }
+        }
+        return bbox;
     }
 
     @Override

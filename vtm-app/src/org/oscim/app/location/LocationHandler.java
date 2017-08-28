@@ -83,7 +83,7 @@ public class LocationHandler implements LocationListener {
     private final static int NAVIGATION_ZOOM = 20;
     private final static int GPS_MAXIMUM_DISTANCE_DEVIATION = 15;
     private final static int GPS_MINIMUM_DISTANCE = 0; //Standard 10
-    private final static int GPS_MINIMUM_TIME_ELAPSE = 2500; //Standard 10000
+    private final static int GPS_MINIMUM_TIME_ELAPSE = 2200; //Standard 10000
 
     private final LocationManager mLocationManager;
     private final LocationLayerImpl mLocationLayer;
@@ -250,7 +250,8 @@ public class LocationHandler implements LocationListener {
 
         //Set Map position
         mMapPosition.setPosition(lat, lon);
-        App.map.setMapPosition(mMapPosition);
+        map.animator().animateTo(500, mMapPosition);
+        map.updateMap(true);
 
         return location;
     }
@@ -277,7 +278,10 @@ public class LocationHandler implements LocationListener {
 
             map.getMapPosition(mMapPosition);
             mMapPosition.setPosition(lat, lon);
-            map.setMapPosition(mMapPosition);
+            map.animator().animateTo(500, mMapPosition);
+            map.updateMap(true);
+
+            //map.setMapPosition(mMapPosition);
         }
 
         mLocationLayer.setPosition(lat, lon, location.getAccuracy());
@@ -571,7 +575,7 @@ public class LocationHandler implements LocationListener {
     private Location preLocation;
     @Override
     public void onLocationChanged(final Location location) {
-        App.activity.showToastOnUiThread("Location changed");
+        App.activity.showToastOnUiThread("Loc");
         if (preLocation == null) {
 //            App.activity.showToastOnUiThread("Prelocation is null");
             notifyVirtualLocationChanged(location);
@@ -666,6 +670,7 @@ public class LocationHandler implements LocationListener {
 
     public void pause() {
         if (mMode != Mode.OFF) {
+            mLocationManager.removeUpdates(this);
             log.debug("pause location listener");
         }
     }

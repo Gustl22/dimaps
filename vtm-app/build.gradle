@@ -8,16 +8,13 @@ dependencies {
     //compile 'org.mapsforge:vtm-android:+'
     compile 'org.mapsforge:vtm-themes:+'
     compile 'org.mapsforge:vtm-extras:+'
-
     //compile 'org.mapsforge:mapsforge-core:+'
     //compile 'org.mapsforge:mapsforge-poi:+'
     //compile 'org.mapsforge:mapsforge-poi-android:+'
-
     compile files('libs/mapsforge-core-master-SNAPSHOT.jar')
     compile files('libs/spatialite-android-master-SNAPSHOT.jar')
     compile files('libs/mapsforge-poi-android-master-SNAPSHOT.jar')
     compile files('libs/mapsforge-poi-master-SNAPSHOT.jar')
-
     //compile 'org.mapsforge:spatialite-android:0.8.0'
     //causes problems with staticlogger
     //    compile ('com.noveogroup.android:android-logger:1.+'){
@@ -41,8 +38,8 @@ dependencies {
 }
 
 android {
-    compileSdkVersion androidCompileSdk()
-    buildToolsVersion "$androidBuildVersionTools"
+    compileSdkVersion 26
+    buildToolsVersion '26.0.1'
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_7

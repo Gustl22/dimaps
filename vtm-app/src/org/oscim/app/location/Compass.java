@@ -104,6 +104,11 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
         return mCurRotation;
     }
 
+    @Override
+    public synchronized boolean hasRotation() {
+        return ((mCurRotation % 360) > 0);
+    }
+
     public synchronized void setRotation(float rotation) {
         adjustArrow(mCurRotation, rotation);
         mMap.viewport().setRotation(-rotation);

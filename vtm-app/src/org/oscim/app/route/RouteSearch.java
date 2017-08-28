@@ -40,6 +40,7 @@ import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.Translation;
 import com.graphhopper.util.shapes.GHPoint;
 
 import org.mapsforge.core.model.LatLong;
@@ -195,26 +196,34 @@ public class RouteSearch implements GHPointListener {
         notifyWayPointSet(MarkerType.Other, item);
     }
 
-    public void removePoint(int index) {
+    public GHPointArea removePoint(int index) {
+        GHPointArea removeElement = null;
         if (index == START_INDEX) {
             notifyWayPointRemoved(MarkerType.Departure, markerStart);
             GHPointAreaRoute.getInstance().remove(mStartPoint);
+            removeElement = mStartPoint;
             mStartPoint = null;
         } else if (index == DEST_INDEX) {
             notifyWayPointRemoved(MarkerType.Destination, markerDestination);
             GHPointAreaRoute.getInstance().remove(mDestinationPoint);
-            mDestinationPoint = null;
+            removeElement = mDestinationPoint;
+            if (!mViaPoints.isEmpty()) {
+                mDestinationPoint = removePoint(mViaPoints.size() - 1);
+            } else {
+                mDestinationPoint = null;
+            }
         } else if (index < -2) {
             //Non route point markers
             notifyWayPointRemoved(MarkerType.Other, null);
             int i = -(index + 3);
-            mNonRoutePoints.remove(i);
+            removeElement = mNonRoutePoints.remove(i);
         } else {
             notifyWayPointRemoved(MarkerType.Via, null);
             GHPointAreaRoute.getInstance().getGHPointAreas().remove(mViaPoints.get(index));
-            mViaPoints.remove(index);
+            removeElement = mViaPoints.remove(index);
         }
         onRoutePointUpdate();
+        return removeElement;
     }
 
     /**
@@ -270,6 +279,10 @@ public class RouteSearch implements GHPointListener {
 //            return theAddress;
 //        }
         return "";
+    }
+
+    public Navigation getNavigation() {
+        return mNavigation;
     }
 
     @Override
@@ -438,9 +451,12 @@ public class RouteSearch implements GHPointListener {
         mItineraryMarkers.removeAllItems(true);
 
         mRouteOverlay.clearPath();
-        mStartPoint = null;
-        mDestinationPoint = null;
-        mViaPoints.clear();
+        //Must be cleared before removing destination index;
+        for (int i = mViaPoints.size(); i > 0; i++) {
+            removePoint(i - 1);
+        }
+        removePoint(START_INDEX);
+        removePoint(DEST_INDEX);
 
         App.map.updateMap(true);
     }
@@ -539,7 +555,7 @@ public class RouteSearch implements GHPointListener {
             double distance = 0;
             double ascend = 0;
             double descend = 0;
-            InstructionList instructionList = InstructionList.EMPTY;
+            InstructionList instructionList = null;
             double routeWeight = 0;
 
             for(int i = 0; i<resp.size(); i++ ) {
@@ -559,6 +575,10 @@ public class RouteSearch implements GHPointListener {
                 wayPoints.add(pw.getWaypoints());
                 pointList.add(pw.getPoints());
                 try {
+                    if (instructionList == null) {
+                        instructionList = pw.getInstructions();
+                        instructionList.clear();
+                    }
                     for (Instruction in : pw.getInstructions()) {
                         instructionList.add(in);
                     }

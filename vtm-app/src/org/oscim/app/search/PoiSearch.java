@@ -298,7 +298,7 @@ public class PoiSearch implements PoiSelector {
             PoiCategoryManager categoryManager = persManager.getCategoryManager();
             PoiCategoryFilter categoryFilter = new ExactMatchPoiCategoryFilter();
             categoryFilter.addCategory(categoryManager.getPoiCategoryByTitle(poiCategory));
-            return persManager.findInRect(boundingBox, categoryFilter, (String) null, Integer.MAX_VALUE);
+            return persManager.findInRect(boundingBox, categoryFilter, null, Integer.MAX_VALUE);
         } catch (Throwable t) {
             Log.e(t.getMessage(), t.getCause().getMessage());
         } finally {
@@ -326,7 +326,7 @@ public class PoiSearch implements PoiSelector {
 
             Collection<PointOfInterest> pois = persManager.findNearPosition(
                     location, distance,
-                    categoryFilter, (String) null, Integer.MAX_VALUE);
+                    categoryFilter, null, Integer.MAX_VALUE);
 
             for (PointOfInterest poi : pois) {
                 LatLong cur = new LatLong(poi.getLatitude(), poi.getLongitude());
@@ -363,19 +363,19 @@ public class PoiSearch implements PoiSelector {
             categoryFilter.addCategory(categoryManager.getPoiCategoryByTitle(category));
             persManager.getPoiFileInfo();
 
-            List<String> query = new ArrayList<>();
+            Map<String, String> query = new HashMap<>();
 
             Iterator it = tags.entrySet().iterator();
             if (!it.hasNext()) {
                 return null;
             }
             while (it.hasNext()) {
-                Map.Entry pair = (Map.Entry) it.next();
-                if (((String) pair.getValue()).isEmpty()) continue;
-                query.add("%" + pair.getKey() + "=" + pair.getValue() + "%");
+                Map.Entry<String, String> pair = (Map.Entry<String, String>) it.next();
+                if ((pair.getValue()).isEmpty()) continue;
+                query.put(pair.getKey(), pair.getValue() + "%");
             }
             return persManager.findInRect(bb, categoryFilter,
-                    query.toArray(new String[query.size()]), Integer.MAX_VALUE);
+                    query, Integer.MAX_VALUE);
         } catch (Throwable t) {
             if (t.getCause() != null)
                 Log.e(t.getMessage(), t.getCause().getMessage());

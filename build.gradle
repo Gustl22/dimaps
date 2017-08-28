@@ -3,7 +3,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.1'
+        classpath 'com.android.tools.build:gradle:2.3.3'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
     }
 }
@@ -13,7 +13,7 @@ allprojects {
     version = 'master-SNAPSHOT'
     ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
-    ext.androidBuildVersionTools = "25.0.2"
+    ext.androidBuildVersionTools = "26.0.1"
     ext.gdxVersion = "1.9.5"
     ext.gwtVersion = "2.8.0"
 
@@ -26,11 +26,11 @@ allprojects {
     }
 }
 
-def androidCompileSdk() { return 25 }
+def androidCompileSdk() { return 26 }
 
 def androidMinSdk() { return 12 }
 
-def androidTargetSdk() { return 25 }
+def androidTargetSdk() { return 26 }
 
 def versionCode() { return 50 }
 

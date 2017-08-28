@@ -7,20 +7,17 @@ dependencies {
 }
 
 android {
-    compileSdkVersion androidCompileSdk()
+    compileSdkVersion 26
     buildToolsVersion = "$androidBuildVersionTools"
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_7
         targetCompatibility JavaVersion.VERSION_1_7
     }
-
     defaultConfig {
         versionCode versionCode()
         versionName versionName()
         minSdkVersion androidMinSdk()
     }
-
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
@@ -32,8 +29,8 @@ android {
         debug.setRoot('build-types/debug')
         release.setRoot('build-types/release')
     }
-
     lintOptions { abortOnError false }
+    buildToolsVersion '26.0.1'
 }
 
 android.libraryVariants.all { variant ->

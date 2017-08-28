@@ -17,12 +17,14 @@
 package org.oscim.app;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import org.oscim.android.cache.TileCache;
+import org.oscim.app.download.MapDownloadActivity;
 import org.oscim.app.preferences.StoragePreference;
 import org.oscim.app.utils.FileUtils;
 import org.oscim.layers.GenericLayer;
@@ -86,6 +88,8 @@ public class MapLayers {
             }
             if (files.isEmpty()) {
                 App.activity.showToastOnUiThread("No maps downloaded.");
+                //TODO correct method to start intent
+                App.activity.startActivity(new Intent(App.activity, MapDownloadActivity.class));
             } else {
                 File worldmap = null;
                 for (File f : files) {
