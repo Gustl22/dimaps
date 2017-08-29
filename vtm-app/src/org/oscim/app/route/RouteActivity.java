@@ -14,6 +14,7 @@ import com.woxthebox.draglistview.DragListView;
 
 import org.mapsforge.core.model.LatLong;
 import org.mapsforge.poi.storage.PointOfInterest;
+import org.openstreetmap.osmosis.osmbinary.file.FileFormatException;
 import org.oscim.app.App;
 import org.oscim.app.R;
 import org.oscim.app.debug.RemoteDebugger;
@@ -71,6 +72,9 @@ public class RouteActivity extends AppCompatActivity implements ItemAdapter.Drag
             ps.initPoiFile();
         } catch (FileNotFoundException e) {
             activity.showToastOnUiThread("No Poidata found, Download it for geoCoding");
+            finish();
+        } catch (FileFormatException e) {
+            activity.showToastOnUiThread(e.getMessage());
             finish();
         }
         GHPointArea rDepart = rs.getStartPoint();

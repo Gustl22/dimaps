@@ -14,6 +14,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 
 import org.mapsforge.poi.storage.PointOfInterest;
+import org.openstreetmap.osmosis.osmbinary.file.FileFormatException;
 import org.oscim.app.App;
 import org.oscim.app.R;
 import org.oscim.app.debug.RemoteDebugger;
@@ -21,6 +22,7 @@ import org.oscim.app.debug.RemoteDebugger;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import static org.oscim.app.search.PoiDisplayUtils.getSearchItemListFromPoiList;
 
@@ -93,6 +95,9 @@ public class PoiSearchActivity extends AppCompatActivity {
         } catch (FileNotFoundException ex) {
             App.activity.showToastOnUiThread("No POI data found. Download it first");
             finish();
+        } catch (FileFormatException ex) {
+            App.activity.showToastOnUiThread(ex.getMessage());
+            finish();
         }
         if(mPoiSearch.getPoiArea() != null){
             mPoiDisplay.currentPoiFile = mPoiSearch.getPoiFile(0);
@@ -122,7 +127,13 @@ public class PoiSearchActivity extends AppCompatActivity {
 
             @Override
             protected ArrayList<PointOfInterest> doInBackground(String... params) {
-                return new ArrayList<>(mPoiSearch.getPoiByAll(params[0]));
+                try {
+                    Collection<PointOfInterest> pois = mPoiSearch.getPoiByAll(params[0]);
+                    return new ArrayList<>(pois);
+                } catch (FileFormatException e) {
+                    App.activity.showToastOnUiThread(e.getMessage());
+                    return null;
+                }
             }
 
             @Override

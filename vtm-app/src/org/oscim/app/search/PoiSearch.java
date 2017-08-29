@@ -29,6 +29,7 @@ import org.mapsforge.poi.storage.PoiFileInfo;
 import org.mapsforge.poi.storage.PoiPersistenceManager;
 import org.mapsforge.poi.storage.PointOfInterest;
 import org.mapsforge.poi.storage.UnknownPoiCategoryException;
+import org.openstreetmap.osmosis.osmbinary.file.FileFormatException;
 import org.oscim.app.MapLayers;
 import org.oscim.app.holder.AreaFileInfo;
 import org.oscim.app.utils.FileUtils;
@@ -64,7 +65,7 @@ public class PoiSearch implements PoiSelector {
         return mPOI_File;
     }
 
-    public void initPoiFile() throws FileNotFoundException {
+    public void initPoiFile() throws FileNotFoundException, FileFormatException {
         ArrayList<File> files = getPoiFilesByAreaFolder(null);
         if (files == null || files.isEmpty())
             throw new FileNotFoundException("No point of interest files found");
@@ -78,7 +79,7 @@ public class PoiSearch implements PoiSelector {
      * @param poiFile The file, which should be set
      * @throws FileNotFoundException If no files exist, it throws an Exception
      */
-    public void setPoiFile(File poiFile) throws FileNotFoundException {
+    public void setPoiFile(File poiFile) throws FileNotFoundException, FileFormatException {
         //if(poiFile == null) return;
         if (poiFile != null && poiFile.exists()) {
             mPOI_File = poiFile;
@@ -135,7 +136,7 @@ public class PoiSearch implements PoiSelector {
                 .getPoiPersistenceManager(poiFile.getAbsolutePath());
     }
 
-    public Collection<PointOfInterest> getPoiByAll(String text) {
+    public Collection<PointOfInterest> getPoiByAll(String text) throws FileFormatException {
         Collection<PointOfInterest> collection = new HashSet<PointOfInterest>();
         List<File> files;
         text = text.toLowerCase();
@@ -277,17 +278,28 @@ public class PoiSearch implements PoiSelector {
         return countryCollection;
     }
 
-    public PointOfInterest getPoiFromFile(File file, int poiId) {
+    /**
+     * Gets the country poi of a Poi-File
+     *
+     * @param file
+     * @param poiId
+     * @return
+     */
+    public PointOfInterest getPoiFromFile(File file, int poiId) throws FileFormatException {
         AreaFileInfo areaInfo = new AreaFileInfo(file.getAbsolutePath());
         PointOfInterest poi;
-        PoiPersistenceManager persManager = openPoiConnection(file);
-        PoiFileInfo poiInfo = persManager.getPoiFileInfo();
-        BoundingBox bb = poiInfo.bounds;
-        LatLong center = bb.getCenterPoint();
-        poi = new PointOfInterest(-(poiId + 1), center.getLatitude(), center.getLongitude(),
-                areaInfo.getContinent() + ", " + areaInfo.getCountry() + ", "
-                        + areaInfo.getRegion(), (new PoiMapareaCategory()));
-        persManager.close();
+        try {
+            PoiPersistenceManager persManager = openPoiConnection(file);
+            PoiFileInfo poiInfo = persManager.getPoiFileInfo();
+            BoundingBox bb = poiInfo.bounds;
+            LatLong center = bb.getCenterPoint();
+            poi = new PointOfInterest(-(poiId + 1), center.getLatitude(), center.getLongitude(),
+                    areaInfo.getContinent() + ", " + areaInfo.getCountry() + ", "
+                            + areaInfo.getRegion(), (new PoiMapareaCategory()));
+            persManager.close();
+        } catch (Exception ex) {
+            throw new FileFormatException("Wrong file format. Check poi-file version");
+        }
         return poi;
     }
 
