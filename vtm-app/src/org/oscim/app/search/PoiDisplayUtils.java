@@ -19,7 +19,6 @@ import org.oscim.app.utils.CustomAnimationUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by gustl on 27.03.17.
@@ -212,7 +211,7 @@ public class PoiDisplayUtils {
         List<QuickSearchListItem> arr = new ArrayList<>();
         for (PointOfInterest poi : poiList) {
             String name = poi.getName();
-            Set<Tag> tags = poi.getTags();
+            List<Tag> tags = poi.getTags();
             String postcode = "";
             String city = "";
             String is_in = "";

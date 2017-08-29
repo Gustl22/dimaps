@@ -117,11 +117,12 @@ public class PoiSearchActivity extends AppCompatActivity {
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
+                if (progDialog != null) progDialog.dismiss();
                 progDialog = new ProgressDialog(context);
                 progDialog.setMessage("Loading...");
                 progDialog.setIndeterminate(false);
                 progDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-                progDialog.setCancelable(false);
+                progDialog.setCancelable(true);
                 progDialog.show();
             }
 

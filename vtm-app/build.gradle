@@ -9,12 +9,12 @@ dependencies {
     compile 'org.mapsforge:vtm-themes:+'
     compile 'org.mapsforge:vtm-extras:+'
 
-    compile 'org.mapsforge:mapsforge-core:+'
-    compile 'org.mapsforge:mapsforge-poi:+'
-    compile 'org.mapsforge:mapsforge-poi-android:+'
-//    compile files('libs/mapsforge-core-master-SNAPSHOT.jar')
-//    compile files('libs/mapsforge-poi-android-master-SNAPSHOT.jar')
-//    compile files('libs/mapsforge-poi-master-SNAPSHOT.jar')
+//    compile 'org.mapsforge:mapsforge-core:+'
+//    compile 'org.mapsforge:mapsforge-poi:+'
+//    compile 'org.mapsforge:mapsforge-poi-android:+'
+    compile files('libs/mapsforge-core-master-SNAPSHOT.jar')
+    compile files('libs/mapsforge-poi-android-master-SNAPSHOT.jar')
+    compile files('libs/mapsforge-poi-master-SNAPSHOT.jar')
     compile files('libs/spatialite-android-master-SNAPSHOT.jar')
 
     //compile 'org.mapsforge:spatialite-android:0.8.0'
