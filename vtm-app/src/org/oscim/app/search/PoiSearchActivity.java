@@ -1,6 +1,5 @@
 package org.oscim.app.search;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -11,6 +10,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AutoCompleteTextView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.mapsforge.poi.storage.PointOfInterest;
@@ -34,6 +34,7 @@ public class PoiSearchActivity extends AppCompatActivity {
     private AutoCompleteTextView mSearchBar;
     private PoiSearch mPoiSearch;
     private PoiDisplayUtils mPoiDisplay;
+    private ProgressBar mSearchProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +84,9 @@ public class PoiSearchActivity extends AppCompatActivity {
             }
         });
 
+        //Set ProgressBar
+        mSearchProgress = (ProgressBar) findViewById(R.id.search_progress);
+
 
         //Setup search logic
         mPoiSearch = new PoiSearch();
@@ -110,20 +114,15 @@ public class PoiSearchActivity extends AppCompatActivity {
      * @param text input-filter for poi-text
      * @return List of suggestions
      */
-    ProgressDialog progDialog;
+
     private void getSuggestions(String text){
         final Context context = this;
         new AsyncTask<String, Void, ArrayList<PointOfInterest>>(){
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
-                if (progDialog != null) progDialog.dismiss();
-                progDialog = new ProgressDialog(context);
-                progDialog.setMessage("Loading...");
-                progDialog.setIndeterminate(false);
-                progDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-                progDialog.setCancelable(true);
-                progDialog.show();
+                mSearchProgress.setIndeterminate(true);
+                mSearchProgress.setVisibility(View.VISIBLE);
             }
 
             @Override
@@ -139,8 +138,8 @@ public class PoiSearchActivity extends AppCompatActivity {
 
             @Override
             protected void onPostExecute(ArrayList<PointOfInterest> pointOfInterests) {
-                if (progDialog != null)
-                    progDialog.dismiss();
+                mSearchProgress.setVisibility(View.GONE);
+
                 super.onPostExecute(pointOfInterests);
                 mPoiDisplay.poiSuggestions = pointOfInterests;
                 mPoiDisplay.listItemSuggestions = getSearchItemListFromPoiList(mPoiDisplay.poiSuggestions);
@@ -172,8 +171,7 @@ public class PoiSearchActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy(){
-        if (progDialog != null)
-            progDialog.dismiss();
+        mSearchProgress.setVisibility(View.GONE);
         savePreferences();
         super.onDestroy();
     }
