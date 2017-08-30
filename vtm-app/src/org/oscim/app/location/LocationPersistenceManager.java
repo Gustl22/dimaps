@@ -19,7 +19,8 @@ import java.util.List;
 
 public class LocationPersistenceManager {
 
-    public static List<LatLong> fetchLocations(File destination) {
+    @SuppressWarnings("unchecked")
+    public static List<LatLong> fetchLocations(File destination) throws ClassCastException {
         if (destination.exists()) {
             String filePath;
             filePath = destination.getAbsolutePath();
@@ -28,7 +29,7 @@ public class LocationPersistenceManager {
                 FileInputStream fileInputStream = new FileInputStream(filePath);
                 ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
 
-                List<Double[]> favorMap = (List<Double[]>) objectInputStream.readObject();
+                List<Double[]> favorMap = (ArrayList<Double[]>) objectInputStream.readObject();
                 objectInputStream.close();
                 List<LatLong> latlongs = new ArrayList<>();
                 for (Double[] doubles : favorMap) {

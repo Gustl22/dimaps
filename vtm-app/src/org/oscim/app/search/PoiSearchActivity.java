@@ -35,6 +35,7 @@ public class PoiSearchActivity extends AppCompatActivity {
     private PoiSearch mPoiSearch;
     private PoiDisplayUtils mPoiDisplay;
     private ProgressBar mSearchProgress;
+    private AsyncTask mSearchTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,9 +78,11 @@ public class PoiSearchActivity extends AppCompatActivity {
             }
         });
         //Set real-time key-listener
-        mSearchBar.setOnKeyListener(new View.OnKeyListener() {
+        mSearchBar.setOnKeyListener(new TextView.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (mSearchTask != null) mSearchTask.cancel(true);
+                getSuggestions(((TextView) v).getText().toString());
                 return false;
             }
         });
@@ -117,7 +120,7 @@ public class PoiSearchActivity extends AppCompatActivity {
 
     private void getSuggestions(String text){
         final Context context = this;
-        new AsyncTask<String, Void, ArrayList<PointOfInterest>>(){
+        mSearchTask = new AsyncTask<String, Void, ArrayList<PointOfInterest>>() {
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
@@ -149,6 +152,11 @@ public class PoiSearchActivity extends AppCompatActivity {
                 mPoiDisplay.suggestionsAdapter.notifyDataSetChanged();
                 mPoiDisplay.expandSuggestions();
 //                mAutoCompleteSearchBarAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            protected void onCancelled() {
+                PoiSearch.closePoiPersistenceManagers();
             }
         }.execute(text);
     }

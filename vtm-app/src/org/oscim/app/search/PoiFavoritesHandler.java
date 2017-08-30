@@ -2,6 +2,7 @@ package org.oscim.app.search;
 
 import org.mapsforge.core.model.LatLong;
 import org.mapsforge.poi.storage.PointOfInterest;
+import org.oscim.app.App;
 import org.oscim.app.MapLayers;
 import org.oscim.app.utils.FileUtils;
 
@@ -47,7 +48,8 @@ public class PoiFavoritesHandler {
 
     /**
      * Remove POI from personal list
-     * @param poi POI you want to remove
+     *
+     * @param poi    POI you want to remove
      * @param folder where POI-list is located.
      */
     public void removeFavorite(PointOfInterest poi, File folder) {
@@ -79,16 +81,22 @@ public class PoiFavoritesHandler {
         }
         for (int i = 0; i < poiFiles.size(); i++) {
             File mapDirectory = poiFiles.get(i).getParentFile();
-            List<LatLong> actualPoiIds = fetchLocations(new File(mapDirectory,mName));
-            if (actualPoiIds == null || actualPoiIds.isEmpty()) continue;
-            List<PointOfInterest> actualPois = new ArrayList<PointOfInterest>();
-            for (LatLong latlong : actualPoiIds) {
-                PointOfInterest poi = getPoiFromLocationAndFile(latlong, poiFiles.get(i));
-                if (poi != null)
-                    actualPois.add(poi);
+            File favorListFile = new File(mapDirectory, mName);
+            try {
+                List<LatLong> actualPoiIds = fetchLocations(favorListFile);
+                if (actualPoiIds == null || actualPoiIds.isEmpty()) continue;
+                List<PointOfInterest> actualPois = new ArrayList<PointOfInterest>();
+                for (LatLong latlong : actualPoiIds) {
+                    PointOfInterest poi = getPoiFromLocationAndFile(latlong, poiFiles.get(i));
+                    if (poi != null)
+                        actualPois.add(poi);
+                }
+                mPoiFavorites.put(mapDirectory.getAbsolutePath(), actualPois);
+            } catch (ClassCastException ex) {
+                favorListFile.delete();
+                App.activity.showToastOnUiThread("Poi-favorites deleted, because they have wrong format.");
             }
-            mPoiFavorites.put(mapDirectory.getAbsolutePath(), actualPois);
-        }
+            }
     }
 
     public void storeAllFavorites() {

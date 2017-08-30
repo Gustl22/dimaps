@@ -57,6 +57,8 @@ public class PoiSearch implements PoiSelector {
     private File mPOI_File;
     private PointOfInterest poiArea; //The Area of poiFile expressed as POI
     public Set<String> CustomPoiCategory;
+    private static List<PoiPersistenceManager> smPoiPersistenceManagerList
+            = new ArrayList<PoiPersistenceManager>();
 
     public PoiSearch() {
     }
@@ -133,8 +135,16 @@ public class PoiSearch implements PoiSelector {
     }
 
     public static PoiPersistenceManager openPoiConnection(File poiFile) {
-        return AndroidPoiPersistenceManagerFactory
+        PoiPersistenceManager ppm = AndroidPoiPersistenceManagerFactory
                 .getPoiPersistenceManager(poiFile.getAbsolutePath());
+        smPoiPersistenceManagerList.add(ppm);
+        return ppm;
+    }
+
+    public static void closePoiPersistenceManagers() {
+        //TODO this takes too long, find another solution for that.
+//0
+        smPoiPersistenceManagerList.clear();
     }
 
     public Collection<PointOfInterest> getPoiByAll(String text) throws FileFormatException {
