@@ -96,7 +96,7 @@ public class PoiFavoritesHandler {
                 favorListFile.delete();
                 App.activity.showToastOnUiThread("Poi-favorites deleted, because they have wrong format.");
             }
-            }
+        }
     }
 
     public void storeAllFavorites() {

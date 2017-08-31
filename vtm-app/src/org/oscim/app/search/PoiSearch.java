@@ -137,14 +137,16 @@ public class PoiSearch implements PoiSelector {
     public static PoiPersistenceManager openPoiConnection(File poiFile) {
         PoiPersistenceManager ppm = AndroidPoiPersistenceManagerFactory
                 .getPoiPersistenceManager(poiFile.getAbsolutePath());
-        smPoiPersistenceManagerList.add(ppm);
+//        smPoiPersistenceManagerList.add(ppm);
         return ppm;
     }
 
     public static void closePoiPersistenceManagers() {
-        //TODO this takes too long, find another solution for that.
-//0
-        smPoiPersistenceManagerList.clear();
+//        //TODO this takes too long, find another solution for that.
+//        for (PoiPersistenceManager poiPersistenceManager : smPoiPersistenceManagerList) {
+//               poiPersistenceManager.close();
+//        }
+//        smPoiPersistenceManagerList.clear();
     }
 
     public Collection<PointOfInterest> getPoiByAll(String text) throws FileFormatException {
