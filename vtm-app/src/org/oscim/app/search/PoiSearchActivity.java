@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -68,6 +70,7 @@ public class PoiSearchActivity extends AppCompatActivity {
         mSearchBar.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (mSearchTask != null) mSearchTask.cancel(true);
                 getSuggestions(v.getText().toString());
                 View view = getCurrentFocus();
                 if (view != null) {
@@ -78,12 +81,18 @@ public class PoiSearchActivity extends AppCompatActivity {
             }
         });
         //Set real-time key-listener
-        mSearchBar.setOnKeyListener(new TextView.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+        mSearchBar.addTextChangedListener(new TextWatcher() {
+            public void afterTextChanged(Editable s) {
                 if (mSearchTask != null) mSearchTask.cancel(true);
-                getSuggestions(((TextView) v).getText().toString());
-                return false;
+                getSuggestions((mSearchBar.getText().toString()));
+            }
+
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // you can check for enter key here
+            }
+
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
             }
         });
 
