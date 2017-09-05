@@ -420,7 +420,7 @@ public class PoiSearch implements PoiSelector {
             if (t.getCause() != null)
                 Log.e(t.getMessage(), t.getCause().getMessage());
         } finally {
-            if (persManager != null && !persManager.isClosed()) {
+            if (persManager != null) {
                 persManager.close();
             }
         }

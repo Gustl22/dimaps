@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 dependencies {
-    compile project(':vtm-android')
+//    compile project(':vtm-android')
     //    compile project(':vtm-themes')
     //    compile project(':vtm-extras')
     //Mapsforge vtm online
-    //compile 'org.mapsforge:vtm-android:+'
+    compile 'org.mapsforge:vtm-android:+'
     compile 'org.mapsforge:vtm-themes:+'
     compile 'org.mapsforge:vtm-extras:+'
 

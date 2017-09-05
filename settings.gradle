@@ -1,4 +1,4 @@
-rootProject.name = 'vtm-parent'
+rootProject.name = 'dimaps-parent'
 include ':vtm'
 include ':vtm-jts'
 include ':vtm-extras'

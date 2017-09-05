@@ -84,8 +84,8 @@ public class PoiSearchActivity extends AppCompatActivity {
 
         mSearchBar.addTextChangedListener(new TextWatcher() {
             public void afterTextChanged(Editable s) {
-                if (mSearchTask != null) mSearchTask.cancel(true);
-                getSuggestions((mSearchBar.getText().toString()));
+//                if (mSearchTask != null) mSearchTask.cancel(true);
+//                getSuggestions((mSearchBar.getText().toString()));
             }
 
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
