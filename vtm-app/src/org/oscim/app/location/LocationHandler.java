@@ -250,6 +250,7 @@ public class LocationHandler implements LocationListener {
 
         //Set Map position
         mMapPosition.setPosition(lat, lon);
+        mMapPosition.setBearing(location.getBearing());
         map.animator().animateTo(500, mMapPosition);
         map.updateMap(true);
 
@@ -274,14 +275,25 @@ public class LocationHandler implements LocationListener {
         //log.debug("update location " + lat + ":" + lon);
 
         if (mSetCenter || mMode == Mode.SNAP || mMode == Mode.NAV) {
-            mSetCenter = false;
+            if (mSetCenter) mSetCenter = false;
 
-            map.getMapPosition(mMapPosition);
-            mMapPosition.setPosition(lat, lon);
-            map.animator().animateTo(500, mMapPosition);
-            map.updateMap(true);
+            // Set map to recent location, if animation not ended. Bearing is handled in Compass
+            MapPosition tmpPosition = new MapPosition();
+            tmpPosition.copy(mMapPosition);
+            if (map.viewport().getMapPosition(mMapPosition)) {
+                mMapPosition.setPosition(tmpPosition.getLatitude(), tmpPosition.getLongitude());
+                map.viewport().setMapPosition(mMapPosition);
+            }
 
-            //map.setMapPosition(mMapPosition);
+            // Change to predicted location
+            tmpPosition.setPosition(lat, lon);
+            mMapPosition = tmpPosition;
+
+//            mMapPosition.setBearing(location.getBearing());
+
+            // Start animation
+//            map.animator().cancel();
+//            map.animator().animateTo(500, mMapPosition, Easing.Type.LINEAR, org.oscim.map.Animator.ANIM_MOVE);
         }
 
         mLocationLayer.setPosition(lat, lon, location.getAccuracy());

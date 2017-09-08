@@ -16,7 +16,6 @@
  */
 package org.oscim.app.location;
 
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.hardware.Sensor;
@@ -240,7 +239,7 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
     @Override
     public void onSensorChanged(SensorEvent event) {
         //Handle unwanted rotation by user
-        if(mIsRotationByLocation){
+        if (mIsRotationByLocation) {
             return;
         }
 
@@ -271,8 +270,8 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
         onRotationChanged();
     }
 
-    ValueAnimator anim;
-    long time;
+    private long time;
+
     private void onRotationChanged() {
         if (mMode != Mode.OFF) {
             // float rotation = (float) Math.toDegrees(mRotationV[0]);
@@ -292,7 +291,7 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
             // low-pass (slow down)
             long currentTime = Calendar.getInstance().getTimeInMillis();
             //40 Milliseconds is an elapse of 1sec/25frames
-            if((currentTime - time) < 40){
+            if ((currentTime - time) < 40) {
                 change *= 0.3;
             }
             time = currentTime;
@@ -305,9 +304,7 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
                 rotation += 360;
 
             boolean redraw = false;
-            if(anim != null){
-                anim.end();
-            }
+
             float absChange = Math.abs(change);
             if (absChange > 0) {
                 adjustArrow(mCurRotation, rotation);
@@ -316,12 +313,12 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
             }
 
 
-            if (mMode == Mode.C3D){
+            if (mMode == Mode.C3D) {
                 // float tilt = (float) Math.toDegrees(mRotationV[1]);
                 // float tilt = (float) Math.toDegrees(mPitchAxisRadians);
                 float tilt;
-                if(App.activity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
-                    tilt = mRotationV[2]>0?-mRotationV[2]:mRotationV[2];
+                if (App.activity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    tilt = mRotationV[2] > 0 ? -mRotationV[2] : mRotationV[2];
                 } else {
                     tilt = mRotationV[1];
                 }
@@ -333,8 +330,9 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
             }
 
             mCurRotation = rotation;
-            if (redraw)
+            if (redraw) {
                 mMap.updateMap(true);
+            }
         }
     }
 
@@ -468,7 +466,7 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
     //Handle set compass if it will be set by locationhandler
     @Override
     public void onLocationChanged(Location location) {
-        if(location.hasSpeed() && location.getSpeed() > 1.5){
+        if (location.hasSpeed() && location.getSpeed() > 1.5) {
             mIsRotationByLocation = true;
             mRotationV[0] = location.getBearing();
             onRotationChanged();
