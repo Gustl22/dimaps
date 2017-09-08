@@ -1,5 +1,6 @@
 package org.oscim.app.download;
 
+import android.Manifest;
 import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -10,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -35,6 +37,7 @@ import org.oscim.app.holder.SelectableItemHolder;
 import org.oscim.app.preferences.StoragePreference;
 
 import java.io.File;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static org.oscim.app.App.activity;
 import static org.oscim.app.ConnectionHandler.isOnline;
 
 
@@ -61,7 +65,6 @@ public class MapDownloadActivity extends DownloadReceiverActivity implements Ada
     private RelativeLayout map_list;
     //    private String fileListURL = "http://download2.graphhopper.com/public/maps/" + Constants.getMajorVersion() + "/";
     private String fileListURLroot;
-    private String downloadURL;
     private HashMap<String, String> dSources;
     BroadcastReceiver onDownloadComplete;
 
@@ -83,6 +86,15 @@ public class MapDownloadActivity extends DownloadReceiverActivity implements Ada
         // TODO get user confirmation to download
         // if (AndroidHelper.isFastDownload(this))
         //chooseAreaFromRemote();
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                // Do nothing
+            } else {
+                ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
+            }
+            // TODO improve Permission grant
+        }
     }
 
 
@@ -94,7 +106,7 @@ public class MapDownloadActivity extends DownloadReceiverActivity implements Ada
 
         String version = "Version unkown";
         try {
-            PackageInfo pInfo = App.activity.getPackageManager().getPackageInfo(getPackageName(), 0);
+            PackageInfo pInfo = activity.getPackageManager().getPackageInfo(getPackageName(), 0);
             version = pInfo.versionName;
         } catch (PackageManager.NameNotFoundException ex) {
             Log.d("Version Error", ex.getMessage());
@@ -252,14 +264,11 @@ public class MapDownloadActivity extends DownloadReceiverActivity implements Ada
                 DownloadListener downloadListener = new DownloadListener() {
                     @Override
                     public void onSelect(AreaFileInfo tnc, String selectedFile) {
-                        if (selectedFile == null
-                                || new File(mMapsFolder, tnc.getPath()).exists()
-/*                                || new File(mMapsFolder, selectedArea + "/").exists()*/) {
-                            downloadURL = null;
-                        } else {
+                        String downloadURL = null;
+                        if (selectedFile != null){
                             downloadURL = selectedFile;
                         }
-                        downloadingFiles(tnc);
+                        downloadingFile(downloadURL, tnc);
                     }
                 };
                 chooseArea(remoteButton, nameList,
@@ -431,7 +440,11 @@ public class MapDownloadActivity extends DownloadReceiverActivity implements Ada
         }
     }
 
-    void downloadingFiles(AreaFileInfo tnc) {
+    /**
+     * @param downloadURL download url of file.
+     * @param tnc AreaFileInfo of file, which should be downloaded.
+     */
+    void downloadingFile(String downloadURL, AreaFileInfo tnc) {
         String downloadPath;
         if (isGraphhopperFolderStyle) {
             String r = tnc.getExtension();
@@ -446,9 +459,20 @@ public class MapDownloadActivity extends DownloadReceiverActivity implements Ada
             downloadPath = tnc.getPath();
         }
         File areaFile = new File(mMapsFolder, downloadPath.toLowerCase());
-        if (downloadURL == null || areaFile.exists()) {
+        if (downloadURL == null) {
             return;
         }
+        if(areaFile.exists()){
+            // Minimum 1 Day for each file actualization.
+            long actualizeDate = Calendar.getInstance().getTimeInMillis() - 86400000;
+            if (areaFile.lastModified() > actualizeDate) {
+                App.activity.showToastOnUiThread("Map is up to date. Try tomorrow!");
+                return;
+            } else {
+                areaFile.delete();
+            }
+        }
+        
         //Gingerbread downloader
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(downloadURL));
         request.setDescription("Map Download");

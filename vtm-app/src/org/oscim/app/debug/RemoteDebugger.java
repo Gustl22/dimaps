@@ -19,7 +19,7 @@ public class RemoteDebugger {
     private static Thread.UncaughtExceptionHandler mUEHandler;
     private static boolean isFirstLog = true;
 
-    public static synchronized void sendLoagcatMail(Activity logActivity, Thread t, Throwable te) {
+    public static synchronized void sendLogcatMail(Activity logActivity, Thread t, Throwable te) {
         if (!isFirstLog) return;
         isFirstLog = false;
         // save logcat in file
@@ -39,8 +39,16 @@ public class RemoteDebugger {
         try {
             PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
             writer.println("Process: " + t.getName() + "\n");
-            writer.printf(te.getMessage());
+
+            writer.printf(te.getCause().getMessage());
+            StackTraceElement[] stackTraceCause = te.getCause().getStackTrace();
+            for (StackTraceElement stackTraceElement : stackTraceCause) {
+                writer.println("\tat " + stackTraceElement.toString());
+            }
+            writer.println();
+
             StackTraceElement[] stackTrace = te.getStackTrace();
+            writer.printf(te.getMessage());
             for (StackTraceElement stackTraceElement : stackTrace) {
                 writer.println("\tat " + stackTraceElement.toString());
             }
@@ -75,7 +83,7 @@ public class RemoteDebugger {
 
             @Override
             public void uncaughtException(Thread t, Throwable e) {
-                sendLoagcatMail(crashActivity, t, e);
+                sendLogcatMail(crashActivity, t, e);
                 crashActivity.finish();
             }
         };

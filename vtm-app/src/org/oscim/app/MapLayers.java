@@ -56,6 +56,8 @@ public class MapLayers {
     }
 
     public static File[] MAP_FOLDERS;
+    final static boolean USE_CACHE = true;
+    final static boolean USE_S3DB = true;
 
     //final static Logger log = LoggerFactory.getLogger(MapLayers.class);
     static Config[] configs = new Config[]{new Config("OPENSCIENCEMAP4") {
@@ -116,6 +118,7 @@ public class MapLayers {
     private VectorTileLayer mBaseLayer;
     private String mMapDatabase;
     private ITileCache mCache;
+    private TileCache mS3dbCache;
     private GenericLayer mGridOverlay;
     private boolean mGridEnabled;
     // FIXME -> implement LayerGroup
@@ -182,7 +185,7 @@ public class MapLayers {
         }
 
         //Cache could be set with an boolean, S3DB would not work with cache
-        if(true){
+        if(USE_CACHE){
             if (tileSource instanceof UrlTileSource) {
                 mCache = new TileCache(App.activity, context.getExternalCacheDir().getAbsolutePath(), dbname);
                 mCache.setCacheSize(512 * (1 << 10));
@@ -194,9 +197,17 @@ public class MapLayers {
 
         if (mBaseLayer == null) {
             mBaseLayer = App.map.setBaseMap(tileSource); //Base Layer (almost OPENSCIENCEMAP4)
-            App.map.layers().add(2, new S3DBLayer(App.map, tileSource));
-            //App.map.layers().add(2, new S3DBLayer(App.map, configs[3].init()));  //S3DB Layer without caching
-            App.map.layers().add(2, new BuildingLayer(App.map, mBaseLayer));
+            if(ConnectionHandler.isOnline() && USE_S3DB){
+                TileSource s3dbTileSource = configs[3].init();
+                if (USE_CACHE) {
+                    mS3dbCache = new TileCache(App.activity, context.getExternalCacheDir().getAbsolutePath(), "s3db.db");
+                    mS3dbCache.setCacheSize(512 * (1 << 10));
+                    s3dbTileSource.setCache(mS3dbCache);
+                }
+                App.map.layers().add(2, new S3DBLayer(App.map, s3dbTileSource, true, false));
+            } else {
+                App.map.layers().add(2, new BuildingLayer(App.map, mBaseLayer));
+            }
             App.map.layers().add(3, new LabelLayer(App.map, mBaseLayer));
         } else
             mBaseLayer.setTileSource(tileSource);
