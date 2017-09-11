@@ -62,15 +62,6 @@ import static org.oscim.app.graphhopper.GraphhopperOsmdroidAdapter.convertGHPoin
 
 public class LocationHandler implements LocationListener {
 
-
-    public PointList getActualRoute() {
-        return actualRoute;
-    }
-
-    public void setActualRoute(PointList actualRoute) {
-        this.actualRoute = actualRoute;
-    }
-
     public enum Mode {
         OFF,
         SHOW,
@@ -92,7 +83,6 @@ public class LocationHandler implements LocationListener {
 
     private boolean mSetCenter;
     private MapPosition mMapPosition;
-    private PointList actualRoute = null;
 
     public LocationHandler(TileMap tileMap, Compass compass) {
         mLocationManager = (LocationManager) tileMap
@@ -231,8 +221,9 @@ public class LocationHandler implements LocationListener {
 
         map.getMapPosition(mMapPosition);
 
-        if (mMapPosition.zoomLevel < zoomLevel)
+        if (mMapPosition.zoomLevel < zoomLevel) {
             mMapPosition.setZoomLevel(zoomLevel);
+        }
 
         double lat = location.getLatitude();
         double lon = location.getLongitude();
@@ -251,8 +242,9 @@ public class LocationHandler implements LocationListener {
         //Set Map position
         mMapPosition.setPosition(lat, lon);
         mMapPosition.setBearing(location.getBearing());
-        map.animator().animateTo(500, mMapPosition);
-        map.updateMap(true);
+        // Does not work, because bearing and position are set by routemanager
+//        map.animator().animateTo(500, mMapPosition);
+        map.setMapPosition(mMapPosition);
 
         return location;
     }
@@ -299,7 +291,7 @@ public class LocationHandler implements LocationListener {
         mLocationLayer.setPosition(lat, lon, location.getAccuracy());
     }
 
-    private void initGraphHopperLocation(double lat, double lon){
+    private void initGraphHopperLocation(double lat, double lon) {
         //Load Graphhopper asynchroniously, if is null
         AsyncTask task = new AsyncTask<Object, Void, Void>() {
             @Override
@@ -329,7 +321,7 @@ public class LocationHandler implements LocationListener {
     }
 
     private synchronized ArrayList<Location> decideVirtualPath(Location preLocation, Location currentLocation) {
-        if (getActualRoute() == null) {
+        if (App.routeSearch.getActualRoute() == null) {
             App.activity.showToastOnUiThread("Predict path");
             ArrayList<Location> locations = new ArrayList<>();
             locations.add(currentLocation);
@@ -435,6 +427,7 @@ public class LocationHandler implements LocationListener {
     }
 
     private ArrayList<Location> calcVirtualPointsOnPath(Location currentLocation) {
+        PointList actualRoute = App.routeSearch.getActualRoute();
 //        App.activity.showToastOnUiThread("Stop 1");
         double curLat = currentLocation.getLatitude();
         double curLon = currentLocation.getLongitude();
@@ -443,11 +436,11 @@ public class LocationHandler implements LocationListener {
         Iterator<GHPoint3D> iterator = actualRoute.iterator();
         boolean foundNearest = false;
         PointList drawPoints;
-        GHPoint secNearestPoint = null;
+        GHPoint pastNearestPoint = null;
         GHPoint nearestPoint = null;
         GHPoint afterPoint = null;
         int i = 0;
-        int secIndex = -1;
+        int secIndex = -2; // Index of Point, which has just passed
         while (iterator.hasNext()) {
             GHPoint next = iterator.next();
             double actDis = convertGHPointToGeoPoint(next)
@@ -455,9 +448,9 @@ public class LocationHandler implements LocationListener {
             if (actDis < distance) {
                 foundNearest = false;
                 distance = actDis;
-                secNearestPoint = nearestPoint;
+                pastNearestPoint = nearestPoint;
                 nearestPoint = next;
-                secIndex = (i == 0) ? 0 : (i - 1);
+                secIndex = i - 1; // Is usually i-1
             } else if (!foundNearest) {
                 foundNearest = true;
                 afterPoint = next;
@@ -469,14 +462,15 @@ public class LocationHandler implements LocationListener {
 //            return null;
 //        }
 
-        if (secIndex != -1) {
-            drawPoints = actualRoute.copy(secIndex, actualRoute.size());
+        if (secIndex != -2) {
+            // Copy actualRoute, with the pastNearestPoint as first element
+            drawPoints = actualRoute.copy((secIndex == -1) ? 0 : secIndex, actualRoute.size());
         } else {
             return null;
         }
 
 
-        if (drawPoints.isEmpty()) actualRoute = null;
+        if (drawPoints.isEmpty()) App.routeSearch.setActualRoute(null);
 
 //        App.activity.showToastOnUiThread("Stop 2");
         if (nearestPoint == null) return null;
@@ -488,20 +482,48 @@ public class LocationHandler implements LocationListener {
         double firstDistance = Double.MAX_VALUE;
         double secDistance = Double.MAX_VALUE;
 
-        if (secNearestPoint == null) {
-            secNearestPoint = nearestPoint;
+        if (pastNearestPoint != null) {
+            Coordinate secNearLoc = new Coordinate(pastNearestPoint.getLon(), pastNearestPoint.getLat());
+            first = projectCoordinate(secNearLoc, nearLoc, curLoc);
+            firstDistance = new LatLong(curLoc.y, curLoc.x).sphericalDistance(new LatLong(first.y, first.x));
         }
-        Coordinate secNearLoc = new Coordinate(secNearestPoint.getLon(), secNearestPoint.getLat());
-        first = projectCoordinate(secNearLoc, nearLoc, curLoc);
-        firstDistance = new LatLong(curLoc.y, curLoc.x).sphericalDistance(new LatLong(first.y, first.x));
 
         if (afterPoint != null) {
             Coordinate afterLoc = new Coordinate(afterPoint.getLon(), afterPoint.getLat());
             second = projectCoordinate(nearLoc, afterLoc, curLoc);
             secDistance = new LatLong(curLoc.y, curLoc.x).sphericalDistance(new LatLong(second.y, second.x));
         }
-        Coordinate startCoord = null;
-        if (firstDistance <= secDistance) {
+
+//        // Debug
+//        App.routeSearch.removePoint(-3);
+//        App.routeSearch.removePoint(-3);
+//        App.routeSearch.removePoint(-3);
+//        App.routeSearch.removePoint(-3);
+//        App.routeSearch.removePoint(-3);
+//        App.routeSearch.removePoint(-3);
+//
+//        App.routeSearch.addNonRoutePoint(new GHPointArea(
+//                afterPoint, RouteSearch.getGraphHopperFiles()), R.color.White);
+//        App.routeSearch.addNonRoutePoint(new GHPointArea(
+//                nearestPoint, RouteSearch.getGraphHopperFiles()), R.color.LightSlateGray);
+//        App.routeSearch.addNonRoutePoint(new GHPointArea(
+//                pastNearestPoint, RouteSearch.getGraphHopperFiles()), R.color.DimGray);
+//        App.routeSearch.addNonRoutePoint(new GHPointArea(
+//                new GHPoint(curLat, curLon)
+//                , RouteSearch.getGraphHopperFiles()), R.color.DeepPink);
+//        if (first != null)
+//            App.routeSearch.addNonRoutePoint(new GHPointArea(
+//                    new GHPoint(first.y, first.x), RouteSearch.getGraphHopperFiles()), R.color.DarkOrange);
+//        if (second != null)
+//            App.routeSearch.addNonRoutePoint(new GHPointArea(
+//                    new GHPoint(second.y, second.x), RouteSearch.getGraphHopperFiles()), R.color.DarkRed);
+
+
+        Coordinate startCoord;
+        if (first == null) {
+            // If the route has no pastNearestPoint, the startCoordinate is the second one.
+            startCoord = second;
+        } else if (firstDistance <= secDistance) {
             if (firstDistance > GPS_MAXIMUM_DISTANCE_DEVIATION) {
                 return null;
             }
@@ -514,8 +536,14 @@ public class LocationHandler implements LocationListener {
             startCoord = second;
         }
 
-        actualRoute = drawPoints;
-        if (drawPoints.isEmpty()) return null;
+
+        App.routeSearch.setActualRoute(drawPoints);
+
+        if (drawPoints.isEmpty()
+                || startCoord == null) {
+            return null;
+        }
+
         drawPoints.set(0, startCoord.y, startCoord.x, startCoord.z);
 
         iterator = drawPoints.iterator();
@@ -585,6 +613,7 @@ public class LocationHandler implements LocationListener {
 
     private ValueAnimator anim;
     private Location preLocation;
+
     @Override
     public void onLocationChanged(final Location location) {
         App.activity.showToastOnUiThread("Loc");

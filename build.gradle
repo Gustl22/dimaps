@@ -28,7 +28,7 @@ allprojects {
 
 def androidCompileSdk() { return 26 }
 
-def androidMinSdk() { return 12 }
+def androidMinSdk() { return 14 }
 
 def androidTargetSdk() { return 26 }
 
@@ -40,6 +40,9 @@ subprojects {
     repositories {
         maven { url 'https://repo.boundlessgeo.com/main' }
         jcenter()
+        maven {
+            url 'https://maven.google.com'
+        }
     }
 
     tasks.withType(JavaCompile) {

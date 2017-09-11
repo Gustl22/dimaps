@@ -8,8 +8,9 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import org.mapsforge.poi.storage.PointOfInterest;
 import org.oscim.app.App;
-import org.oscim.app.route.RouteSearch;
+import org.oscim.app.R;
 import org.oscim.app.graphhopper.GHPointArea;
+import org.oscim.app.route.RouteSearch;
 
 import java.io.File;
 import java.util.List;
@@ -56,7 +57,7 @@ public class PoiActionHandler {
 
     public void showOnMap() {
         if (mPoi == null) return;
-        mRouteSearch.addNonRoutePoint(new GHPointArea(mPoiLocation, mGhFiles));
+        mRouteSearch.addNonRoutePoint(new GHPointArea(mPoiLocation, mGhFiles), R.color.Gray);
         mActivity.finish();
     }
 

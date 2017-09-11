@@ -25,13 +25,13 @@ dependencies {
     compile('com.squareup.okhttp3:okhttp:3.+') {
         exclude module: 'support-v4'
     }
-    compile 'com.android.support:support-v4:25.+'
-    compile 'com.android.support:appcompat-v7:25.+'
-    compile 'com.android.support:design:25.+'
+    compile 'com.android.support:support-v4:26.0.2'
+    compile 'com.android.support:appcompat-v7:26.0.2'
+    compile 'com.android.support:design:26.0.2'
     compile 'com.android.support.constraint:constraint-layout:1.0.1'
     //Graphhopper
-    compile 'com.graphhopper:graphhopper-core:0.+'
-    compile 'com.graphhopper:graphhopper-reader-osm:0.+'
+    compile 'com.graphhopper:graphhopper-core:+'
+    compile 'com.graphhopper:graphhopper-reader-osm:+'
     //compile 'com.graphhopper:graphhopper-reader-overlay-data:0.+'
     //TreeView helper
     compile 'com.github.bmelnychuk:atv:1.2.+'

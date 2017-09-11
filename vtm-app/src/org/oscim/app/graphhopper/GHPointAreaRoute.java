@@ -19,7 +19,7 @@ public class GHPointAreaRoute {
     public void updateRoutePoints() {
         // Notify everybody that may be interested.
         for (GHPointListener hl : mListeners)
-            hl.onRoutePointUpdate();
+            hl.onGHPointUpdate(true);
     }
 
     private static GHPointAreaRoute mGHPointAreaRoute;
