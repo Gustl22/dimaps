@@ -2,6 +2,7 @@ package org.oscim.app.search;
 
 import android.app.Activity;
 import android.text.Html;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -12,12 +13,14 @@ import android.widget.TextView;
 import com.github.johnkil.print.PrintView;
 
 import org.mapsforge.core.model.Tag;
+import org.mapsforge.poi.storage.PoiCategory;
 import org.mapsforge.poi.storage.PointOfInterest;
 import org.oscim.app.R;
 import org.oscim.app.utils.CustomAnimationUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -32,7 +35,7 @@ public class PoiDisplayUtils {
     public View vPoiActions;
     public PoiActionHandler poiHandler;
     public ListView vPoiListView;
-    private PrintView vSelection_icon;
+    private LinearLayout vmSelection_icon_wrapper;
     private TextView vSelection_category;
     private TextView vSelection_name;
     public List<QuickSearchListItem> listItemSuggestions;
@@ -89,7 +92,7 @@ public class PoiDisplayUtils {
 
         vPoiActions = parent.findViewById(R.id.poi_actions);
         CustomAnimationUtils.collapse(vPoiActions);
-        vSelection_icon = (PrintView) parent.findViewById(R.id.poi_selection_icon);
+        vmSelection_icon_wrapper = (LinearLayout) parent.findViewById(R.id.poi_selection_icon_wrapper);
         vSelection_category = (TextView) parent.findViewById(R.id.poi_selection_category);
         vSelection_name = (TextView) parent.findViewById(R.id.poi_selection_name);
 
@@ -120,11 +123,32 @@ public class PoiDisplayUtils {
         if (mSelectedPOI.getCategory().getTitle().equals("Maparea")) {
             vAreaSelection.setText(Html.fromHtml("<b>" + mSelectedPOI.getCategory().getTitle() + ": </b>" + resText));
         } else {
-            vSelection_category.setText(mSelectedPOI.getCategory().getTitle());
+            vmSelection_icon_wrapper.removeAllViews();
+            StringBuilder sb = null;
+            for (PoiCategory poiCategory : mSelectedPOI.getCategories()) {
+                String icon = getIconFromCategory(poiCategory);
+                if (sb == null) {
+                    sb = new StringBuilder();
+                } else {
+                    sb.append("\n");
+                }
+                sb.append(poiCategory.getTitle());
+
+                PrintView v = (PrintView) LayoutInflater.from(mParent).inflate(R.layout.poi_icon, null);
+                v.setIconText(icon);
+                vmSelection_icon_wrapper.addView(v);
+
+                // Needed to update, after animation has finished.
+                v.postInvalidateDelayed(100);
+            }
+
+            assert sb != null;
+            vSelection_category.setText(sb.toString());
+
             vSelection_name.setText(mSelectedPOI.getName());
             vResult.setText(Html.fromHtml(resText));
             poiHandler.setPoi(mSelectedPOI, currentPoiFile);
-            vSelection_icon.setIconText(getIconFromPOI(mSelectedPOI));
+
             CustomAnimationUtils.expand(vPoiActions);
             if (currentPoiFile != null) {
                 vAreaSelection.setText(Html.fromHtml("<b> Maparea: </b>" + currentPoiFile.getName()
@@ -133,78 +157,136 @@ public class PoiDisplayUtils {
         }
     }
 
-    public static String getIconFromPOI(PointOfInterest poi) {
-        switch (poi.getCategory().getTitle().toLowerCase()) {
-            case "restaurants":
-                return "ic_local_dining";
-            case "cafes":
-                return "ic_local_cafe";
-            case "bus stations":
-                return "ic_directions_bus";
-            case "fuel stations":
-                return "ic_local_gas_station";
-            case "banks":
-                return "ic_monetization_on";
-            case "cinemas":
-                return "ic_local_movies";
-            case "public toilets":
-                return "ic_wc";
-            case "bus stops":
-                return "ic_directions_bus";
-            case "museums":
-                return "ic_local_activity";
-            case "beacons":
-                return "ic_lightbulb_outline";
-            case "fast food restaurants":
-                return "ic_local_pizza";
-            case "information":
-                return "ic_information_outline";
-            case "bicycle rental stations":
-                return "ic_directions_bike";
-            case "boutiques":
-                return "ic_local_grocery_store";
-            case "toys":
-                return "ic_toys";
-            case "sport centres":
-                return "ic_directions_run";
-            case "school grounds":
-                return "ic_school";
-            case "car parks":
-                return "ic_local_parking";
-            case "university campus or buildings":
-                return "ic_school";
-            case "public libraries":
-                return "ic_local_library";
-            case "hospitals":
+    public static String getIconFromCategory(PoiCategory cat) {
+        List<PoiCategory> path = new ArrayList<PoiCategory>();
+        PoiCategory parent = cat;
+        do {
+            path.add(parent);
+        } while ((!(parent = parent.getParent()).getTitle().equals("root")));
+        Collections.reverse(path);
+
+        List<String> catsStrings = new ArrayList<>();
+        for (PoiCategory poiCategory : path) {
+            catsStrings.add(poiCategory.getTitle().toLowerCase());
+        }
+
+        switch (catsStrings.get(0)) {
+            case "amenities":
+                switch (catsStrings.get(1)) {
+                    case "food":
+                        switch (catsStrings.get(2)) {
+                            case "fast food restaurants":
+                                return "ic_local_pizza";
+                            case "cafes":
+                                return "ic_local_cafe";
+                        }
+                        return "ic_local_dining";
+                    case "transportation":
+                        switch (catsStrings.get(2)) {
+                            case "bus stations":
+                                return "ic_directions_bus";
+                            case "fuel stations":
+                                return "ic_local_gas_station";
+                            case "car parks":
+                                return "ic_local_parking";
+                        }
+                        return "ic_directions_car";
+                    case "financial institutes":
+                        return "ic_monetization_on";
+                    case "education institutes":
+                        switch (catsStrings.get(2)) {
+                            case "public libraries":
+                                return "ic_local_library";
+                        }
+                        return "ic_school";
+                    case "entertainment, arts and culture":
+                        switch (catsStrings.get(2)) {
+                            case "cinemas":
+                                return "ic_local_movies";
+                        }
+                        return "ic_local_play";
+                    case "health care":
+                        return "ic_local_hospital";
+                    case "other amenities":
+                        switch (catsStrings.get(2)) {
+                            case "public toilets":
+                                return "ic_wc";
+                        }
+                        return "ic_local_activity";
+                }
+                return "ic_domain";
+            case "airport pois":
+                return "ic_local_airport";
+            case "barriers":
+                return "ic_do_not_disturb_on";
+            case "crafting":
+                return "ic_build";
+            case "emergency":
                 return "ic_local_hospital";
-            case "newsagents":
-            case "works":
+            case "geological":
+                return "ic_terrain";
+            case "highway":
+                switch (catsStrings.get(1)) {
+                    case "bus stops":
+                        return "ic_directions_bus";
+                }
+                return "ic_timeline";
+            case "historic":
+                return "ic_search";
+            case "leisure":
+                return "ic_local_activity";
+            case "man made":
+                switch (catsStrings.get(1)) {
+                    case "beacons":
+                        return "ic_lightbulb_outline";
+                    case "works":
+                        return "ic_work";
+                }
                 return "ic_work";
+            case "military":
+                return "ic_warning";
+            case "natural":
+                return "ic_nature_people";
+            case "office":
+                return "ic_attach_file";
+            case "places":
+                return "ic_location_city";
+            case "public transport":
+                return "ic_transfer_within_a_station";
+            case "railway": // TODO
+                return "ic_directions_subway";
+            case "shop":
+                switch (catsStrings.get(1)) {
+                    case "toys":
+                        return "ic_toys";
+                    case "newsagents":
+                        return "ic_work";
+                }
+                return "ic_local_grocery_store";
+            case "sport":
+                return "ic_fitness_center";
+            case "tourism":
+                switch (catsStrings.get(1)) {
+                    case "museums":
+                        return "ic_account_balance";
+                    case "information":
+                        return "ic_information_outline";
+                }
+                return "ic_photo_camera";
+            case "waterways":
+                return "ic_pool";
+            case "bicycle related":
+                return "ic_directions_bike";
         }
-        for (Tag tag : poi.getTags()) {
-            switch (tag.key) {
-                case "building":
-                    return "ic_home";
-                case "highway":
-                    switch (tag.value) {
-                        case "footway":
-                            return "ic_directions_walk";
-                    }
-                    return "ic_timeline";
-                case "amenity":
-                    return "ic_domain";
-                case "natural":
-                    return "ic_nature_people";
-                case "railway":
-                    return "ic_directions_subway";
-                case "tourism":
-                    return "ic_photo_camera";
-                case "place":
-                    return "ic_location_city";
-                case "bus":
-                    return "ic_directions_bus";
-            }
-        }
+//        for (Tag tag : poi.getTags()) {
+//            switch (tag.key) {
+//                case "highway":
+//                    switch (tag.value) {
+//                        case "footway":
+//                            return "ic_directions_walk";
+//                    }
+//            }
+//        }
         return "ic_place";
     }
 
@@ -247,7 +329,7 @@ public class PoiDisplayUtils {
             }
             city = city.isEmpty() ? is_in : (postcode.isEmpty() ? "," + city : city);
             item.setCategory(poi.getCategory().getTitle());
-            item.setCategoryIcon(getIconFromPOI(poi));
+            item.setCategoryIcon(getIconFromCategory(poi.getCategory()));
             item.setDistance("0m");
             item.setTown(street + postcode + city);
             arr.add(item);

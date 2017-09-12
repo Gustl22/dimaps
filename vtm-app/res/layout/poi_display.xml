@@ -75,19 +75,18 @@
                     android:foregroundGravity="center"
                     android:layout_gravity="center_vertical" />
 
-                <com.github.johnkil.print.PrintView
-                    android:id="@+id/poi_selection_icon"
+                <LinearLayout
+                    android:id="@+id/poi_selection_icon_wrapper"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:foregroundGravity="center"
                     android:gravity="center"
-                    app:iconColor="@color/colorAccent"
-                    app:iconFont="fonts/material-icon-font.ttf"
-                    app:iconSize="50dp"
-                    app:iconText="@string/ic_place"
-                    android:padding="@dimen/activity_horizontal_margin"
-                    android:layout_column="1" />
+                    android:orientation="horizontal"
+                    android:layout_column="1">
+
+                </LinearLayout>
+
 
                 <TextView
                     android:id="@+id/poi_selection_name"

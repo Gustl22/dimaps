@@ -60,6 +60,9 @@ public class PoiSearchActivity extends AppCompatActivity {
 
     private void initPoiDisplay() {
         mPoiDisplay = new PoiDisplayUtils(this);
+        mPoiDisplay.suggestionsAdapter.add(new QuickSearchListItem("No proposals"));
+        mPoiDisplay.suggestionsAdapter.notifyDataSetChanged();
+        mPoiDisplay.collapseSuggestions();
         //Remove Delete-Favor button
         findViewById(R.id.favor_delete).setVisibility(View.GONE);
     }
@@ -71,7 +74,7 @@ public class PoiSearchActivity extends AppCompatActivity {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (mSearchTask != null) mSearchTask.cancel(true);
-                getSuggestions(v.getText().toString());
+                updateSuggestions(v.getText().toString());
                 View view = getCurrentFocus();
                 if (view != null) {
                     InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -124,10 +127,9 @@ public class PoiSearchActivity extends AppCompatActivity {
     /**
      * Gets suggestion-list of all categories filtered by text
      * @param text input-filter for poi-text
-     * @return List of suggestions
      */
 
-    private void getSuggestions(String text){
+    private void updateSuggestions(String text) {
         final Context context = this;
         mSearchTask = new AsyncTask<String, Void, ArrayList<PointOfInterest>>() {
             @Override
