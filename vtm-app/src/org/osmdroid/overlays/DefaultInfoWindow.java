@@ -9,7 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.oscim.android.MapView;
-import org.oscim.app.App;
+import org.rebo.app.App;
 import org.osmdroid.utils.BonusPackHelper;
 
 /**

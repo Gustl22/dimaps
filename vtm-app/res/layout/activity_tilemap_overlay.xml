@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="false"
     android:id="@+id/coordinatorlayout"
-    tools:context="org.oscim.app.TileMap">
+    tools:context="org.rebo.app.TileMap">
 
     <include layout="@layout/activity_tilemap" />
 

@@ -5,7 +5,7 @@ import android.os.AsyncTask;
 import android.view.View;
 import android.widget.ImageView;
 
-import org.oscim.app.R;
+import org.rebo.app.R;
 import org.oscim.core.BoundingBox;
 import org.oscim.core.GeoPoint;
 import org.osmdroid.utils.BonusPackHelper;

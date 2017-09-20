@@ -58,12 +58,12 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/storage">
-        <org.oscim.app.preferences.StoragePreference
+        <org.rebo.app.preferences.StoragePreference
             android:defaultValue="@string/preferences_storage_location_default"
             android:key="storage"
             android:summary="@string/storage_location_summary"
             android:title="@string/storage" />
-        <org.oscim.app.preferences.CacheSizePreference
+        <org.rebo.app.preferences.CacheSizePreference
             android:key="cacheSize"
             android:summary="Set tile cache size"
             android:title="@string/preferences_cache_size"

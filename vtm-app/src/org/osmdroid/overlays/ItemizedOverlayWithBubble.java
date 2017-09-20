@@ -3,7 +3,7 @@ package org.osmdroid.overlays;
 import android.content.Context;
 import android.util.Log;
 
-import org.oscim.app.App;
+import org.rebo.app.App;
 import org.oscim.core.GeoPoint;
 import org.oscim.core.MapPosition;
 import org.oscim.core.Point;
