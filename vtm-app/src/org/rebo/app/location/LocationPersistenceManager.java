@@ -38,7 +38,7 @@ public class LocationPersistenceManager {
 
                 return latlongs;
             } catch (IOException | ClassNotFoundException ex) {
-                Log.w("Exception List File", ex.getMessage());
+                Log.w("Exception List File", "" + ex.getMessage());
             }
         }
         return null;

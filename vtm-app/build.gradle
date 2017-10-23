@@ -1,27 +1,28 @@
 apply plugin: 'com.android.application'
 
+repositories {
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+}
+
 dependencies {
-//    compile project(':vtm-android')
-    //    compile project(':vtm-themes')
-    //    compile project(':vtm-extras')
-    //Mapsforge vtm online
-    compile 'org.mapsforge:vtm-android:+'
-    compile 'org.mapsforge:vtm-themes:+'
-    compile 'org.mapsforge:vtm-extras:+'
+    // Mapsforge / VTM online
+    compile 'org.mapsforge:vtm-android:master-SNAPSHOT'
+    compile 'org.mapsforge:vtm-themes:master-SNAPSHOT'
+    compile 'org.mapsforge:vtm-extras:master-SNAPSHOT'
+    compile 'org.mapsforge:mapsforge-core:master-SNAPSHOT'
+    compile 'org.mapsforge:mapsforge-poi:master-SNAPSHOT'
+    compile 'org.mapsforge:mapsforge-poi-android:master-SNAPSHOT'
+    compile 'org.mapsforge:spatialite-android:master-SNAPSHOT'
+    compile 'org.mapsforge:spatialite-android:master-SNAPSHOT:natives-armeabi'
+    compile 'org.mapsforge:spatialite-android:master-SNAPSHOT:natives-armeabi-v7a'
+    compile 'org.mapsforge:spatialite-android:master-SNAPSHOT:natives-x86'
 
-//    compile 'org.mapsforge:mapsforge-core:+'
-//    compile 'org.mapsforge:mapsforge-poi:+'
-//    compile 'org.mapsforge:mapsforge-poi-android:+'
-    compile files('libs/mapsforge-core-master-SNAPSHOT.jar')
-    compile files('libs/mapsforge-poi-android-master-SNAPSHOT.jar')
-    compile files('libs/mapsforge-poi-master-SNAPSHOT.jar')
-    compile files('libs/spatialite-android-master-SNAPSHOT.jar')
+    // Offline libs
+//    compile files('libs/mapsforge-core-master-SNAPSHOT.jar')
+//    compile files('libs/mapsforge-poi-android-master-SNAPSHOT.jar')
+//    compile files('libs/mapsforge-poi-master-SNAPSHOT.jar')
+//    compile files('libs/spatialite-android-master-SNAPSHOT.jar')
 
-    //compile 'org.mapsforge:spatialite-android:0.8.0'
-    //causes problems with staticlogger
-    //    compile ('com.noveogroup.android:android-logger:1.+'){
-    //        exclude module: 'support-v4'
-    //    }
     compile('com.squareup.okhttp3:okhttp:3.+') {
         exclude module: 'support-v4'
     }
@@ -40,8 +41,8 @@ dependencies {
 }
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion '26.0.1'
+    compileSdkVersion androidCompileSdk()
+    buildToolsVersion "$androidBuildVersionTools"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_7
@@ -52,12 +53,13 @@ android {
         versionCode versionCode()
         versionName versionName()
         minSdkVersion androidMinSdk()
-        vectorDrawables.useSupportLibrary = true
+        targetSdkVersion androidTargetSdk()
+//        vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
-//        Filters the lib architecture (Spatialite is not available for x64)
-        ndk {
-            abiFilters "armeabi", "armeabi-v7a", "x86"
-        }
+////        Filters the lib architecture (Spatialite is not available for x64)
+//        ndk {
+//            abiFilters "armeabi", "armeabi-v7a", "x86"
+//        }
     }
 
     sourceSets {
@@ -70,24 +72,34 @@ android {
             file("${rootDir}/vtm-android/natives").eachDir() { dir ->
                 jniLibs.srcDirs += "${dir.path}/lib"
             }
-            //Spatialite database for POI search
-//            file('libs').eachDir() { dir ->
-//                jniLibs.srcDirs += "${dir.path}/lib"
-//            }
-            jniLibs.srcDirs += ['libs']
+//            //Spatialite database for POI search
+////            file('libs').eachDir() { dir ->
+////                jniLibs.srcDirs += "${dir.path}/lib"
+////            }
+//            jniLibs.srcDirs += ['libs']
 
         }
         debug.setRoot('build-types/debug')
         release.setRoot('build-types/release')
     }
 
-    lintOptions {
-//        abortOnError false
-        disable 'InvalidPackage'
-    }
+    lintOptions { abortOnError false }
 
     packagingOptions {
+        exclude 'META-INF/services/org.jeo.data.Driver'
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/NOTICE'
+    }
+}
+
+task run(dependsOn: 'installDebug') {
+    doFirst {
+        println(">> adb run...")
+        String adb = System.getenv()['ANDROID_HOME'] + '/platform-tools/adb'
+        String cmd = "${adb} shell am start -n org.oscim.android.test/.Samples"
+        def proc = cmd.execute()
+        proc.in.eachLine { line -> println line }
+        proc.err.eachLine { line -> System.err.println('ERROR: ' + line) }
+        proc.waitFor()
     }
 }

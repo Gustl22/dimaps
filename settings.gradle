@@ -1,6 +1,2 @@
 rootProject.name = 'dimaps-parent'
-include ':vtm'
-include ':vtm-extras'
-include ':vtm-android'
-include ':vtm-themes'
 include ':vtm-app'

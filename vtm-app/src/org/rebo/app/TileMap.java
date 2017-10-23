@@ -52,7 +52,6 @@ import android.widget.Toast;
 import org.oscim.android.MapView;
 import org.oscim.core.BoundingBox;
 import org.oscim.core.GeoPoint;
-import org.oscim.core.Tile;
 import org.osmdroid.location.POI;
 import org.osmdroid.overlays.ExtendedMarkerItem;
 import org.osmdroid.overlays.MapEventsReceiver;
@@ -126,7 +125,6 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         //Debug
         RemoteDebugger.setExceptionHandler(this);
 
-        Tile.SIZE = Tile.calculateTileSize(getResources().getDisplayMetrics().scaledDensity);
         setContentView(R.layout.activity_tilemap_nav);
         App.view = (MapView) findViewById(R.id.mapView);
         registerMapView(App.view);

@@ -13,9 +13,10 @@ allprojects {
     version = 'master-SNAPSHOT'
     ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
-    ext.androidBuildVersionTools = "26.0.1"
-    ext.gdxVersion = "1.9.5"
+    ext.androidBuildVersionTools = "26.0.2"
+    ext.gdxVersion = "1.9.6"
     ext.gwtVersion = "2.8.0"
+    ext.slf4jVersion = "1.7.25"
 
     if (JavaVersion.current().isJava8Compatible()) {
         tasks.withType(Javadoc) {
@@ -28,6 +29,7 @@ allprojects {
 
 def androidCompileSdk() { return 26 }
 
+// Minimum API Level by Support Library
 def androidMinSdk() { return 14 }
 
 def androidTargetSdk() { return 26 }
@@ -40,9 +42,7 @@ subprojects {
     repositories {
         maven { url 'https://repo.boundlessgeo.com/main' }
         jcenter()
-        maven {
-            url 'https://maven.google.com'
-        }
+        maven { url 'https://maven.google.com' }
     }
 
     tasks.withType(JavaCompile) {
