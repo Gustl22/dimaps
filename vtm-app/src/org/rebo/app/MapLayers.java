@@ -40,7 +40,6 @@ import org.oscim.tiling.source.UrlTileSource;
 import org.oscim.tiling.source.bitmap.DefaultSources;
 import org.oscim.tiling.source.mapfile.MapFileTileSource;
 import org.oscim.tiling.source.mapfile.MultiMapFileTileSource;
-import org.oscim.tiling.source.mapnik.MapnikVectorTileSource;
 import org.oscim.tiling.source.oscimap4.OSciMap4TileSource;
 import org.rebo.app.download.MapDownloadActivity;
 import org.rebo.app.preferences.StoragePreference;
@@ -68,10 +67,6 @@ public class MapLayers {
         TileSource init() {
             return new MapFileTileSource().setOption("file",
                     StoragePreference.getPreferredStorageLocation().getAbsolutePath() + "/maps/openscience.map");
-        }
-    }, new Config("MAPNIK_VECTOR") {
-        TileSource init() {
-            return new MapnikVectorTileSource();
         }
     }, new Config("S3DB") {
         TileSource init() {
@@ -198,7 +193,7 @@ public class MapLayers {
         if (mBaseLayer == null) {
             mBaseLayer = App.map.setBaseMap(tileSource); //Base Layer (almost OPENSCIENCEMAP4)
             if(ConnectionHandler.isOnline() && USE_S3DB){
-                TileSource s3dbTileSource = configs[3].init();
+                TileSource s3dbTileSource = configs[2].init();
                 if (USE_CACHE) {
                     mS3dbCache = new TileCache(App.activity, context.getExternalCacheDir().getAbsolutePath(), "s3db.db");
                     mS3dbCache.setCacheSize(512 * (1 << 10));

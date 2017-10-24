@@ -8,7 +8,7 @@ export NDK_HOME=/path_to_android_sdk
 ant -v
 
 ## copy vtm/libs/armeabi* to vtm-android/libs
-rm -rf ../../vtm-ext-libs/vtm-android/libs/*
-cp -r ../libs/armeabi* ../../vtm-ext-libs/vtm-android/libs/
+#rm -rf ../../vtm-ext-libs/vtm-android/libs/*
+#cp -r ../libs/armeabi* ../../vtm-ext-libs/vtm-android/libs/
 
 
