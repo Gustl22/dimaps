@@ -612,9 +612,7 @@ public class RouteSearch implements GHPointListener {
                         instructionList = pw.getInstructions();
                         instructionList.clear();
                     }
-                    for (Instruction in : pw.getInstructions()) {
-                        instructionList.add(in);
-                    }
+                    instructionList.addAll(pw.getInstructions());
                 } catch (IllegalArgumentException ex){
                     Log.w("Graphh. Instructions", "Instructions disabled");
                 }
