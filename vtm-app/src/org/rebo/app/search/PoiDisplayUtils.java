@@ -120,6 +120,10 @@ public class PoiDisplayUtils {
         for (Tag t : mSelectedPOI.getTags()) {
             resText += "<br/>" + t.key + ": " + t.value;
         }
+        if (mSelectedPOI.getCategory() == null) {
+            vAreaSelection.setText(Html.fromHtml("<b>" + "No categories found" + ": </b>" + resText));
+            return;
+        }
         if (mSelectedPOI.getCategory().getTitle().equals("Maparea")) {
             vAreaSelection.setText(Html.fromHtml("<b>" + mSelectedPOI.getCategory().getTitle() + ": </b>" + resText));
         } else {
@@ -158,11 +162,12 @@ public class PoiDisplayUtils {
     }
 
     public static String getIconFromCategory(PoiCategory cat) {
+        assert cat != null;
         List<PoiCategory> path = new ArrayList<PoiCategory>();
         PoiCategory parent = cat;
         do {
             path.add(parent);
-        } while ((!(parent = parent.getParent()).getTitle().equals("root")));
+        } while ((parent = parent.getParent()) != null && (!parent.getTitle().equals("root")));
         Collections.reverse(path);
 
         List<String> catsStrings = new ArrayList<>();
@@ -328,8 +333,13 @@ public class PoiDisplayUtils {
                 }
             }
             city = city.isEmpty() ? is_in : (postcode.isEmpty() ? "," + city : city);
-            item.setCategory(poi.getCategory().getTitle());
-            item.setCategoryIcon(getIconFromCategory(poi.getCategory()));
+            if (poi.getCategory() != null) {
+                item.setCategory(poi.getCategory().getTitle());
+                item.setCategoryIcon(getIconFromCategory(poi.getCategory()));
+            } else {
+                item.setCategory("No category available");
+                item.setCategoryIcon("root");
+            }
             item.setDistance("0m");
             item.setTown(street + postcode + city);
             arr.add(item);

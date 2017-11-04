@@ -129,45 +129,47 @@ public class PoiSearchActivity extends AppCompatActivity {
 
     private void updateSuggestions(String text) {
         final Context context = this;
-        mSearchTask = new AsyncTask<String, Void, ArrayList<PointOfInterest>>() {
-            @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
-                mSearchProgress.setIndeterminate(true);
-                mSearchProgress.setVisibility(View.VISIBLE);
+        mSearchTask = new SearchTask().execute(text);
+    }
+
+    private class SearchTask extends AsyncTask<String, Void, ArrayList<PointOfInterest>> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mSearchProgress.setIndeterminate(true);
+            mSearchProgress.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected ArrayList<PointOfInterest> doInBackground(String... params) {
+            try {
+                Collection<PointOfInterest> pois = mPoiSearch.getPoiByAll(params[0]);
+                return new ArrayList<>(pois);
+            } catch (FileFormatException e) {
+                App.activity.showToastOnUiThread(e.getMessage());
+                return null;
             }
+        }
 
-            @Override
-            protected ArrayList<PointOfInterest> doInBackground(String... params) {
-                try {
-                    Collection<PointOfInterest> pois = mPoiSearch.getPoiByAll(params[0]);
-                    return new ArrayList<>(pois);
-                } catch (FileFormatException e) {
-                    App.activity.showToastOnUiThread(e.getMessage());
-                    return null;
-                }
-            }
+        @Override
+        protected void onPostExecute(ArrayList<PointOfInterest> pointOfInterests) {
+            mSearchProgress.setVisibility(View.GONE);
 
-            @Override
-            protected void onPostExecute(ArrayList<PointOfInterest> pointOfInterests) {
-                mSearchProgress.setVisibility(View.GONE);
+            super.onPostExecute(pointOfInterests);
+            mPoiDisplay.poiSuggestions = pointOfInterests;
+            mPoiDisplay.listItemSuggestions = PoiDisplayUtils.getSearchItemListFromPoiList(mPoiDisplay.poiSuggestions);
 
-                super.onPostExecute(pointOfInterests);
-                mPoiDisplay.poiSuggestions = pointOfInterests;
-                mPoiDisplay.listItemSuggestions = PoiDisplayUtils.getSearchItemListFromPoiList(mPoiDisplay.poiSuggestions);
-
-                mPoiDisplay.suggestionsAdapter.clear();
-                mPoiDisplay.suggestionsAdapter.addAll(mPoiDisplay.listItemSuggestions);
-                mPoiDisplay.suggestionsAdapter.notifyDataSetChanged();
-                mPoiDisplay.expandSuggestions();
+            mPoiDisplay.suggestionsAdapter.clear();
+            mPoiDisplay.suggestionsAdapter.addAll(mPoiDisplay.listItemSuggestions);
+            mPoiDisplay.suggestionsAdapter.notifyDataSetChanged();
+            mPoiDisplay.expandSuggestions();
 //                mAutoCompleteSearchBarAdapter.notifyDataSetChanged();
-            }
+        }
 
-            @Override
-            protected void onCancelled() {
-                PoiSearch.closePoiPersistenceManagers();
-            }
-        }.execute(text);
+        @Override
+        protected void onCancelled() {
+            PoiSearch.closePoiPersistenceManagers();
+        }
     }
 
     public void loadPreferences() {
