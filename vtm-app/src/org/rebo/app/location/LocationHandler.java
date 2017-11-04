@@ -27,7 +27,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.os.AsyncTaskCompat;
 import android.view.animation.LinearInterpolator;
 
 import com.graphhopper.GraphHopper;
@@ -43,12 +42,12 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.math.Vector2D;
 
 import org.mapsforge.core.model.LatLong;
+import org.oscim.core.MapPosition;
 import org.rebo.app.App;
 import org.rebo.app.R;
 import org.rebo.app.TileMap;
 import org.rebo.app.graphhopper.GHPointArea;
 import org.rebo.app.route.RouteSearch;
-import org.oscim.core.MapPosition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -293,31 +292,36 @@ public class LocationHandler implements LocationListener {
 
     private void initGraphHopperLocation(double lat, double lon) {
         //Load Graphhopper asynchroniously, if is null
-        AsyncTask task = new AsyncTask<Object, Void, Void>() {
-            @Override
-            protected Void doInBackground(Object[] params) {
-                try {
-                    GHPointArea area = new GHPointArea(
-                            new GHPoint((double) params[0], (double) params[1])
-                            , RouteSearch.getGraphHopperFiles());
-                    if (area.getGraphHopper() == null) {
-                        synchronized (area.virtualObject) {
-                            try {
-                                area.virtualObject.wait();
-                                App.activity.showToastOnUiThread("Way snap initialized");
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+
+        new InitGraphHopperTask().execute(lat, lon);
+        //App.activity.showToastOnUiThread("Way animation in progress");
+    }
+
+    private static class InitGraphHopperTask extends AsyncTask<Double, Void, Void> {
+        @Override
+        protected Void doInBackground(Double[] params) {
+            try {
+                GHPointArea tempPointArea = new GHPointArea(new GHPoint(params[0], params[1]),
+                        RouteSearch.getGraphHopperFiles());
+                if (tempPointArea.getGraphHopper() == null) {
+                    synchronized (tempPointArea.virtualObject) {
+                        try {
+                            // Calling wait() will block this thread until another thread
+                            // calls notify() on the object.
+                            tempPointArea.virtualObject.wait();
+//                            App.activity.showToastOnUiThread("Way snap initialized");
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
                     }
-                } catch (Exception e) {
-                    App.activity.showToastOnUiThread(e.getMessage());
                 }
-                return null;
+                App.activity.showToastOnUiThread("GH loaded");
+                mLocationGh = tempPointArea.getGraphHopper();
+            } catch (Exception e) {
+                App.activity.showToastOnUiThread(e.getMessage());
             }
-        };
-        AsyncTaskCompat.executeParallel(task, lat, lon);
-        //App.activity.showToastOnUiThread("Way animation in progress");
+            return null;
+        }
     }
 
     private synchronized ArrayList<Location> decideVirtualPath(Location preLocation, Location currentLocation) {
@@ -332,7 +336,7 @@ public class LocationHandler implements LocationListener {
         }
     }
 
-    private GraphHopper locationGh;
+    private static GraphHopper mLocationGh;
 
     /**
      * Predict next location, if there is no given way.
@@ -353,45 +357,23 @@ public class LocationHandler implements LocationListener {
         Location locationEnd = new Location(currentLocation);
         Location locationStart = new Location(currentLocation);
 
-        if (locationGh == null) {
+        if (mLocationGh == null) {
             App.activity.showToastOnUiThread("No GraphHopper matches the point or it is loading");
-            AsyncTask<Object, Void, Void> task = new AsyncTask<Object, Void, Void>() {
-                @Override
-                protected Void doInBackground(Object[] params) {
-                    GHPointArea tempPointArea = new GHPointArea(new GHPoint(
-                            (double) params[0], (double) params[1]),
-                            RouteSearch.getGraphHopperFiles());
-                    if (tempPointArea.getGraphHopper() == null) {
-                        synchronized (tempPointArea.virtualObject) {
-                            try {
-                                // Calling wait() will block this thread until another thread
-                                // calls notify() on the object.
-                                tempPointArea.virtualObject.wait();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                    locationGh = tempPointArea.getGraphHopper();
-                    App.activity.showToastOnUiThread("GraphHopper loaded");
-                    return null;
-                }
-            };
-            AsyncTaskCompat.executeParallel(task, curLat, curLon);
+
+            new InitGraphHopperTask().execute(curLat, curLon);
             return null;
         }
 
-        int curNode = locationGh.getLocationIndex().findClosest(curLat, curLon,
+        int curNode = mLocationGh.getLocationIndex().findClosest(curLat, curLon,
                 EdgeFilter.ALL_EDGES).getClosestNode();
         if (curNode < 1) {
             App.activity.showToastOnUiThread("Closest calculated point not existent. " +
                     "Recalculate GraphHopper...");
-            locationGh = new GHPointArea(new GHPoint(curLat, curLon),
-                    RouteSearch.getGraphHopperFiles()).getGraphHopper();
+            new InitGraphHopperTask().execute(curLat, curLon);
             return null;
         }
-        NodeAccess na = locationGh.getGraphHopperStorage().getNodeAccess();
-        Graph graph = locationGh.getGraphHopperStorage().getBaseGraph();
+        NodeAccess na = mLocationGh.getGraphHopperStorage().getNodeAccess();
+        Graph graph = mLocationGh.getGraphHopperStorage().getBaseGraph();
         EdgeExplorer explorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);
         EdgeIterator iter = explorer.setBaseNode(curNode);
         int nextNode = 0;

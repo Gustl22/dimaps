@@ -1,7 +1,6 @@
 package org.rebo.app.graphhopper;
 
 import android.os.AsyncTask;
-import android.support.v4.os.AsyncTaskCompat;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -52,28 +51,29 @@ public class GHPointAreaRoute {
      * @param rpl Listener that gets informed if route changes
      */
     public void add(GHPointArea ghPointArea, GHPointListener rpl){
-        AsyncTask<Object, Void, Void> task = new AsyncTask<Object, Void, Void>(){
-            @Override
-            protected Void doInBackground(Object[] params) {
-                GHPointArea tempPointArea = (GHPointArea) params[0];
-                if(tempPointArea.getGraphHopper() == null){
-                    synchronized(tempPointArea.virtualObject) {
-                        try {
-                            // Calling wait() will block this thread until another thread
-                            // calls notify() on the object.
-                            tempPointArea.virtualObject.wait();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+        new GHPointAreaTask().execute(ghPointArea, rpl);
+    }
+
+    private class GHPointAreaTask extends AsyncTask<Object, Void, Void> {
+        @Override
+        protected Void doInBackground(Object[] params) {
+            GHPointArea tempPointArea = (GHPointArea) params[0];
+            if (tempPointArea.getGraphHopper() == null) {
+                synchronized (tempPointArea.virtualObject) {
+                    try {
+                        // Calling wait() will block this thread until another thread
+                        // calls notify() on the object.
+                        tempPointArea.virtualObject.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                 }
-                GHPointAreas.add(tempPointArea);
-                addListener((GHPointListener) params[1]);
-                updateRoutePoints();
-                return null;
             }
-        };
-        AsyncTaskCompat.executeParallel(task, ghPointArea, rpl );
+            GHPointAreas.add(tempPointArea);
+            addListener((GHPointListener) params[1]);
+            updateRoutePoints();
+            return null;
+        }
     }
 
     public void remove(GHPointArea ghPointArea){

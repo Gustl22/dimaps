@@ -1,6 +1,5 @@
 package org.rebo.app.graphhopper;
 
-import android.support.v4.os.AsyncTaskCompat;
 import android.util.Log;
 
 import com.graphhopper.GraphHopper;
@@ -39,26 +38,27 @@ public class GHPointArea {
     public GHPointArea(GHPoint ghPoint, List<File> ghFiles) {
         this.mGhPoint = ghPoint;
         if (sGraphHopperMemory == null) sGraphHopperMemory = new HashSet<>();
-        GHAsyncTask<Object, Void, GraphHopper> task = new GHAsyncTask<Object, Void, GraphHopper>() {
-            @Override
-            protected GraphHopper saveDoInBackground(Object... params) throws Exception {
-                GraphHopper hopper = autoSelectGraphhopper((GHPoint) params[0], (List<File>) params[1],
-                        (Collection<GraphHopper>) params[2]);
-                return hopper;
-            }
-
-            protected void onPostExecute(GraphHopper hopper) {
-                graphHopper = hopper;
-                synchronized (virtualObject) {
-                    virtualObject.notifyAll();
-                }
-                if (hopper == null) {
-                    App.activity.showToastOnUiThread("No Hopper matches the point");
-                }
-            }
-        };
-        AsyncTaskCompat.executeParallel(task, ghPoint, ghFiles, sGraphHopperMemory);
+        new GHNotifyTask().execute(ghPoint, ghFiles, sGraphHopperMemory);
     }
+
+    private class GHNotifyTask extends GHAsyncTask<Object, Void, GraphHopper> {
+        @Override
+        protected GraphHopper saveDoInBackground(Object... params) throws Exception {
+            return autoSelectGraphhopper((GHPoint) params[0], (List<File>) params[1],
+                    (Collection<GraphHopper>) params[2]);
+        }
+
+        protected void onPostExecute(GraphHopper hopper) {
+            graphHopper = hopper;
+            synchronized (virtualObject) {
+                virtualObject.notifyAll();
+            }
+            if (hopper == null) {
+                App.activity.showToastOnUiThread("No Hopper matches the point");
+            }
+        }
+    }
+
 
     /**
      * Manually add Point to Graphhopper e.g. on edges

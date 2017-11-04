@@ -74,8 +74,9 @@
                 android:adjustViewBounds="true"
                 android:background="@android:color/transparent"
                 android:drawableStart="@drawable/ic_menu_black_24dp"
+                android:drawableLeft="@drawable/ic_menu_black_24dp"
                 android:layout_gravity="center"
-                android:onClick="toggleNavigationView"/>
+                android:onClick="toggleNavigationView" />
 
             <EditText
                 android:id="@+id/search_bar"
