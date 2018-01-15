@@ -30,6 +30,7 @@ import org.oscim.layers.TileGridLayer;
 import org.oscim.layers.tile.bitmap.BitmapTileLayer;
 import org.oscim.layers.tile.buildings.BuildingLayer;
 import org.oscim.layers.tile.buildings.S3DBLayer;
+import org.oscim.layers.tile.buildings.S3DBTileLayer;
 import org.oscim.layers.tile.vector.VectorTileLayer;
 import org.oscim.layers.tile.vector.labeling.LabelLayer;
 import org.oscim.theme.ThemeFile;
@@ -56,7 +57,7 @@ public class MapLayers {
 
     public static File[] MAP_FOLDERS;
     final static boolean USE_CACHE = true;
-    final static boolean USE_S3DB = true;
+    final static boolean USE_S3DB = false;
 
     //final static Logger log = LoggerFactory.getLogger(MapLayers.class);
     static Config[] configs = new Config[]{new Config("OPENSCIENCEMAP4") {
@@ -138,7 +139,7 @@ public class MapLayers {
         MAP_FOLDERS = removeNullFile(MAP_FOLDERS);
 
         //Unzip downloaded Files:
-        ArrayList<File> files = new ArrayList<File>();
+        ArrayList<File> files = new ArrayList<>();
         for (File f : MAP_FOLDERS) {
             files.addAll(FileUtils.walkExtension(f, ".ghz"));
         }
@@ -192,16 +193,16 @@ public class MapLayers {
 
         if (mBaseLayer == null) {
             mBaseLayer = App.map.setBaseMap(tileSource); //Base Layer (almost OPENSCIENCEMAP4)
-            if(ConnectionHandler.isOnline() && USE_S3DB){
+            if (USE_S3DB && ConnectionHandler.isOnline()) {
                 TileSource s3dbTileSource = configs[2].init();
                 if (USE_CACHE) {
                     mS3dbCache = new TileCache(App.activity, context.getExternalCacheDir().getAbsolutePath(), "s3db.db");
                     mS3dbCache.setCacheSize(512 * (1 << 10));
                     s3dbTileSource.setCache(mS3dbCache);
                 }
-                App.map.layers().add(2, new S3DBLayer(App.map, s3dbTileSource, true, false));
+                App.map.layers().add(2, new S3DBTileLayer(App.map, s3dbTileSource, true, false));
             } else {
-                App.map.layers().add(2, new BuildingLayer(App.map, mBaseLayer));
+                App.map.layers().add(2, new S3DBLayer(App.map, mBaseLayer));
             }
             App.map.layers().add(3, new LabelLayer(App.map, mBaseLayer));
         } else
