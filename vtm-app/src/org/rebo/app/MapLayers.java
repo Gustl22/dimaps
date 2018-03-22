@@ -177,7 +177,7 @@ public class MapLayers {
         if (tileSource == null) {
             tileSource = configs[0].init();
             dbname = getDbMapName();
-            preferences.edit().putString("mapDatabase", dbname).commit();
+            preferences.edit().putString("mapDatabase", dbname).apply();
         }
 
         //Cache could be set with an boolean, S3DB would not work with cache

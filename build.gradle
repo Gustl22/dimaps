@@ -35,7 +35,7 @@ static def androidMinSdk() { return 14 }
 
 static def androidTargetSdk() { return 22 }
 
-static def versionCode() { return 1 }
+static def versionCode() { return 0.1 }
 
 def versionName() { return version }
 

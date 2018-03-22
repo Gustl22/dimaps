@@ -51,10 +51,10 @@ public class GHPointAreaRoute {
      * @param rpl Listener that gets informed if route changes
      */
     public void add(GHPointArea ghPointArea, GHPointListener rpl){
-        new GHPointAreaTask().execute(ghPointArea, rpl);
+        new GHPointAreaTask().execute(ghPointArea, rpl, this);
     }
 
-    private class GHPointAreaTask extends AsyncTask<Object, Void, Void> {
+    private static class GHPointAreaTask extends AsyncTask<Object, Void, Void> {
         @Override
         protected Void doInBackground(Object[] params) {
             GHPointArea tempPointArea = (GHPointArea) params[0];
@@ -70,8 +70,8 @@ public class GHPointAreaRoute {
                 }
             }
             GHPointAreas.add(tempPointArea);
-            addListener((GHPointListener) params[1]);
-            updateRoutePoints();
+            ((GHPointAreaRoute) params[2]).addListener((GHPointListener) params[1]);
+            ((GHPointAreaRoute) params[2]).updateRoutePoints();
             return null;
         }
     }

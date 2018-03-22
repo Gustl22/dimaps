@@ -52,6 +52,7 @@ import android.widget.Toast;
 import org.oscim.android.MapView;
 import org.oscim.core.BoundingBox;
 import org.oscim.core.GeoPoint;
+import org.oscim.utils.Parameters;
 import org.osmdroid.location.POI;
 import org.osmdroid.overlays.ExtendedMarkerItem;
 import org.osmdroid.overlays.MapEventsReceiver;
@@ -122,9 +123,13 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
-        //Debug
+        // Debug
         RemoteDebugger.setExceptionHandler(this);
 
+        // Set VTM preferences
+        Parameters.ANIMATOR2 = true;
+
+        // Init view
         setContentView(R.layout.activity_tilemap_nav);
         App.view = (MapView) findViewById(R.id.mapView);
         registerMapView(App.view);
@@ -132,7 +137,7 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         App.map = mMap;
         activity = this;
 
-        //Keep screen on
+        // Keep screen on
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mMapLayers = new MapLayers();
