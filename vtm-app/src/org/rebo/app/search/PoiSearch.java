@@ -54,6 +54,8 @@ import java.util.TreeMap;
  * Tap on POIs to show their name (in device's locale).
  */
 public class PoiSearch implements PoiSelector {
+    private final static int SEARCH_RESULT_LIMIT = 25;
+
     private File mPOI_File;
     private PointOfInterest poiArea; //The Area of poiFile expressed as POI
     public Set<String> CustomPoiCategory;
@@ -346,7 +348,7 @@ public class PoiSearch implements PoiSelector {
             PoiCategoryManager categoryManager = persManager.getCategoryManager();
             PoiCategoryFilter categoryFilter = new ExactMatchPoiCategoryFilter();
             categoryFilter.addCategory(categoryManager.getPoiCategoryByTitle(poiCategory));
-            return persManager.findInRect(boundingBox, categoryFilter, null, Integer.MAX_VALUE);
+            return persManager.findInRect(boundingBox, categoryFilter, null, SEARCH_RESULT_LIMIT);
         } catch (Throwable t) {
             Log.e(t.getMessage(), t.getCause().getMessage());
         } finally {
@@ -374,7 +376,7 @@ public class PoiSearch implements PoiSelector {
 
             Collection<PointOfInterest> pois = persManager.findNearPosition(
                     location, distance,
-                    categoryFilter, null, Integer.MAX_VALUE);
+                    categoryFilter, null, SEARCH_RESULT_LIMIT);
 
             for (PointOfInterest poi : pois) {
                 LatLong cur = new LatLong(poi.getLatitude(), poi.getLongitude());
