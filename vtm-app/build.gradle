@@ -20,11 +20,11 @@ dependencies {
 
     // Android
     implementation "org.slf4j:slf4j-android:$slf4jVersion"
-    implementation 'com.squareup.okhttp3:okhttp:3.9.0'
-    implementation 'com.android.support:support-v4:27.1.0'
-    implementation 'com.android.support:appcompat-v7:27.1.0'
-    implementation 'com.android.support:design:27.1.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
+    implementation 'com.android.support:support-v4:27.1.1'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:design:27.1.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
 
     // Graphhopper
     implementation(group: 'com.graphhopper', name: 'graphhopper-core', version: '0.10-SNAPSHOT') {
