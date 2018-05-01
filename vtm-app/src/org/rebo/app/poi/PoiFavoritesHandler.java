@@ -1,4 +1,4 @@
-package org.rebo.app.search;
+package org.rebo.app.poi;
 
 import android.util.SparseArray;
 
@@ -13,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.rebo.app.search.PoiSearch.getPoiFromLocationAndFile;
+import static org.rebo.app.poi.PoiSearch.getPoiFromLocationAndFile;
 
 /**
  * Handles storage of favorite POIs

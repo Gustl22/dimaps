@@ -1,4 +1,4 @@
-package org.rebo.app.search;
+package org.rebo.app.poi;
 
 import android.content.Context;
 import android.os.AsyncTask;

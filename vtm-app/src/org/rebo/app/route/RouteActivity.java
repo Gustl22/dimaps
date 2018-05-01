@@ -18,7 +18,7 @@ import org.rebo.app.App;
 import org.rebo.app.R;
 import org.rebo.app.debug.RemoteDebugger;
 import org.rebo.app.graphhopper.GHPointArea;
-import org.rebo.app.search.PoiSearch;
+import org.rebo.app.poi.PoiSearch;
 import org.rebo.app.utils.Triplet;
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package org.rebo.app.search;
+package org.rebo.app.poi;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -10,13 +10,8 @@ import android.view.Window;
 import org.mapsforge.poi.storage.PointOfInterest;
 import org.rebo.app.App;
 import org.rebo.app.R;
-import org.rebo.app.utils.FileUtils;
 
-import java.io.File;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by gustl on 24.03.17.

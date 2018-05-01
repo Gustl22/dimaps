@@ -69,7 +69,7 @@
                 android:value="org.rebo.app.TileMap" />
         </activity>
         <activity
-            android:name="org.rebo.app.search.PoiSearchActivity"
+            android:name="org.rebo.app.poi.PoiSearchActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:launchMode="singleTop"
             android:windowSoftInputMode="stateVisible"
@@ -79,7 +79,7 @@
                 android:value="org.rebo.app.TileMap" />
         </activity>
         <activity
-            android:name="org.rebo.app.search.PoiFavoritesActivity"
+            android:name="org.rebo.app.poi.PoiFavoritesActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:launchMode="singleTop"
             android:windowSoftInputMode="stateHidden"

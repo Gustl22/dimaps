@@ -25,7 +25,7 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import org.oscim.android.MapView;
-import org.rebo.app.search.PoiManager;
+import org.rebo.app.poi.PoiManager;
 import org.rebo.app.route.RouteSearch;
 import org.oscim.map.Map;
 import org.slf4j.Logger;
