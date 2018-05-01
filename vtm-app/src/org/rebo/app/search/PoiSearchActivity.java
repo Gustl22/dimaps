@@ -1,7 +1,6 @@
 package org.rebo.app.search;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -16,13 +15,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.mapsforge.poi.storage.PointOfInterest;
-import org.openstreetmap.osmosis.osmbinary.file.FileFormatException;
 import org.rebo.app.App;
 import org.rebo.app.R;
 import org.rebo.app.debug.RemoteDebugger;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -35,7 +31,8 @@ public class PoiSearchActivity extends AppCompatActivity {
     private PoiSearch mPoiSearch;
     private PoiDisplayUtils mPoiDisplay;
     private ProgressBar mSearchProgress;
-    private AsyncTask mSearchTask;
+    private SearchTask mSearchTask;
+    private final PoiManager mPoiManager = App.poiManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,16 +45,19 @@ public class PoiSearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_poi_search);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+        if (mPoiManager.getPoiFileId() < 0 || mPoiManager.getPoiFiles().size() == 0) {
+            App.activity.showToastOnUiThread("No POI data found. Download it first");
+            finish();
+        }
+        mPoiManager.loadPreferences(this);
+
         initPoiDisplay(); //Keep order
         initPoiSearchBar();
         //Both initializations refer to each other.
-        // So the poiSelector is set afterwards
-        mPoiDisplay.poiSelector = mPoiSearch;
-        loadPreferences();
     }
 
     private void initPoiDisplay() {
-        mPoiDisplay = new PoiDisplayUtils(this);
+        mPoiDisplay = new PoiDisplayUtils(this, mPoiManager, new PoiFavoritesHandler(mPoiManager));
         mPoiDisplay.suggestionsAdapter.add(new QuickSearchListItem("No proposals"));
         mPoiDisplay.suggestionsAdapter.notifyDataSetChanged();
         mPoiDisplay.collapseSuggestions();
@@ -71,7 +71,6 @@ public class PoiSearchActivity extends AppCompatActivity {
         mSearchBar.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (mSearchTask != null) mSearchTask.cancel(true);
                 updateSuggestions(v.getText().toString());
                 View view = getCurrentFocus();
                 if (view != null) {
@@ -102,24 +101,7 @@ public class PoiSearchActivity extends AppCompatActivity {
 
 
         //Setup search logic
-        mPoiSearch = new PoiSearch();
-        try {
-            if (mPoiDisplay.currentPoiFile == null) {
-                mPoiSearch.initPoiFile();
-            } else {
-                mPoiSearch.setPoiFile(mPoiDisplay.currentPoiFile);
-            }
-        } catch (FileNotFoundException ex) {
-            App.activity.showToastOnUiThread("No POI data found. Download it first");
-            finish();
-        } catch (FileFormatException ex) {
-            App.activity.showToastOnUiThread(ex.getMessage());
-            finish();
-        }
-        if(mPoiSearch.getPoiArea() != null){
-            mPoiDisplay.currentPoiFile = mPoiSearch.getPoiFile(0);
-            mPoiDisplay.setResultText(mPoiSearch.getPoiArea());
-        }
+        mPoiSearch = new PoiSearch(mPoiManager);
     }
 
     /**
@@ -128,8 +110,10 @@ public class PoiSearchActivity extends AppCompatActivity {
      */
 
     private void updateSuggestions(String text) {
-        final Context context = this;
-        mSearchTask = new SearchTask().execute(text);
+        if (mSearchTask != null)
+            mSearchTask.cancel(true);
+        mSearchTask = new SearchTask();
+        mSearchTask.execute(text);
     }
 
     private class SearchTask extends AsyncTask<String, Void, ArrayList<PointOfInterest>> {
@@ -142,13 +126,8 @@ public class PoiSearchActivity extends AppCompatActivity {
 
         @Override
         protected ArrayList<PointOfInterest> doInBackground(String... params) {
-            try {
-                Collection<PointOfInterest> pois = mPoiSearch.getPoiByAll(params[0]);
-                return new ArrayList<>(pois);
-            } catch (FileFormatException e) {
-                App.activity.showToastOnUiThread(e.getMessage());
-                return null;
-            }
+            Collection<PointOfInterest> pois = mPoiSearch.getPoiByAll(params[0]);
+            return new ArrayList<>(pois);
         }
 
         @Override
@@ -156,11 +135,15 @@ public class PoiSearchActivity extends AppCompatActivity {
             mSearchProgress.setVisibility(View.GONE);
 
             super.onPostExecute(pointOfInterests);
-            mPoiDisplay.poiSuggestions = pointOfInterests;
-            mPoiDisplay.listItemSuggestions = PoiDisplayUtils.getSearchItemListFromPoiList(mPoiDisplay.poiSuggestions);
+            mPoiDisplay.poiSuggestions.clear();
+            mPoiDisplay.poiSuggestions.addAll(pointOfInterests);
+
+            // Must be newly set, otherwise no updates are visible
+            mPoiDisplay.searchSpinnerItems =
+                    PoiDisplayUtils.getSearchItemListFromPoiList(mPoiDisplay.poiSuggestions);
 
             mPoiDisplay.suggestionsAdapter.clear();
-            mPoiDisplay.suggestionsAdapter.addAll(mPoiDisplay.listItemSuggestions);
+            mPoiDisplay.suggestionsAdapter.addAll(mPoiDisplay.searchSpinnerItems);
             mPoiDisplay.suggestionsAdapter.notifyDataSetChanged();
             mPoiDisplay.expandSuggestions();
 //                mAutoCompleteSearchBarAdapter.notifyDataSetChanged();
@@ -172,26 +155,10 @@ public class PoiSearchActivity extends AppCompatActivity {
         }
     }
 
-    public void loadPreferences() {
-        SharedPreferences sharedPref = App.activity.getPreferences(Context.MODE_PRIVATE);
-        String filepath = sharedPref.getString(getString(R.string.pref_poiArea_folderPath), null);
-        if(filepath != null)
-            mPoiDisplay.currentPoiFile = new File(filepath);
-    }
-
-    public void savePreferences(){
-        if (mPoiDisplay.currentPoiFile != null) {
-            SharedPreferences sharedPref = App.activity.getPreferences(Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString(getString(R.string.pref_poiArea_folderPath), mPoiDisplay.currentPoiFile.getAbsolutePath());
-            editor.apply();
-        }
-    }
-
     @Override
     protected void onDestroy(){
         mSearchProgress.setVisibility(View.GONE);
-        savePreferences();
+        mPoiManager.savePreferences(this);
         super.onDestroy();
     }
 

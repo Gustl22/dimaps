@@ -2,12 +2,14 @@ package org.rebo.app.search;
 
 import android.app.Activity;
 import android.text.Html;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.github.johnkil.print.PrintView;
@@ -16,6 +18,7 @@ import org.mapsforge.core.model.Tag;
 import org.mapsforge.poi.storage.PoiCategory;
 import org.mapsforge.poi.storage.PointOfInterest;
 import org.rebo.app.R;
+import org.rebo.app.holder.AreaFileInfo;
 import org.rebo.app.utils.CustomAnimationUtils;
 
 import java.io.File;
@@ -29,7 +32,7 @@ import java.util.Set;
  */
 
 public class PoiDisplayUtils {
-    public TextView vAreaSelection;
+    public Spinner vAreaSpinner;
     public TextView vResult;
     public PrintView vExpandButton;
     public View vPoiActions;
@@ -38,16 +41,21 @@ public class PoiDisplayUtils {
     private LinearLayout vmSelection_icon_wrapper;
     private TextView vSelection_category;
     private TextView vSelection_name;
-    public List<QuickSearchListItem> listItemSuggestions;
+    public List<QuickSearchListItem> searchSpinnerItems = new ArrayList<>();
+    public final List<String> areaSpinnerItems = new ArrayList<>();
     public ArrayAdapter<QuickSearchListItem> suggestionsAdapter;
-    public List<PointOfInterest> poiSuggestions;
+    public final List<PointOfInterest> poiSuggestions = new ArrayList<>();
     public PointOfInterest selectedPOI;
-    public File currentPoiFile;
+    public int mPoiFileId;
 
-    public PoiSelector poiSelector;
+    private final PoiManager mPoiManager;
+    private final PoiFavoritesHandler mPoiFavoritesHandler;
+
     private Activity mParent;
 
-    public PoiDisplayUtils(Activity parent) {
+    public PoiDisplayUtils(Activity parent, PoiManager manager, PoiFavoritesHandler poiFavorHandler) {
+        this.mPoiManager = manager;
+        this.mPoiFavoritesHandler = poiFavorHandler;
         onCreateView(parent);
     }
 
@@ -56,8 +64,7 @@ public class PoiDisplayUtils {
         LinearLayout mExpandLine;
         this.mParent = parent;
         //Set search-Bar on-hit-Enter-Listener
-        listItemSuggestions = new ArrayList<>();
-//        listItemSuggestions.add("No suggestions");
+
         vResult = (TextView) parent.findViewById(R.id.poi_selection_textview);
         vPoiListView = (ListView) parent.findViewById(R.id.poi_listview);
         mExpandLine = (LinearLayout) parent.findViewById(R.id.expand_line);
@@ -72,19 +79,19 @@ public class PoiDisplayUtils {
                 }
             }
         });
-        vAreaSelection = (TextView) parent.findViewById(R.id.poi_area_selection_textview);
+        vAreaSpinner = parent.findViewById(R.id.poi_area_selection_spinner);
 
         //Set autocompletion-List
-        suggestionsAdapter = new QuickSearchListAdapter(parent, listItemSuggestions);
+        suggestionsAdapter = new QuickSearchListAdapter(parent, searchSpinnerItems);
         vPoiListView.setAdapter(suggestionsAdapter);
         //Onclick suggested item
         vPoiListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-                if (poiSuggestions != null && !poiSuggestions.isEmpty()) {
-                    selectedPOI = poiSuggestions.get((int) arg3);
-                    currentPoiFile = poiSelector.getPoiFile((int) arg3);
-                    setResultText(selectedPOI);
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (!poiSuggestions.isEmpty()) {
+                    selectedPOI = poiSuggestions.get((int) id);
+                    mPoiFileId = mPoiManager.getPoiFileId();
+                    updateResults(selectedPOI);
                     collapseSuggestions();
                 }
             }
@@ -96,13 +103,41 @@ public class PoiDisplayUtils {
         vSelection_category = (TextView) parent.findViewById(R.id.poi_selection_category);
         vSelection_name = (TextView) parent.findViewById(R.id.poi_selection_name);
 
-        poiHandler = new PoiActionHandler(parent);
+        poiHandler = new PoiActionHandler(parent, mPoiManager, mPoiFavoritesHandler);
         poiHandler.setDestinationButton(parent.findViewById(R.id.destination_position));
         poiHandler.setShareButton(parent.findViewById(R.id.share_position));
         poiHandler.setFavoriteButton(parent.findViewById(R.id.favor_position));
         poiHandler.setDepartureButton(parent.findViewById(R.id.start_position));
         poiHandler.setShowMapButton(parent.findViewById(R.id.show_position));
         poiHandler.setDeleteFavorButton(parent.findViewById(R.id.favor_delete));
+
+        SparseArray<File> poiFiles = mPoiManager.getPoiFiles();
+        if (poiFiles.size() == 0) {
+            areaSpinnerItems.add(0, "No POI files downloaded");
+        } else {
+            for (int i = 0; i < poiFiles.size(); i++) {
+                areaSpinnerItems.add(poiFiles.keyAt(i),
+                        new AreaFileInfo(poiFiles.valueAt(i).getPath()).toString());
+            }
+        }
+
+        ArrayAdapter<String> areaSpinnerAdapter = new ArrayAdapter<>(parent,
+                android.R.layout.simple_spinner_dropdown_item, areaSpinnerItems);
+        vAreaSpinner.setAdapter(areaSpinnerAdapter);
+        vAreaSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                                       int position, long id) {
+                mPoiManager.setPoiFileId((int) id);
+                mPoiFileId = mPoiManager.getPoiFileId();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+        vAreaSpinner.setSelection(mPoiManager.getPoiFileId());
     }
 
     public void collapseSuggestions() {
@@ -115,50 +150,39 @@ public class PoiDisplayUtils {
         vExpandButton.setIconText(mParent.getString(R.string.ic_keyboard_arrow_down));
     }
 
-    public void setResultText(PointOfInterest mSelectedPOI) {
+    public void updateResults(PointOfInterest mSelectedPOI) {
         String resText = mSelectedPOI.getName();
         for (Tag t : mSelectedPOI.getTags()) {
             resText += "<br/>" + t.key + ": " + t.value;
         }
-        if (mSelectedPOI.getCategory() == null) {
-            vAreaSelection.setText(Html.fromHtml("<b>" + "No categories found" + ": </b>" + resText));
-            return;
-        }
-        if (mSelectedPOI.getCategory().getTitle().equals("Maparea")) {
-            vAreaSelection.setText(Html.fromHtml("<b>" + mSelectedPOI.getCategory().getTitle() + ": </b>" + resText));
-        } else {
-            vmSelection_icon_wrapper.removeAllViews();
-            StringBuilder sb = null;
-            for (PoiCategory poiCategory : mSelectedPOI.getCategories()) {
-                String icon = getIconFromCategory(poiCategory);
-                if (sb == null) {
-                    sb = new StringBuilder();
-                } else {
-                    sb.append("\n");
-                }
-                sb.append(poiCategory.getTitle());
 
-                PrintView v = (PrintView) LayoutInflater.from(mParent).inflate(R.layout.poi_icon, null);
-                v.setIconText(icon);
-                vmSelection_icon_wrapper.addView(v);
-
-                // Needed to update, after animation has finished.
-                v.postInvalidateDelayed(100);
+        vmSelection_icon_wrapper.removeAllViews();
+        StringBuilder sb = null;
+        for (PoiCategory poiCategory : mSelectedPOI.getCategories()) {
+            String icon = getIconFromCategory(poiCategory);
+            if (sb == null) {
+                sb = new StringBuilder();
+            } else {
+                sb.append("\n");
             }
+            sb.append(poiCategory.getTitle());
 
-            assert sb != null;
-            vSelection_category.setText(sb.toString());
+            PrintView v = (PrintView) LayoutInflater.from(mParent).inflate(R.layout.poi_icon, null);
+            v.setIconText(icon);
+            vmSelection_icon_wrapper.addView(v);
 
-            vSelection_name.setText(mSelectedPOI.getName());
-            vResult.setText(Html.fromHtml(resText));
-            poiHandler.setPoi(mSelectedPOI, currentPoiFile);
-
-            CustomAnimationUtils.expand(vPoiActions);
-            if (currentPoiFile != null) {
-                vAreaSelection.setText(Html.fromHtml("<b> Maparea: </b>" + currentPoiFile.getName()
-                        .substring(0, currentPoiFile.getName().length() - 4).replace("_", ", ")));
-            }
+            // Needed to update, after animation has finished.
+            v.postInvalidateDelayed(100);
         }
+
+        assert sb != null;
+        vSelection_category.setText(sb.toString());
+
+        vSelection_name.setText(mSelectedPOI.getName());
+        vResult.setText(Html.fromHtml(resText));
+        poiHandler.setPoi(mSelectedPOI, mPoiFileId);
+
+        CustomAnimationUtils.expand(vPoiActions);
     }
 
     public static String getIconFromCategory(PoiCategory cat) {

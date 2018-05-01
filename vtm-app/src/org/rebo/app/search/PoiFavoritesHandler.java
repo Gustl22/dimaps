@@ -1,10 +1,10 @@
 package org.rebo.app.search;
 
+import android.util.SparseArray;
+
 import org.mapsforge.core.model.LatLong;
 import org.mapsforge.poi.storage.PointOfInterest;
 import org.rebo.app.App;
-import org.rebo.app.MapLayers;
-import org.rebo.app.utils.FileUtils;
 import org.rebo.app.location.LocationPersistenceManager;
 
 import java.io.File;
@@ -20,11 +20,19 @@ import static org.rebo.app.search.PoiSearch.getPoiFromLocationAndFile;
  */
 
 public class PoiFavoritesHandler {
-    private LinkedHashMap<String, List<PointOfInterest>> mPoiFavorites;
-    private String mName;
+    public static final String POI_FAVOR_FILE = "poiFavor.list";
 
-    public PoiFavoritesHandler(String name) {
+    private final LinkedHashMap<Integer, List<PointOfInterest>> mPoiFavorites = new LinkedHashMap<>();
+    private String mName;
+    private final PoiManager mPoiManager;
+
+    public PoiFavoritesHandler(PoiManager manager) {
+        this(POI_FAVOR_FILE, manager);
+    }
+
+    public PoiFavoritesHandler(String name, PoiManager manager) {
         this.mName = name;
+        this.mPoiManager = manager;
         initAllFavorites();
     }
 
@@ -32,16 +40,16 @@ public class PoiFavoritesHandler {
      * Add favorite POI to internal list
      *
      * @param poi    POI you want to add
-     * @param folder which contains the POI-file
+     * @param poiFileId id of poi file
      */
-    public void addFavorite(PointOfInterest poi, File folder) {
-        List<PointOfInterest> poiList = mPoiFavorites.get(folder.getAbsolutePath());
+    public void addFavorite(PointOfInterest poi, int poiFileId) {
+        List<PointOfInterest> poiList = mPoiFavorites.get(poiFileId);
         if (poiList == null) {
             poiList = new ArrayList<>();
         }
         if (!poiList.contains(poi)) {
             poiList.add(poi);
-            mPoiFavorites.put(folder.getAbsolutePath(), poiList);
+            mPoiFavorites.put(poiFileId, poiList);
         }
     }
 
@@ -49,64 +57,65 @@ public class PoiFavoritesHandler {
      * Remove POI from personal list
      *
      * @param poi    POI you want to remove
-     * @param folder where POI-list is located.
+     * @param poiFileId id of poi file
      */
-    public void removeFavorite(PointOfInterest poi, File folder) {
-        List<PointOfInterest> poiList = mPoiFavorites.get(folder.getAbsolutePath());
+    public void removeFavorite(PointOfInterest poi, int poiFileId) {
+        List<PointOfInterest> poiList = mPoiFavorites.get(poiFileId);
         if (poiList == null) {
             return;
         }
         poiList.remove(poi);
-        mPoiFavorites.put(folder.getAbsolutePath(), poiList);
+        mPoiFavorites.put(poiFileId, poiList);
     }
 
-    public LinkedHashMap<String, List<PointOfInterest>> getFavoriteHashMap() {
+    public LinkedHashMap<Integer, List<PointOfInterest>> getFavoriteHashMap() {
         return mPoiFavorites;
     }
 
     public List<PointOfInterest> getFavorites() {
         List<PointOfInterest> actualPois = new ArrayList<>();
-        for (Map.Entry<String, List<PointOfInterest>> pair : mPoiFavorites.entrySet()) {
+        for (Map.Entry<Integer, List<PointOfInterest>> pair : mPoiFavorites.entrySet()) {
             actualPois.addAll(pair.getValue());
         }
         return actualPois;
     }
 
     private void initAllFavorites() {
-        mPoiFavorites = new LinkedHashMap<>();
-        List<File> poiFiles = new ArrayList<>();
-        for (File folder : MapLayers.MAP_FOLDERS) {
-            poiFiles.addAll(FileUtils.walkExtension(folder, ".poi"));
-        }
+        mPoiFavorites.clear();
+        SparseArray<File> poiFiles = mPoiManager.getPoiFiles();
+        // Iterate through all files and find POI of stored locations, if existent.
         for (int i = 0; i < poiFiles.size(); i++) {
-            File mapDirectory = poiFiles.get(i).getParentFile();
+            File mapDirectory = poiFiles.valueAt(i).getParentFile();
             File favorListFile = new File(mapDirectory, mName);
-            try {
-                List<LatLong> actualPoiIds = LocationPersistenceManager.fetchLocations(favorListFile);
-                if (actualPoiIds == null || actualPoiIds.isEmpty()) continue;
-                List<PointOfInterest> actualPois = new ArrayList<PointOfInterest>();
-                for (LatLong latlong : actualPoiIds) {
-                    PointOfInterest poi = getPoiFromLocationAndFile(latlong, poiFiles.get(i));
-                    if (poi != null)
-                        actualPois.add(poi);
+            if (favorListFile.exists()) {
+                try {
+                    List<LatLong> poiLocations = LocationPersistenceManager.fetchLocations(favorListFile);
+                    if (poiLocations == null || poiLocations.isEmpty()) continue;
+                    List<PointOfInterest> pois = new ArrayList<>();
+                    for (LatLong latlong : poiLocations) {
+                        PointOfInterest poi = getPoiFromLocationAndFile(latlong, poiFiles.valueAt(i));
+                        if (poi != null)
+                            pois.add(poi);
+                    }
+                    mPoiFavorites.put(poiFiles.keyAt(i), pois);
+                } catch (ClassCastException ex) {
+                    favorListFile.delete();
+                    App.activity.showToastOnUiThread("Poi-favorites deleted, because they have wrong format.");
                 }
-                mPoiFavorites.put(mapDirectory.getAbsolutePath(), actualPois);
-            } catch (ClassCastException ex) {
-                favorListFile.delete();
-                App.activity.showToastOnUiThread("Poi-favorites deleted, because they have wrong format.");
             }
         }
     }
 
     public void storeAllFavorites() {
-        for (Map.Entry<String, List<PointOfInterest>> pair : mPoiFavorites.entrySet()) {
+        for (Map.Entry<Integer, List<PointOfInterest>> pair : mPoiFavorites.entrySet()) {
             List<LatLong> actualPoiLocations = new ArrayList<>();
             List<PointOfInterest> actualPois = pair.getValue();
             for (PointOfInterest poi : actualPois) {
                 actualPoiLocations.add(new LatLong(poi.getLatitude(), poi.getLongitude()));
             }
-            LocationPersistenceManager.storeLocations(new File(pair.getKey(), mName), actualPoiLocations);
-            //it.remove(); // avoids a ConcurrentModificationException
+            LocationPersistenceManager.storeLocations(
+                    new File(mPoiManager.getPoiFiles().get(pair.getKey()).getParent(), mName),
+                    actualPoiLocations);
         }
     }
 }

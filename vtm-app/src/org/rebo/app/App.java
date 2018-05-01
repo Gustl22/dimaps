@@ -25,6 +25,7 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import org.oscim.android.MapView;
+import org.rebo.app.search.PoiManager;
 import org.rebo.app.route.RouteSearch;
 import org.oscim.map.Map;
 import org.slf4j.Logger;
@@ -41,6 +42,7 @@ public class App extends Application {
 
     public static POISearch poiSearch;
     public static RouteSearch routeSearch;
+    public static PoiManager poiManager;
 
     @Override
     public void onCreate() {

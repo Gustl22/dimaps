@@ -6,9 +6,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Window;
-import android.widget.ArrayAdapter;
 
 import org.mapsforge.poi.storage.PointOfInterest;
+import org.rebo.app.App;
 import org.rebo.app.R;
 import org.rebo.app.utils.FileUtils;
 
@@ -22,13 +22,12 @@ import java.util.Map;
  * Created by gustl on 24.03.17.
  */
 
-public class PoiFavoritesActivity extends AppCompatActivity implements PoiSelector {
+public class PoiFavoritesActivity extends AppCompatActivity {
+
     private PoiFavoritesHandler favorHandler;
-    private List<String> mStringFavorList;
-    private List<PointOfInterest> mFavorDataList;
-    private ArrayAdapter mFavorListAdapter;
 
     private PoiDisplayUtils mPoiDisplay;
+    private PoiManager mPoiManager = App.poiManager;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -50,49 +49,33 @@ public class PoiFavoritesActivity extends AppCompatActivity implements PoiSelect
     }
 
     private void initPoiDisplay() {
-        mPoiDisplay = new PoiDisplayUtils(this);
-        mPoiDisplay.poiSelector = this;
+        favorHandler = new PoiFavoritesHandler(mPoiManager);
 
-        favorHandler = new PoiFavoritesHandler("poiFavor.list");
+        mPoiDisplay = new PoiDisplayUtils(this, mPoiManager, favorHandler);
+
         List<PointOfInterest> actualPois = favorHandler.getFavorites();
 
-        mPoiDisplay.poiSuggestions = actualPois;
-        mPoiDisplay.listItemSuggestions = PoiDisplayUtils.getSearchItemListFromPoiList(mPoiDisplay.poiSuggestions);
+        mPoiDisplay.poiSuggestions.clear();
+        mPoiDisplay.poiSuggestions.addAll(actualPois);
+
+        // Must be newly set, otherwise no updates are visible
+        mPoiDisplay.searchSpinnerItems =
+                PoiDisplayUtils.getSearchItemListFromPoiList(mPoiDisplay.poiSuggestions);
 
         mPoiDisplay.suggestionsAdapter.clear();
-        mPoiDisplay.suggestionsAdapter.addAll(mPoiDisplay.listItemSuggestions);
+        mPoiDisplay.suggestionsAdapter.addAll(mPoiDisplay.searchSpinnerItems);
         mPoiDisplay.suggestionsAdapter.notifyDataSetChanged();
         mPoiDisplay.expandSuggestions();
 
         //Remove Add-Favor button
         findViewById(R.id.favor_position).setVisibility(View.GONE);
+        findViewById(R.id.poi_area_selection_spinner).setEnabled(false);
+        findViewById(R.id.poi_area_selection_spinner).setClickable(false);
     }
 
     @Override
     protected void onDestroy() {
         if (favorHandler != null) favorHandler.storeAllFavorites();
         super.onDestroy();
-    }
-
-    @Override
-    public File getPoiFile(int index) {
-        LinkedHashMap poiFavorites = favorHandler.getFavoriteHashMap();
-        Iterator it = poiFavorites.entrySet().iterator();
-        File res = null;
-        while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry) it.next();
-            List<PointOfInterest> actualPois = (List<PointOfInterest>) pair.getValue();
-            if (index > actualPois.size() - 1) {
-                index -= actualPois.size();
-            } else {
-                File tmp = new File((String) pair.getKey());
-                List<File> list = FileUtils.walkExtension(tmp, ".poi");
-                if (list != null && !list.isEmpty()) {
-                    res = list.get(0);
-                    break;
-                }
-            }
-        }
-        return res;
     }
 }

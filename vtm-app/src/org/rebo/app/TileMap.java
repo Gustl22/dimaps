@@ -64,6 +64,7 @@ import org.rebo.app.location.LocationDialog;
 import org.rebo.app.location.LocationHandler;
 import org.rebo.app.navigation.Navigation;
 import org.rebo.app.permission.Permission;
+import org.rebo.app.search.PoiManager;
 import org.rebo.app.preferences.EditPreferences;
 import org.rebo.app.route.RouteActivity;
 import org.rebo.app.route.RouteSearch;
@@ -159,7 +160,12 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         mLocation = new LocationHandler(this, mCompass);
         mLocation.addVirtualLocationListener(mCompass);
 
-        App.poiSearch = new POISearch();
+        App.poiSearch = new POISearch(); // TODO remove
+
+        // Init POIs, must be set after MapLayers
+        App.poiManager = new PoiManager();
+        App.poiManager.loadPreferences(this);
+
         App.routeSearch = new RouteSearch();
         routeSearch.addRouteSearchListener(this);
 

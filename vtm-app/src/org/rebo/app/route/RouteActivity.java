@@ -14,7 +14,6 @@ import com.woxthebox.draglistview.DragListView;
 
 import org.mapsforge.core.model.LatLong;
 import org.mapsforge.poi.storage.PointOfInterest;
-import org.openstreetmap.osmosis.osmbinary.file.FileFormatException;
 import org.rebo.app.App;
 import org.rebo.app.R;
 import org.rebo.app.debug.RemoteDebugger;
@@ -22,7 +21,6 @@ import org.rebo.app.graphhopper.GHPointArea;
 import org.rebo.app.search.PoiSearch;
 import org.rebo.app.utils.Triplet;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,16 +65,12 @@ public class RouteActivity extends AppCompatActivity implements ItemAdapter.Drag
         mItemArray = new ArrayList<>();
 
         RouteSearch rs = routeSearch;
-        PoiSearch ps = new PoiSearch();
-        try {
-            ps.initPoiFile();
-        } catch (FileNotFoundException e) {
+        if (App.poiManager.getPoiFileId() < 0) {
             activity.showToastOnUiThread("No Poidata found, Download it for geoCoding");
             finish();
-        } catch (FileFormatException e) {
-            activity.showToastOnUiThread(e.getMessage());
-            finish();
         }
+        PoiSearch ps = new PoiSearch(App.poiManager);
+
         GHPointArea rDepart = rs.getStartPoint();
         GHPointArea rDest = rs.getDestinationPoint();
         List<GHPointArea> rVia = rs.getViaPoints();
@@ -103,7 +97,7 @@ public class RouteActivity extends AppCompatActivity implements ItemAdapter.Drag
         for (GHPointArea routePoint : mRoutePoints) {
             GHPoint ghPoint = routePoint.getGhPoint();
             LatLong rPoint = new LatLong(ghPoint.getLat(), ghPoint.getLon());
-            List<PointOfInterest> poiList = PoiSearch.getPoisByPoint(rPoint, 50, ps.getPoiFile(0));
+            List<PointOfInterest> poiList = PoiSearch.getPoisByPoint(rPoint, 50, App.poiManager.getPoiFile());
             int imageId = (mRoutePoints.size() == i + 1) ? R.drawable.ic_place_red_24dp :
                     (i == 0 ? R.drawable.ic_place_green_24dp : R.drawable.ic_place_yellow_24dp);
             if (poiList != null && !poiList.isEmpty()) {

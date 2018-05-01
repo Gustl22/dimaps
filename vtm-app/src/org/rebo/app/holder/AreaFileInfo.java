@@ -13,83 +13,83 @@ public class AreaFileInfo {
     private String region;
 
     public AreaFileInfo(String path) {
-        this(!path.contains(".") ? R.string.ic_folder :  R.string.ic_insert_drive_file, path);
+        this(!path.contains(".") ? R.string.ic_folder : R.string.ic_insert_drive_file, path);
     }
 
     public AreaFileInfo(int icon, String path) {
         this.icon = icon;
         this.path = path.trim();
         int i = path.lastIndexOf("/");
-        String fullname = i>=0?path.substring(i+1): this.path;
+        String fullname = i >= 0 ? path.substring(i + 1) : this.path;
 
         boolean isFolder = !fullname.contains(".");
 
-        this.text = isFolder ? fullname : fullname.substring(0,fullname.indexOf("."));
+        this.text = isFolder ? fullname : fullname.substring(0, fullname.indexOf("."));
         this.extension = isFolder ? "" : fullname.substring(fullname.indexOf("."));
         parseRegions(this.text);
     }
 
-    public void setExtension(String extension){
+    public void setExtension(String extension) {
         this.extension = extension;
     }
 
-    public String getExtension(){
+    public String getExtension() {
         return extension;
     }
 
-    public void setText(String text){
+    public void setText(String text) {
         this.text = text;
     }
 
-    public String getText(){
+    public String getText() {
         return text;
     }
 
-    public void setRegion(String region){
+    public void setRegion(String region) {
         this.region = region;
     }
 
-    public String getRegion(){
+    public String getRegion() {
         return region;
     }
 
-    public void setCountry(String country){
+    public void setCountry(String country) {
         this.country = country;
     }
 
-    public String getCountry(){
+    public String getCountry() {
         return country;
     }
 
-    public void setContinent(String continent){
+    public void setContinent(String continent) {
         this.continent = continent;
     }
 
-    public String getContinent(){
+    public String getContinent() {
         return continent;
     }
 
-    public void setSize(String size){
+    public void setSize(String size) {
         this.size = size;
     }
 
-    public String getSize(){
+    public String getSize() {
         return size;
     }
 
-    public String getFullName(){
-        return text+extension;
+    public String getFullName() {
+        return text + extension;
     }
 
-    public String getPath(){
+    public String getPath() {
         return this.path.toLowerCase();
     }
 
     @Override
-    public boolean equals(Object o){
+    public boolean equals(Object o) {
         if (o == null) return false;
-        if (!(o instanceof AreaFileInfo))return false;
-        AreaFileInfo i = (AreaFileInfo)o;
+        if (!(o instanceof AreaFileInfo)) return false;
+        AreaFileInfo i = (AreaFileInfo) o;
         return i.getPath().equals(this.path);
     }
 
@@ -98,33 +98,33 @@ public class AreaFileInfo {
         return (this.path).hashCode();
     }
 
-    public void parseRegions(String name){
-        for(Continent continent :Continent.values()){
-            if(name.toLowerCase().contains(continent.name().toLowerCase()));
-            break;
-        }
-        String[] arr =name.split("_");
-        if(arr.length>1) {
+    public void parseRegions(String name) {
+//        for (Continent continent : Continent.values()) {
+//            if (!name.toLowerCase().contains(continent.name().toLowerCase()))
+//                return;
+//        }
+        String[] arr = name.split("_");
+        if (arr.length > 1) {
             continent = capitalize(arr[0]);
             country = capitalize(arr[1]);
             region = country;
         }
-        if(arr.length>2){
+        if (arr.length > 2) {
             region = "";
-            for(int i = 2; i< arr.length; i++){
-                region += capitalize(arr[i]+" ");
+            for (int i = 2; i < arr.length; i++) {
+                region += capitalize(arr[i] + " ");
             }
             region = region.trim();
         }
     }
 
-    public String capitalize(String text){
-        if(text.length()> 1)
-            return String.valueOf(text.charAt(0)).toUpperCase()+text.substring(1);
+    public String capitalize(String text) {
+        if (text.length() > 1)
+            return String.valueOf(text.charAt(0)).toUpperCase() + text.substring(1);
         return text.toUpperCase();
     }
 
-    enum Continent{
+    enum Continent {
         America,
         Africa,
         Antarctica,
@@ -133,4 +133,10 @@ public class AreaFileInfo {
         Australia
     }
 
+    @Override
+    public String toString() {
+        return this.continent + ", "
+                + this.country + ", "
+                + this.region;
+    }
 }

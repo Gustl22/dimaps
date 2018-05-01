@@ -22,7 +22,9 @@ import java.util.List;
 public class PoiActionHandler {
     private Activity mActivity;
     private PointOfInterest mPoi;
-    private File mPoiFile;
+    private int mPoiFileId;
+    private final PoiManager mPoiManager;
+    private final PoiFavoritesHandler mPoiFavoritesHandler;
     private GHPoint mPoiLocation;
     private RouteSearch mRouteSearch = App.routeSearch;
     private List<File> mGhFiles = RouteSearch.getGraphHopperFiles();
@@ -33,8 +35,10 @@ public class PoiActionHandler {
     private View mvShareButton;
     private View mvDeleteFavorButton;
 
-    public PoiActionHandler(Activity activity) {
+    public PoiActionHandler(Activity activity, PoiManager manager, PoiFavoritesHandler poiFavorHandler) {
+        this.mPoiManager = manager;
         this.mActivity = activity;
+        this.mPoiFavoritesHandler = poiFavorHandler;
     }
 
 
@@ -62,19 +66,17 @@ public class PoiActionHandler {
     }
 
     public void markAsFavorite() {
-        if (mPoi == null || mPoiFile == null || !mPoiFile.exists()) return;
-        PoiFavoritesHandler favorHandler = new PoiFavoritesHandler("poiFavor.list");
-        favorHandler.addFavorite(mPoi, mPoiFile.getParentFile());
-        favorHandler.storeAllFavorites();
+        if (mPoi == null || mPoiFileId < 0) return;
+        mPoiFavoritesHandler.addFavorite(mPoi, mPoiFileId);
+        mPoiFavoritesHandler.storeAllFavorites();
         mActivity.startActivity(new Intent(App.activity, PoiFavoritesActivity.class));
         mActivity.finish();
     }
 
     public void removeFavorite() {
-        if (mPoi == null || mPoiFile == null || !mPoiFile.exists()) return;
-        PoiFavoritesHandler favorHandler = new PoiFavoritesHandler("poiFavor.list");
-        favorHandler.removeFavorite(mPoi, mPoiFile.getParentFile());
-        favorHandler.storeAllFavorites();
+        if (mPoi == null || mPoiFileId < 0) return;
+        mPoiFavoritesHandler.removeFavorite(mPoi, mPoiFileId);
+        mPoiFavoritesHandler.storeAllFavorites();
         mActivity.recreate();
     }
 
@@ -173,11 +175,11 @@ public class PoiActionHandler {
         return mPoi;
     }
 
-    public void setPoi(PointOfInterest poi, File poiFile) {
-        if (poi == null || poiFile == null || !poiFile.exists()) return;
+    public void setPoi(PointOfInterest poi, int poiFileId) {
+        if (poi == null || poiFileId < 0) return;
         mPoiLocation = new GHPoint(poi.getLatitude(), poi.getLongitude());
         this.mPoi = poi;
-        this.mPoiFile = poiFile;
+        this.mPoiFileId = poiFileId;
     }
 
 

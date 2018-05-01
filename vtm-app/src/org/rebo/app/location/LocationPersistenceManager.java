@@ -45,7 +45,7 @@ public class LocationPersistenceManager {
     }
 
     public static void storeLocations(File destination, List<LatLong> list) {
-        List<Double[]> favorList = new ArrayList<Double[]>();
+        List<Double[]> favorList = new ArrayList<>();
         for (LatLong latLong : list) {
             favorList.add(new Double[]{latLong.getLatitude(), latLong.getLongitude()});
         }
