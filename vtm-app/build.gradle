@@ -6,6 +6,7 @@ repositories {
 
 dependencies {
     // Mapsforge / VTM online
+    implementation 'org.mapsforge:vtm:master-SNAPSHOT'
     implementation 'org.mapsforge:vtm-android:master-SNAPSHOT'
     implementation 'org.mapsforge:vtm-android:master-SNAPSHOT:natives-armeabi'
     implementation 'org.mapsforge:vtm-android:master-SNAPSHOT:natives-armeabi-v7a'
@@ -19,12 +20,14 @@ dependencies {
     implementation 'org.mapsforge:spatialite-android:master-SNAPSHOT:natives-x86'
 
     // Android
-    implementation "org.slf4j:slf4j-android:$slf4jVersion"
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     implementation 'com.android.support:support-v4:27.1.1'
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.0'
+
+    // Logging
+    implementation "org.slf4j:slf4j-android:$slf4jVersion"
 
     // Graphhopper
     implementation(group: 'com.graphhopper', name: 'graphhopper-core', version: '0.10-SNAPSHOT') {
