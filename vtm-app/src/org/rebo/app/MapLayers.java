@@ -202,6 +202,7 @@ public class MapLayers {
                 }
                 App.map.layers().add(2, new S3DBTileLayer(App.map, s3dbTileSource, true, false));
             } else {
+                BuildingLayer.POST_AA = true;
                 App.map.layers().add(2, new S3DBLayer(App.map, mBaseLayer));
             }
             App.map.layers().add(3, new LabelLayer(App.map, mBaseLayer));
