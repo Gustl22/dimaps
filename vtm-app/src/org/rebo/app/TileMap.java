@@ -52,6 +52,7 @@ import android.widget.Toast;
 import org.oscim.android.MapView;
 import org.oscim.core.BoundingBox;
 import org.oscim.core.GeoPoint;
+import org.oscim.renderer.MapRenderer;
 import org.oscim.utils.Parameters;
 import org.osmdroid.location.POI;
 import org.osmdroid.overlays.ExtendedMarkerItem;
@@ -129,6 +130,8 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
 
         // Set VTM preferences
         Parameters.ANIMATOR2 = true;
+        Parameters.CUSTOM_COORD_SCALE = true;
+        MapRenderer.COORD_SCALE = 2.0f;
 
         // Init view
         setContentView(R.layout.activity_tilemap_nav);
