@@ -884,13 +884,13 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
 //        mToolbar.invalidate();
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             //Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
-            mMap.viewport().setMaxTilt(80);
+            mMap.viewport().setMaxTilt(79);
             float tilt = mCompass.getTilt() + 15;
             mCompass.setTilt(tilt);
             //getLayoutInflater().inflate(mCompassFab, );
         } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
             //Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
-            mMap.viewport().setMaxTilt(65);
+            mMap.viewport().setMaxTilt(70);
             float tilt = mCompass.getTilt() - 15;
             mCompass.setTilt(tilt);
         }

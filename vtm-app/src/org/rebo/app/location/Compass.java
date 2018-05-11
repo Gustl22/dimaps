@@ -93,7 +93,7 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
         //Set maximum tilt to 80 degrees, if orientation is portrait
         int orientation = App.activity.getResources().getConfiguration().orientation;
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            mMap.viewport().setMaxTilt(82);
+            mMap.viewport().setMaxTilt(79);
         }
         setEnabled(false);
     }
