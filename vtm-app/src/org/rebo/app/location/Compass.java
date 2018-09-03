@@ -30,6 +30,7 @@ import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 
+import org.oscim.utils.FastMath;
 import org.rebo.app.App;
 import org.rebo.app.R;
 import org.oscim.core.MapPosition;
@@ -283,10 +284,7 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
             // float rotation = (float) Math.toDegrees(mAzimuthRadians);
 
             float change = rotation - mCurRotation;
-            if (change > 180)
-                change -= 360;
-            else if (change < -180)
-                change += 360;
+            change = (float) FastMath.clampDegree(change);
 
             // low-pass (slow down)
             long currentTime = Calendar.getInstance().getTimeInMillis();
@@ -297,11 +295,7 @@ public class Compass extends Layer implements SensorEventListener, Map.UpdateLis
             time = currentTime;
 
             rotation = mCurRotation + change;
-
-            if (rotation > 180)
-                rotation -= 360;
-            else if (rotation < -180)
-                rotation += 360;
+            rotation = (float) FastMath.clampDegree(rotation);
 
             boolean redraw = false;
 

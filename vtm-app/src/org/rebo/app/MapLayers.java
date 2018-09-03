@@ -243,7 +243,7 @@ public class MapLayers {
 
         if (enable) {
             if (mGridOverlay == null)
-                mGridOverlay = new TileGridLayer(App.map, context.getResources().getDisplayMetrics().density);
+                mGridOverlay = new TileGridLayer(App.map);
 
             App.map.layers().add(mGridOverlay);
         } else {

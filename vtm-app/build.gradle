@@ -1,30 +1,29 @@
 apply plugin: 'com.android.application'
 
-repositories {
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-}
-
 dependencies {
     // Mapsforge / VTM online
     implementation 'org.mapsforge:vtm:master-SNAPSHOT'
     implementation 'org.mapsforge:vtm-android:master-SNAPSHOT'
-    implementation 'org.mapsforge:vtm-android:master-SNAPSHOT:natives-armeabi'
     implementation 'org.mapsforge:vtm-android:master-SNAPSHOT:natives-armeabi-v7a'
+    implementation 'org.mapsforge:vtm-android:master-SNAPSHOT:natives-arm64-v8a'
     implementation 'org.mapsforge:vtm-android:master-SNAPSHOT:natives-x86'
+    implementation 'org.mapsforge:vtm-android:master-SNAPSHOT:natives-x86_64'
     implementation 'org.mapsforge:vtm-themes:master-SNAPSHOT'
 
     implementation 'org.mapsforge:mapsforge-core:master-SNAPSHOT'
     implementation 'org.mapsforge:mapsforge-poi-android:master-SNAPSHOT'
-    implementation 'org.mapsforge:spatialite-android:master-SNAPSHOT:natives-armeabi'
-    implementation 'org.mapsforge:spatialite-android:master-SNAPSHOT:natives-armeabi-v7a'
-    implementation 'org.mapsforge:spatialite-android:master-SNAPSHOT:natives-x86'
+
+    implementation 'org.mapsforge:sqlite-android:master-SNAPSHOT:natives-armeabi-v7a'
+    implementation 'org.mapsforge:sqlite-android:master-SNAPSHOT:natives-x86'
+    implementation 'org.mapsforge:sqlite-android:master-SNAPSHOT:natives-x86_64'
 
     // Android
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     implementation 'com.android.support:support-v4:27.1.1'
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support:design:27.1.1'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation 'com.android.support:support-core-utils:27.1.1'
 
     // Logging
     implementation "org.slf4j:slf4j-android:$slf4jVersion"
@@ -58,7 +57,7 @@ android {
         minSdkVersion androidMinSdk()
         targetSdkVersion androidTargetSdk()
         vectorDrawables.useSupportLibrary = true // Needed to support vector drawables below API 21
-        multiDexEnabled false // true if too more than 64k methods are included
+        multiDexEnabled false // true if more than 64k methods are included
     }
 
     sourceSets {

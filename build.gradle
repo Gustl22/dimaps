@@ -4,7 +4,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.2'
+        classpath 'com.android.tools.build:gradle:3.1.4'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
     }
 }
@@ -14,7 +14,7 @@ allprojects {
     version = 'master-SNAPSHOT'
     ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
-    ext.androidBuildVersionTools = "27.0.3"
+    ext.androidBuildVersionTools = "28.0.2"
     ext.gdxVersion = "1.9.8"
     ext.gwtVersion = "2.8.0"
     ext.slf4jVersion = "1.7.25"
@@ -28,10 +28,10 @@ allprojects {
     }
 }
 
-static def androidCompileSdk() { return 27 }
+static def androidCompileSdk() { return 28 }
 
 // Minimum API Level by Support Library
-static def androidMinSdk() { return 14 }
+static def androidMinSdk() { return 16 }
 
 static def androidTargetSdk() { return 22 }
 
@@ -42,8 +42,10 @@ def versionName() { return version }
 subprojects {
     repositories {
         google()
-        maven { url 'https://repo.boundlessgeo.com/main' }
+        maven { url 'https://repo.boundlessgeo.com/main/' }
         jcenter()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url 'https://jitpack.io' }
     }
 
     tasks.withType(JavaCompile) {

@@ -13,18 +13,19 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_LOGS" />
-    <uses-permission android:name="android.permission.SET_DEBUG_APP" />
+    <!--<uses-permission android:name="android.permission.READ_LOGS" />-->
+    <!--<uses-permission android:name="android.permission.SET_DEBUG_APP" />-->
 
-    <uses-sdk android:targetSdkVersion="26" />
+    <!--<uses-sdk android:targetSdkVersion="28" />-->
 
     <application
         android:name="org.rebo.app.App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/application_name">
+        android:label="@string/application_name"
+        android:usesCleartextTraffic="true">
 
-        android:theme="@style/AppTheme.NoActionBar"
+        <!--android:theme="@style/AppTheme.NoActionBar"-->
         <activity
             android:name="org.rebo.app.TileMap"
             android:configChanges="keyboardHidden|orientation|screenSize"
