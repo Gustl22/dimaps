@@ -52,6 +52,7 @@ import android.widget.Toast;
 import org.oscim.android.MapView;
 import org.oscim.core.BoundingBox;
 import org.oscim.core.GeoPoint;
+import org.oscim.core.Tile;
 import org.oscim.renderer.MapRenderer;
 import org.oscim.utils.Parameters;
 import org.osmdroid.location.POI;
