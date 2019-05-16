@@ -56,20 +56,23 @@ public class MapLayers {
     }
 
     public static File[] MAP_FOLDERS;
-    final static boolean USE_CACHE = true;
-    final static boolean USE_S3DB = false;
+    static final boolean USE_CACHE = true;
+    static final boolean USE_S3DB = false;
 
     //final static Logger log = LoggerFactory.getLogger(MapLayers.class);
     static Config[] configs = new Config[]{new Config("OPENSCIENCEMAP4") {
+        @Override
         TileSource init() {
             return new OSciMap4TileSource();
         }
     }, new Config("MAPSFORGE") {
+        @Override
         TileSource init() {
             return new MapFileTileSource().setOption("file",
                     StoragePreference.getPreferredStorageLocation().getAbsolutePath() + "/maps/openscience.map");
         }
     }, new Config("S3DB") {
+        @Override
         TileSource init() {
             return OSciMap4TileSource.builder()
                     .url("http://opensciencemap.org/tiles/s3db")
@@ -78,6 +81,7 @@ public class MapLayers {
                     .build();
         }
     }, new Config("MAPSFORGE_OFFLINE") {
+        @Override
         TileSource init() {
             MultiMapFileTileSource MultiTS = new MultiMapFileTileSource();
             ArrayList<File> files = new ArrayList<File>();
@@ -100,9 +104,9 @@ public class MapLayers {
             }
             for (File f : files) {
                 Log.d("Files", "FileName:" + f.getName());
-                    MapFileTileSource ts = new MapFileTileSource();
-                    ts.setMapFile(f.getAbsolutePath());
-                    MultiTS.add(ts);
+                MapFileTileSource ts = new MapFileTileSource();
+                ts.setMapFile(f.getAbsolutePath());
+                MultiTS.add(ts);
             }
             if (MultiTS.getTileSize() > 0) return MultiTS;
             return null;

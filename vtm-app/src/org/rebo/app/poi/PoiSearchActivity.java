@@ -83,15 +83,18 @@ public class PoiSearchActivity extends AppCompatActivity {
         //Set real-time key-listener
 
         mSearchBar.addTextChangedListener(new TextWatcher() {
+            @Override
             public void afterTextChanged(Editable s) {
 //                if (mSearchTask != null) mSearchTask.cancel(true);
 //                getSuggestions((mSearchBar.getText().toString()));
             }
 
+            @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 // you can check for enter key here
             }
 
+            @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
             }
         });

@@ -23,7 +23,7 @@ import java.util.ArrayList;
  */
 public class NominatimPOIProvider implements POIProvider {
 
-    final static Logger log = LoggerFactory.getLogger(NominatimPOIProvider.class);
+    static final Logger log = LoggerFactory.getLogger(NominatimPOIProvider.class);
 
     /* As the doc lacks a lot of features, source code may help:
      * https://trac.openstreetmap
@@ -150,6 +150,7 @@ public class NominatimPOIProvider implements POIProvider {
      * @param maxResults  ...
      * @return list of POIs, null if technical issue.
      */
+    @Override
     public ArrayList<POI> getPOIInside(BoundingBox boundingBox, String type, int maxResults) {
         String url = getUrlInside(boundingBox, type, maxResults);
         return getThem(url);

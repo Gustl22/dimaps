@@ -48,6 +48,7 @@ public class GHPointArea {
                     (Collection<GraphHopper>) params[2]);
         }
 
+        @Override
         protected void onPostExecute(GraphHopper hopper) {
             graphHopper = hopper;
             synchronized (virtualObject) {

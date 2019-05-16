@@ -37,7 +37,7 @@ import java.util.ArrayList;
 
 public class FourSquareProvider implements POIProvider {
 
-    final static Logger log = LoggerFactory.getLogger(FourSquareProvider.class);
+    static final Logger log = LoggerFactory.getLogger(FourSquareProvider.class);
 
     //    https://developer.foursquare.com/docs/venues/search
     //    https://developer.foursquare.com/docs/responses/venue
@@ -137,6 +137,7 @@ public class FourSquareProvider implements POIProvider {
      * Null if
      * technical issue.
      */
+    @Override
     public ArrayList<POI> getPOIInside(BoundingBox boundingBox, String query, int maxResults) {
         String url = getUrlInside(boundingBox, query, maxResults);
         return getThem(url);

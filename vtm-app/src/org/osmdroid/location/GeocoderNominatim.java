@@ -26,7 +26,7 @@ import java.util.Locale;
  */
 public class GeocoderNominatim {
 
-    final static Logger log = LoggerFactory.getLogger(GeocoderNominatim.class);
+    static final Logger log = LoggerFactory.getLogger(GeocoderNominatim.class);
 
     public static final String NOMINATIM_SERVICE_URL = "http://nominatim.openstreetmap.org/";
     public static final String MAPQUEST_SERVICE_URL = "http://open.mapquestapi.com/nominatim/v1/";
@@ -51,7 +51,7 @@ public class GeocoderNominatim {
         init(context, Locale.getDefault());
     }
 
-    static public boolean isPresent() {
+    public static boolean isPresent() {
         return true;
     }
 

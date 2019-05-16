@@ -233,6 +233,7 @@ public class MapDownloadActivity extends DownloadReceiverActivity implements Ada
                 progDailog.show();
             }
 
+            @Override
             protected Collection<String> saveDoInBackground(Void... params)
                     throws Exception {
                 fileSizeHMap = new HashMap();

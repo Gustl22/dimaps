@@ -45,7 +45,7 @@ import java.util.Calendar;
 public class Compass extends Layer implements SensorEventListener, Map.UpdateListener,
         LocationRenderer.Callback, LocationListener {
 
-    // final static Logger log = LoggerFactory.getLogger(Compass.class);
+    // static final Logger log = LoggerFactory.getLogger(Compass.class);
 
     public enum Mode {
         OFF, NAV, C2D, C3D,

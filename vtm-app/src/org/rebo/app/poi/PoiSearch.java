@@ -48,7 +48,7 @@ import java.util.TreeMap;
  * Tap on POIs to show their name (in device's locale).
  */
 public class PoiSearch {
-    private final static int SEARCH_RESULT_LIMIT = 25;
+    private static final int SEARCH_RESULT_LIMIT = 25;
     private final PoiManager mPoiManager;
 
     // POI categories are based on one POI file, the others should have same categories.

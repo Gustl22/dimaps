@@ -20,10 +20,10 @@ import java.util.HashMap;
  */
 public class FlickrPOIProvider implements POIProvider {
 
-    final static Logger log = LoggerFactory.getLogger(FlickrPOIProvider.class);
+    static final Logger log = LoggerFactory.getLogger(FlickrPOIProvider.class);
 
     protected String mApiKey;
-    private final static String PHOTO_URL = "http://www.flickr.com/photos/%s/%s/sizes/o/in/photostream/";
+    private static final String PHOTO_URL = "http://www.flickr.com/photos/%s/%s/sizes/o/in/photostream/";
 
     /**
      * @param apiKey the registered API key to give to Flickr service.
@@ -149,6 +149,7 @@ public class FlickrPOIProvider implements POIProvider {
      * Null if
      * technical issue.
      */
+    @Override
     public ArrayList<POI> getPOIInside(BoundingBox boundingBox, String query, int maxResults) {
         String url = getUrlInside(boundingBox, maxResults);
         return getThem(url);

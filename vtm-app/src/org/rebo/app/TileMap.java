@@ -87,7 +87,7 @@ import static org.rebo.app.location.LocationHandler.Mode.SNAP;
 public class TileMap extends MapActivity implements MapEventsReceiver,
         NavigationView.OnNavigationItemSelectedListener, CrossMapCalculatorListener,
         RouteSearch.RouteSearchListener {
-    final static Logger log = LoggerFactory.getLogger(TileMap.class);
+    static final Logger log = LoggerFactory.getLogger(TileMap.class);
 
     private static final int DIALOG_ENTER_COORDINATES = 0;
     private static final int DIALOG_LOCATION_PROVIDER_DISABLED = 2;
@@ -238,11 +238,13 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
         builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
                 .setCancelable(false)
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
                     public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
                         startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                     }
                 })
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
                     public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
                         dialog.cancel();
                     }

@@ -59,6 +59,7 @@ public abstract class DownloadReceiverActivity extends AppCompatActivity {
 
     private void initDownloadReceiver() {
         receiver = new BroadcastReceiver() {
+            @Override
             public void onReceive(final Context ctxt, Intent intent) {
                 long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0L);
                 if (!mDownLoadList.contains(id)) {
@@ -108,6 +109,7 @@ public abstract class DownloadReceiverActivity extends AppCompatActivity {
                 progDailog.show();
             }
 
+            @Override
             protected Boolean saveDoInBackground(File... files)
                     throws Exception {
                 Unzipper unzipper = new Unzipper();

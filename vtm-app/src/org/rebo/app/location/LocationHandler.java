@@ -68,12 +68,12 @@ public class LocationHandler implements LocationListener {
         NAV
     }
 
-    private final static int DIALOG_LOCATION_PROVIDER_DISABLED = 2;
-    private final static int SHOW_LOCATION_ZOOM = 14;
-    private final static int NAVIGATION_ZOOM = 20;
-    private final static int GPS_MAXIMUM_DISTANCE_DEVIATION = 15;
-    private final static int GPS_MINIMUM_DISTANCE = 0; //Standard 10
-    private final static int GPS_MINIMUM_TIME_ELAPSE = 2200; //Standard 10000
+    private static final int DIALOG_LOCATION_PROVIDER_DISABLED = 2;
+    private static final int SHOW_LOCATION_ZOOM = 14;
+    private static final int NAVIGATION_ZOOM = 20;
+    private static final int GPS_MAXIMUM_DISTANCE_DEVIATION = 15;
+    private static final int GPS_MINIMUM_DISTANCE = 0; //Standard 10
+    private static final int GPS_MINIMUM_TIME_ELAPSE = 2200; //Standard 10000
 
     private final LocationManager mLocationManager;
     private final LocationLayerImpl mLocationLayer;
@@ -709,7 +709,7 @@ public class LocationHandler implements LocationListener {
     }
 
     //Location Listeners, which listen this Location-Handler
-    private final static Logger log = LoggerFactory.getLogger(LocationHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(LocationHandler.class);
     private Collection<LocationListener> virtualLocationListeners = new HashSet<LocationListener>();
 
     public void addVirtualLocationListener(LocationListener toAdd) {

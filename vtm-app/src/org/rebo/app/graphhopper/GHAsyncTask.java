@@ -7,6 +7,7 @@ public abstract class GHAsyncTask<A, B, C> extends AsyncTask<A, B, C> {
 
     protected abstract C saveDoInBackground(A... params) throws Exception;
 
+    @Override
     protected C doInBackground(A... params) {
         try {
             return saveDoInBackground(params);

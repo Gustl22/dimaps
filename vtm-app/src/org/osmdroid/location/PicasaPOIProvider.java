@@ -27,7 +27,7 @@ import javax.xml.parsers.SAXParserFactory;
  */
 public class PicasaPOIProvider implements POIProvider {
 
-    final static Logger log = LoggerFactory.getLogger(PicasaPOIProvider.class);
+    static final Logger log = LoggerFactory.getLogger(PicasaPOIProvider.class);
 
     String mAccessToken;
 
@@ -95,6 +95,7 @@ public class PicasaPOIProvider implements POIProvider {
      * @return list of POI, Picasa photos inside the bounding box. Null if
      * technical issue.
      */
+    @Override
     public List<POI> getPOIInside(BoundingBox boundingBox, String query, int maxResults) {
         String url = getUrlInside(boundingBox, maxResults, query);
         return getThem(url);

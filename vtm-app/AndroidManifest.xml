@@ -16,8 +16,6 @@
     <!--<uses-permission android:name="android.permission.READ_LOGS" />-->
     <!--<uses-permission android:name="android.permission.SET_DEBUG_APP" />-->
 
-    <!--<uses-sdk android:targetSdkVersion="28" />-->
-
     <application
         android:name="org.rebo.app.App"
         android:allowBackup="true"
