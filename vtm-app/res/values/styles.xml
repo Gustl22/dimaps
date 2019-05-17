@@ -6,7 +6,6 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
         <item name="android:textColor">@android:color/primary_text_light</item>
         <item name="android:autoCompleteTextViewStyle">@style/AutoCompleteTextViewLight</item>
         <item name="android:dropDownItemStyle">@style/Widget.DropDownItemLight</item>
@@ -18,16 +17,6 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="AppTheme.NoActionBar.TranslucentStatus" parent="AppTheme.NoActionBar">
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
-    </style>
-
-    <style name="AppTheme.NoActionBar.TransparentStatus" parent="AppTheme.NoActionBar">
-        <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowTranslucentNavigation">true</item>
-    </style>
     <style name="AutoCompleteTextViewLight" parent="@android:style/Widget.AutoCompleteTextView">
         <item name="android:textColor">@android:color/primary_text_light</item>
         <item name="android:background">@android:color/white</item>

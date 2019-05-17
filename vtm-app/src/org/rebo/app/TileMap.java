@@ -123,8 +123,6 @@ public class TileMap extends MapActivity implements MapEventsReceiver,
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
         // Debug
         RemoteDebugger.setExceptionHandler(this);
