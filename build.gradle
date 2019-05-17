@@ -30,7 +30,7 @@ allprojects {
 
 ext {
     androidCompileSdk = { return 28 }
-    androidMinSdk = { return 16 } // 14 for Support Library, 16 for sqlite-android
+    androidMinSdk = { return 21 } // 14 for Support Library, 16 for sqlite-android
     androidTargetSdk = { return 28 }
     versionCode = { return 1 }
     versionName = { return version }
