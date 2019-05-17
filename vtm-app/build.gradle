@@ -52,10 +52,10 @@ android {
     }
 
     defaultConfig {
-        versionCode versionCode()
-        versionName versionName()
-        minSdkVersion androidMinSdk()
-        targetSdkVersion androidTargetSdk()
+        versionCode project.versionCode()
+        versionName project.versionName()
+        minSdkVersion project.androidMinSdk()
+        targetSdkVersion project.androidTargetSdk()
         vectorDrawables.useSupportLibrary = true // Needed to support vector drawables below API 21
         multiDexEnabled false // true if more than 64k methods are included
     }
