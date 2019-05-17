@@ -1,34 +1,42 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-	<head>
-		<title>About this software</title>
-		<meta http-equiv="Content-Style-Type" content="text/css" />
-	</head>
-	<body style="padding: 0.5em;">
-		<p style="text-align: center;">
-			<img src="file:///android_asset/ic_launcher.png" style="width: 72px; height: 72px;" />
-			<br />Version 0.1.0-alpha
-		</p>
-		<p>
-			<li>
-				<a href="http://www.mapsforge.org">Dimaps</a>
-				is
-		        distributed under the <a href="http://www.gnu.org/licenses/lgpl.html">LGPL3</a>. 
-		    Please report any  bugs, problems or feature requests via our
-				<a href="https://github.com/Gustl22/dimaps/issues">issue tracker</a>.
-			</li>
-		</p>
-		<p></p>
-		<p></p>    		    
-		
-		<p> <li>Map data for 'OpenScienceMap' source © <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors, 
-		 licensed under the Open Data Commons Open Database License (ODbL).</li></p>
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+    <head>
+        <title>About this software</title>
+        <meta content="text/css" http-equiv="Content-Style-Type" />
+    </head>
+    <body style="padding: 0.5em;">
+        <p style="text-align: center;">
+            <img style="width: 72px; height: 72px;" alt="Dimaps"
+                src="file:///android_asset/ic_launcher.png" />
+            <br />Version 0.1.0-alpha
+        </p>
+        <ul>
+            <li>
+                <a href="http://www.mapsforge.org">Dimaps</a>
+                is
+                distributed under the <a href="http://www.gnu.org/licenses/lgpl.html">LGPL3</a>.
+                Please report any bugs, problems or feature requests via our
+                <a href="https://github.com/Gustl22/dimaps/issues">issue tracker</a>.
+            </li>
+        </ul>
+        <p />
+        <p />
 
-		<p>
-			<li>This software contains fragments of
-				<a href="https://github.com/mapsforge/vtm">mapsforge vtm</a>
-        library and <a href="https://github.com/osmdroid/osmdroid">osmdroid</a>.</li></p>
-        
-	</body>
+        <ul>
+            <li>Map data for 'OpenScienceMap' source © <a href="http://www.openstreetmap.org/">
+                OpenStreetMap
+            </a> contributors,
+                licensed under the Open Data Commons Open Database License (ODbL).
+            </li>
+        </ul>
+
+        <ul>
+            <li>This software contains fragments of
+                <a href="https://github.com/mapsforge/vtm">mapsforge vtm</a>
+                library and <a href="https://github.com/osmdroid/osmdroid">osmdroid</a>.
+            </li>
+        </ul>
+
+    </body>
 </html>
